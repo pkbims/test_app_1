@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app_1 — Spec Review</title>
+<style>
+  :root{
+    --bg:#faf9f7; --panel:#fff; --ink:#1a1a18; --muted:#6b6b66;
+    --line:#e4e2dd; --accent:#2d5f4f; --accent-soft:#e8f0ec;
+    --warn:#8a5a2b; --quote:#f2f0eb;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#16161a; --panel:#1e1e24; --ink:#eceae5; --muted:#9d9d98;
+      --line:#2e2e36; --accent:#7fc0a6; --accent-soft:#22322c;
+      --warn:#d0a06a; --quote:#25252c;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+  header{position:sticky;top:0;z-index:50;background:var(--panel);
+    border-bottom:1px solid var(--line);padding:14px 24px;
+    display:flex;align-items:center;gap:16px}
+  header h1{font-size:15px;margin:0;font-weight:650;letter-spacing:-.01em}
+  .tag{font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--accent);background:var(--accent-soft);padding:3px 8px;border-radius:4px}
+  .spacer{flex:1}
+  .count{font-size:13px;color:var(--muted)}
+  .wrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;
+    gap:32px;max-width:1240px;margin:0 auto;padding:32px 24px 120px}
+  @media(max-width:960px){.wrap{grid-template-columns:1fr}}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:24px 26px;margin-bottom:20px;position:relative}
+  section:hover .cbtn{opacity:1}
+  h2{font-size:19px;margin:0 0 4px;letter-spacing:-.015em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+  h3{font-size:14px;margin:22px 0 10px;letter-spacing:-.005em}
+  blockquote{margin:10px 0;padding:10px 14px;background:var(--quote);
+    border-left:2px solid var(--line);border-radius:0 6px 6px 0;
+    font-size:13.5px;color:var(--ink)}
+  blockquote cite{display:block;margin-top:6px;color:var(--muted);
+    font-style:normal;font-size:12px}
+  .cbtn{position:absolute;top:14px;right:14px;opacity:0;transition:.15s;
+    background:var(--bg);border:1px solid var(--line);color:var(--muted);
+    font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer}
+  .cbtn:hover{color:var(--accent);border-color:var(--accent)}
+  .cbtn.has{opacity:1;color:var(--accent);border-color:var(--accent);
+    background:var(--accent-soft)}
+  .d{border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:14px 0;
+    position:relative}
+  .d:hover .cbtn{opacity:1}
+  .d .q{font-weight:600;font-size:14.5px;margin-bottom:3px}
+  .d .why{color:var(--muted);font-size:13px;margin-bottom:12px}
+  label.opt{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;
+    border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:14px}
+  label.opt:hover{background:var(--bg)}
+  label.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+  label.opt input{margin-top:3px;accent-color:var(--accent);flex:none}
+  label.opt .oh{font-weight:550}
+  label.opt .od{color:var(--muted);font-size:12.5px;display:block;margin-top:1px}
+  .flow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+  .step{background:var(--bg);border:1px solid var(--line);border-radius:7px;
+    padding:9px 14px;cursor:pointer;font-size:13.5px}
+  .step.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);
+    font-weight:600}
+  .screen{border:1px dashed var(--line);border-radius:8px;padding:20px;
+    min-height:150px;background:var(--bg);font-size:13.5px}
+  .screen h4{margin:0 0 8px;font-size:14px}
+  .screen ul{margin:8px 0 0;padding-left:18px;color:var(--muted)}
+  aside{position:sticky;top:78px;align-self:start;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:20px;
+    max-height:calc(100vh - 110px);display:flex;flex-direction:column}
+  aside h2{font-size:15px;margin-bottom:2px}
+  #queue{flex:1;overflow-y:auto;margin:14px -4px;padding:0 4px}
+  .qi{border:1px solid var(--line);border-radius:7px;padding:11px 12px;margin-bottom:9px;
+    font-size:13px;background:var(--bg)}
+  .qi .qa{color:var(--accent);font-size:11px;text-transform:uppercase;
+    letter-spacing:.06em;font-weight:650;margin-bottom:5px}
+  .qi .qx{float:right;cursor:pointer;color:var(--muted);border:0;background:none;
+    font-size:15px;line-height:1;padding:0 0 0 8px}
+  .qi .qx:hover{color:var(--warn)}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:26px 10px}
+  button.primary{width:100%;background:var(--accent);color:#fff;border:0;
+    padding:11px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;
+    font-family:inherit}
+  button.primary:disabled{opacity:.4;cursor:not-allowed}
+  button.primary:not(:disabled):hover{filter:brightness(1.08)}
+  #pop{position:absolute;z-index:100;width:330px;background:var(--panel);
+    border:1px solid var(--line);border-radius:9px;padding:14px;
+    box-shadow:0 8px 30px rgba(0,0,0,.16);display:none}
+  #pop .pa{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--accent);font-weight:650;margin-bottom:8px}
+  #pop textarea{width:100%;min-height:88px;border:1px solid var(--line);
+    border-radius:6px;padding:9px;font:inherit;font-size:13.5px;resize:vertical;
+    background:var(--bg);color:var(--ink)}
+  #pop .row{display:flex;gap:8px;margin-top:10px}
+  #pop button{flex:1;padding:8px;border-radius:6px;font-size:13px;cursor:pointer;
+    font-family:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  #pop button.add{background:var(--accent);color:#fff;border-color:var(--accent);
+    font-weight:600}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:7px;
+    font-size:13.5px;opacity:0;transition:.25s;pointer-events:none;z-index:200}
+  #toast.on{opacity:1}
+  .locked{background:var(--accent-soft);border-color:var(--accent)}
+  .dsec{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:4px}
+  .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:9px}
+  .bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+  .dlist{overflow-y:auto;max-height:32vh;margin:10px -4px 0;padding:0 4px}
+  .dr{display:flex;gap:9px;align-items:baseline;padding:6px 8px;border-radius:6px;
+    cursor:pointer;font-size:12.5px}
+  .dr:hover{background:var(--bg)}
+  .dr .dot{width:7px;height:7px;border-radius:50%;background:var(--line);
+    flex:none;align-self:center}
+  .dr.done .dot{background:var(--accent)}
+  .dr .dn{color:var(--muted);font-weight:700;flex:none;letter-spacing:.03em}
+  .dr.todo .dv{color:var(--muted);font-style:italic}
+  .conflict{border-color:var(--warn)}
+  .conflict .q::before{content:'conflict · ';color:var(--warn);font-weight:700}
+  .settled{opacity:.55}
+  .settled:hover{opacity:1}
+  .newq{border-left:3px solid var(--accent)}
+  nav.parts{display:flex;gap:4px;padding:0 24px;background:var(--panel);
+    border-bottom:1px solid var(--line);position:sticky;top:53px;z-index:49;overflow-x:auto}
+  nav.parts button{background:none;border:0;border-bottom:2px solid transparent;
+    padding:11px 14px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer;
+    white-space:nowrap}
+  nav.parts button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:650}
+  .part{display:none}.part.on{display:block}
+  .mm{background:var(--bg);border:1px solid var(--line);border-radius:8px;
+    padding:18px;margin:14px 0;overflow-x:auto;text-align:center}
+  .plain{background:var(--accent-soft);border-left:3px solid var(--accent);
+    padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:13.5px}
+  .plain b{color:var(--accent)}
+  table.api{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+  table.api th,table.api td{border:1px solid var(--line);padding:8px 10px;
+    text-align:left;vertical-align:top}
+  table.api th{background:var(--bg);font-weight:650}
+  table.api code{font-size:12px}
+  code{background:var(--quote);padding:1px 5px;border-radius:4px;font-size:12.5px}
+  pre.code{background:var(--quote);padding:14px;border-radius:8px;overflow-x:auto;
+    font-size:12.5px;line-height:1.5;margin:12px 0}
+  .flash{animation:fl 1.1s ease-out}
+  @keyframes fl{0%{background:var(--accent-soft)}100%{background:transparent}}
+</style>
+</head>
+<body>
+<header>
+  <h1>app_1 — Spec Review</h1>
+  <span class="tag">Stage 3 · PRD</span>
+  <div class="spacer"></div>
+  <span class="count" id="dcount">0 decisions</span>
+  <span class="tag" id="round">Round 1</span>
+</header>
+
+<nav class="parts" id="nav"></nav>
+<div class="wrap">
+<main>
+<div class="part on" data-part="product" data-partname="Product">
+
+<section data-anchor="problem" data-label="Problem">
+  <button class="cbtn">comment</button>
+  <h2>The problem</h2>
+  <p class="sub">7 of 45 people in our research, the most repeated criticism of the whole AI decor category.</p>
+  <p>AI design tools redesign a room you don't have. You upload a photo of your actual living room and get back a different room — new windows, moved walls, furniture you never owned.</p>
+  <blockquote>"adds addition windows and doors, changes room configuration and does not use your existing room"<cite>LiaGator, DecorAI review</cite></blockquote>
+  <blockquote>"it still gives me an image of whole new furnitures and it restructures my whole house, nothing like i asked for."<cite>balls242, Interium review</cite></blockquote>
+</section>
+
+<section data-anchor="positioning" data-label="Positioning" class="locked">
+  <button class="cbtn">comment</button>
+  <h2>Positioning <span class="tag">locked</span></h2>
+  <p class="sub">Decided at stage 2. Everything below must obey this.</p>
+  <p><strong>It's basically DecorAI or Interium, but it never invents architecture.</strong> The room's structure is extracted and locked before anything is generated, so walls, windows, doors, ceiling height and proportions survive untouched — and the user can see what is being protected. The wedge is credibility, not features.</p>
+</section>
+
+
+<section data-anchor="conflicts" data-label="Conflicts">
+  <button class="cbtn">comment</button>
+  <h2>Conflicts in round 1</h2>
+  <p class="sub">Two of your answers pull against each other. Resolve before the PRD.</p>
+
+  <div class="d conflict" data-anchor="c1" data-label="C1 user vs keep-furniture">
+    <button class="cbtn">comment</button>
+    <div class="q">C1 — "Just moved in" vs "tap items to keep"</div>
+    <div class="why">New movers have empty rooms. D4 preserves furniture they may not have yet.</div>
+    <div data-radio="c1">
+      <label class="opt"><input type="radio" name="c1" value="switch-user"><span><span class="oh">Switch to lived-in restyler</span><span class="od">Keeps D4 meaningful, and matches our loudest research quotes.</span></span></label>
+      <label class="opt"><input type="radio" name="c1" value="switch-furniture"><span><span class="oh">Keep new movers, replace everything</span><span class="od">Drops D4. Simplest build — structure locked, contents free.</span></span></label>
+      <label class="opt"><input type="radio" name="c1" value="both-real"><span><span class="oh">Both — they bring old furniture</span><span class="od">People move in with a sofa that fits the last place. Real, and keeps D4 honest.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d conflict" data-anchor="c2" data-label="C2 iOS vs baseline">
+    <button class="cbtn">comment</button>
+    <div class="q">C2 — iOS native vs the series engineering baseline</div>
+    <div class="why">CLAUDE.md requires Docker, CI/CD, deploy, health checks, metrics. An iOS app can't carry most of that, and App Store review enters your release loop. D2 doesn't need LiDAR, so iOS isn't forced.</div>
+    <div data-radio="c2">
+      <label class="opt"><input type="radio" name="c2" value="web"><span><span class="oh">Responsive web instead</span><span class="od">Whole baseline is demoable. Camera access is adequate for 2–3 photos.</span></span></label>
+      <label class="opt"><input type="radio" name="c2" value="ios-backend"><span><span class="oh">Keep iOS, baseline lives in the backend</span><span class="od">Honest split: containerized API with full ops, thin native client.</span></span></label>
+      <label class="opt"><input type="radio" name="c2" value="pwa"><span><span class="oh">Installable web app</span><span class="od">Home-screen icon and camera without the App Store.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d conflict" data-anchor="c3" data-label="C3 fidelity chain">
+    <button class="cbtn">comment</button>
+    <div class="q">C3 — The promise, the data, and the failure path don't agree</div>
+    <div class="why">D10 is the widest promise (flooring and fixtures too), D12 gives the weakest geometry (freeform photos), D11 ships anyway on low confidence. D9 then measures you on structure fidelity. Move one lever.</div>
+    <div data-radio="c3">
+      <label class="opt"><input type="radio" name="c3" value="harden"><span><span class="oh">Harden the failure path</span><span class="od">D11 becomes "show the guess, let them fix it." The failure screen becomes the trust moment, and no competitor has one.</span></span></label>
+      <label class="opt"><input type="radio" name="c3" value="narrow"><span><span class="oh">Narrow the promise</span><span class="od">D10 drops to walls, windows, doors, ceiling. Defensible on freeform photos, and still the thing everyone else fails at.</span></span></label>
+      <label class="opt"><input type="radio" name="c3" value="improve"><span><span class="oh">Improve the input</span><span class="od">D12 becomes "one required, extras improve it." Better geometry without guided capture's friction.</span></span></label>
+      <label class="opt"><input type="radio" name="c3" value="accept"><span><span class="oh">Accept it as is</span><span class="od">Ship warnings on low confidence and let the fidelity metric tell us how bad it is. Fastest to build, and an honest experiment — but it is the category's known failure.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="round2" data-label="Round 2 questions">
+  <button class="cbtn">comment</button>
+  <h2>Round 2 — unlocked by your answers</h2>
+  <p class="sub">These only became askable once you'd chosen multi-photo, the slider, and mark-to-keep.</p>
+
+  <div class="d newq" data-anchor="d10" data-label="D10 what is structure">
+    <button class="cbtn">comment</button>
+    <div class="q">D10 — What exactly counts as "structure"?</div>
+    <div class="why">This is the promise. Its boundary decides what the model may repaint.</div>
+    <div data-radio="d10">
+      <label class="opt"><input type="radio" name="d10" value="shell"><span><span class="oh">Walls, windows, doors, ceiling line</span><span class="od">Narrowest and most defensible. Flooring and fixtures are fair game.</span></span></label>
+      <label class="opt"><input type="radio" name="d10" value="fixed"><span><span class="oh">+ built-ins, fireplaces, radiators</span><span class="od">Everything bolted down. Matches what users mean by "my room".</span></span></label>
+      <label class="opt"><input type="radio" name="d10" value="all"><span><span class="oh">+ flooring and light fixtures</span><span class="od">Strictest. Limits how transformative results can look.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d newq" data-anchor="d11" data-label="D11 detection failure">
+    <button class="cbtn">comment</button>
+    <div class="q">D11 — What happens when structure detection fails?</div>
+    <div class="why">Your baseline demands deliberate failure handling. This is that screen, and no competitor has one.</div>
+    <div data-radio="d11">
+      <label class="opt"><input type="radio" name="d11" value="block"><span><span class="oh">Block and ask for a better photo</span><span class="od">Never ships a bad render. Costs you users at the door.</span></span></label>
+      <label class="opt"><input type="radio" name="d11" value="correct"><span><span class="oh">Show the guess, let them fix it</span><span class="od">Turns the failure into the trust-building moment.</span></span></label>
+      <label class="opt"><input type="radio" name="d11" value="warn"><span><span class="oh">Proceed with a confidence warning</span><span class="od">Lowest friction, highest risk of the exact complaint we're fixing.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d newq" data-anchor="d12" data-label="D12 capture UX">
+    <button class="cbtn">comment</button>
+    <div class="q">D12 — How do we get 2–3 usable photos?</div>
+    <div class="why">You chose multi-photo. Each extra photo is a place people quit.</div>
+    <div data-radio="d12">
+      <label class="opt"><input type="radio" name="d12" value="guided"><span><span class="oh">Guided capture, one corner at a time</span><span class="od">Best geometry. Feels like work.</span></span></label>
+      <label class="opt"><input type="radio" name="d12" value="freeform"><span><span class="oh">Freeform — upload 2–3</span><span class="od">Fastest. Quality varies wildly.</span></span></label>
+      <label class="opt"><input type="radio" name="d12" value="one-plus"><span><span class="oh">One required, extras improve it</span><span class="od">Ship on one, reward the second. Lowest drop-off.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d newq" data-anchor="d13" data-label="D13 auth timing">
+    <button class="cbtn">comment</button>
+    <div class="q">D13 — When is an account required?</div>
+    <div class="why">You chose 3 free renders with no card. Auth timing decides whether that promise is felt.</div>
+    <div data-radio="d13">
+      <label class="opt"><input type="radio" name="d13" value="after"><span><span class="oh">Only to save or download</span><span class="od">Strongest answer to the paywall complaints. Rate limiting gets harder.</span></span></label>
+      <label class="opt"><input type="radio" name="d13" value="before"><span><span class="oh">Before the first render</span><span class="od">Clean quotas and real auth from day one.</span></span></label>
+      <label class="opt"><input type="radio" name="d13" value="second"><span><span class="oh">After the first render</span><span class="od">They see it work, then sign up.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d newq" data-anchor="d14" data-label="D14 free render unit">
+    <button class="cbtn">comment</button>
+    <div class="q">D14 — What does one "free render" consume?</div>
+    <div class="why">Decides your rate limiter and your GPU bill.</div>
+    <div data-radio="d14">
+      <label class="opt"><input type="radio" name="d14" value="generation"><span><span class="oh">One generated image</span><span class="od">Simplest to meter and explain.</span></span></label>
+      <label class="opt"><input type="radio" name="d14" value="room"><span><span class="oh">One room, 3 restyles</span><span class="od">Your call from round 3. Enough to feel the loop, capped enough to bound the GPU bill.</span></span></label>
+      <label class="opt"><input type="radio" name="d14" value="day"><span><span class="oh">Three per day</span><span class="od">Caps cost, invites people back.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="user" data-label="Primary user">
+  <button class="cbtn">comment</button>
+  <h2>Who it's for</h2>
+  <p class="sub">Pick one. A PRD that serves everyone specifies nothing.</p>
+  <div class="d" data-anchor="d1" data-label="D1 primary user">
+    <button class="cbtn">comment</button>
+    <div class="q">D1 — Primary user</div>
+    <div class="why">Our evidence skews to homeowners, because Houzz does. That's a known sampling bias, not a finding.</div>
+    <div data-radio="d1">
+      <label class="opt"><input type="radio" name="d1" value="new-mover"><span><span class="oh">Just moved in</span><span class="od">Rooms are empty or half-done. Highest urgency, highest spend, but they're also the ones with no existing furniture to preserve.</span></span></label>
+      <label class="opt"><input type="radio" name="d1" value="renter"><span><span class="oh">Renter</span><span class="od">Cannot change architecture at all, so "we never touch your walls" is the literal value prop. Lower budget.</span></span></label>
+      <label class="opt"><input type="radio" name="d1" value="restyler"><span><span class="oh">Lived-in restyler</span><span class="od">Has furniture they're keeping and a room that feels wrong. Closest to our loudest complaints.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="input" data-label="Input & output">
+  <button class="cbtn">comment</button>
+  <h2>Input and output</h2>
+  <p class="sub">What the user gives us, and what comes back.</p>
+
+  <div class="d" data-anchor="d2" data-label="D2 what user uploads">
+    <button class="cbtn">comment</button>
+    <div class="q">D2 — What does the user upload?</div>
+    <div class="why">More input means better structure lock, but every extra step loses people at the door.</div>
+    <div data-radio="d2">
+      <label class="opt"><input type="radio" name="d2" value="one-photo"><span><span class="oh">One photo</span><span class="od">Lowest friction, matches what competitors do. Depth has to be inferred.</span></span></label>
+      <label class="opt"><input type="radio" name="d2" value="multi-photo"><span><span class="oh">2–3 photos of the same room</span><span class="od">Much better geometry. Meaningfully more work for the user.</span></span></label>
+      <label class="opt"><input type="radio" name="d2" value="photo-dims"><span><span class="oh">Photo + typed room dimensions</span><span class="od">Cheap to build, and dimensions unlock furniture-fit later.</span></span></label>
+      <label class="opt"><input type="radio" name="d2" value="lidar"><span><span class="oh">LiDAR scan</span><span class="od">Best data, iPhone Pro only, and rules out a web-first build.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d" data-anchor="d3" data-label="D3 proving the lock">
+    <button class="cbtn">comment</button>
+    <div class="q">D3 — How do we prove the structure was preserved?</div>
+    <div class="why">This is the product. If the user can't verify it, we're just another app claiming to be different.</div>
+    <div data-radio="d3">
+      <label class="opt"><input type="radio" name="d3" value="overlay"><span><span class="oh">Outline overlay</span><span class="od">Draw the detected walls/windows/doors over the result. Most literal proof.</span></span></label>
+      <label class="opt"><input type="radio" name="d3" value="slider"><span><span class="oh">Before/after slider</span><span class="od">Familiar, satisfying, and the eye catches any drift instantly.</span></span></label>
+      <label class="opt"><input type="radio" name="d3" value="both"><span><span class="oh">Slider + overlay toggle</span><span class="od">Both. More build, but this is the one screen worth over-investing in.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d" data-anchor="d4" data-label="D4 existing furniture">
+    <button class="cbtn">comment</button>
+    <div class="q">D4 — What happens to furniture they already own?</div>
+    <div class="why">"Does not use your existing room" was the complaint. Furniture may be part of what people mean by that.</div>
+    <div data-radio="d4">
+      <label class="opt"><input type="radio" name="d4" value="replace"><span><span class="oh">Replace everything</span><span class="od">Simplest. Structure is locked, contents are free.</span></span></label>
+      <label class="opt"><input type="radio" name="d4" value="mark-keep"><span><span class="oh">User taps items to keep</span><span class="od">Direct control. Needs segmentation and a decent touch UI.</span></span></label>
+      <label class="opt"><input type="radio" name="d4" value="auto-keep"><span><span class="oh">Auto-detect and preserve</span><span class="od">Magic when it works, infuriating when it guesses wrong.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d" data-anchor="d5" data-label="D5 style input">
+    <button class="cbtn">comment</button>
+    <div class="q">D5 — How does the user say what they want?</div>
+    <div class="why">One reviewer complained the app "doesn't seem to take any text prompt into consideration."</div>
+    <div data-radio="d5">
+      <label class="opt"><input type="radio" name="d5" value="presets"><span><span class="oh">Preset style cards</span><span class="od">No blank page, predictable quality, feels limited fast.</span></span></label>
+      <label class="opt"><input type="radio" name="d5" value="prompt"><span><span class="oh">Free text</span><span class="od">Expressive, and the thing competitors visibly fail at.</span></span></label>
+      <label class="opt"><input type="radio" name="d5" value="both"><span><span class="oh">Presets + optional refinement</span><span class="od">Start from a card, adjust in words.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="flow" data-label="Core flow">
+  <button class="cbtn">comment</button>
+  <h2>Core flow</h2>
+  <p class="sub">Click each step to see the screen. Comment on any step that's wrong or missing.</p>
+  <div class="flow" id="flow"></div>
+  <div class="screen" id="screen"></div>
+</section>
+
+<section data-anchor="money" data-label="Pricing & platform">
+  <button class="cbtn">comment</button>
+  <h2>Pricing and platform</h2>
+  <div class="d" data-anchor="d6" data-label="D6 free tier">
+    <button class="cbtn">comment</button>
+    <div class="q">D6 — What can someone do without paying?</div>
+    <div class="why">Two of our strongest quotes are rage about paywalls before you can judge quality.</div>
+    <div data-radio="d6">
+      <label class="opt"><input type="radio" name="d6" value="free-renders"><span><span class="oh">3 free renders, no card</span><span class="od">Directly answers the loudest billing complaint in the category.</span></span></label>
+      <label class="opt"><input type="radio" name="d6" value="watermark"><span><span class="oh">Unlimited, watermarked</span><span class="od">Maximum proof of quality, weaker conversion pressure.</span></span></label>
+      <label class="opt"><input type="radio" name="d6" value="one-free"><span><span class="oh">1 free, then pay</span><span class="od">What competitors do, and what they're hated for.</span></span></label>
+    </div>
+  </div>
+  <div class="d" data-anchor="d7" data-label="D7 platform">
+    <button class="cbtn">comment</button>
+    <div class="q">D7 — Platform</div>
+    <div class="why">Affects D2, and affects how much of the baseline you can actually demo on video.</div>
+    <div data-radio="d7">
+      <label class="opt"><input type="radio" name="d7" value="web"><span><span class="oh">Responsive web</span><span class="od">Ships fastest, deploys properly, easiest to show CI/CD and metrics on.</span></span></label>
+      <label class="opt"><input type="radio" name="d7" value="ios"><span><span class="oh">iOS native</span><span class="od">Better camera and LiDAR. App Store review adds a week and complicates CI.</span></span></label>
+      <label class="opt"><input type="radio" name="d7" value="web-then-ios"><span><span class="oh">Web first, iOS later</span><span class="od">Sequence it. Later is a real risk of never.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="notbuilding" data-label="Not building">
+  <button class="cbtn">comment</button>
+  <h2>What we are not building</h2>
+  <p class="sub">Tick everything that stays out of v1. This is the section that saves the project.</p>
+  <div class="d newq" data-anchor="d8" data-label="D8 exclusions">
+    <button class="cbtn">comment</button>
+    <div class="q">D8 — Out of scope for v1</div>
+    <div class="why">Every one of these is defensible. That's exactly why they're dangerous.</div>
+    <div data-check="d8">
+      <label class="opt"><input type="checkbox" name="d8" value="shopping"><span><span class="oh">Shopping links / buyable products</span></span></label>
+      <label class="opt"><input type="checkbox" name="d8" value="ar"><span><span class="oh">AR / live camera preview</span></span></label>
+      <label class="opt"><input type="checkbox" name="d8" value="floorplan"><span><span class="oh">Floor plans and 3D walkthroughs</span></span></label>
+      <label class="opt"><input type="checkbox" name="d8" value="designers"><span><span class="oh">Human designer marketplace</span></span></label>
+      <label class="opt"><input type="checkbox" name="d8" value="social"><span><span class="oh">Social feed / sharing / challenges</span></span></label>
+      <label class="opt"><input type="checkbox" name="d8" value="multiroom"><span><span class="oh">Multi-room projects</span></span></label>
+      <label class="opt"><input type="checkbox" name="d8" value="collab"><span><span class="oh">Collaboration with a partner or spouse</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="success" data-label="Success criteria">
+  <button class="cbtn">comment</button>
+  <h2>Success criteria</h2>
+  <p class="sub">Draft. Comment to change any of these.</p>
+  <div class="d" data-anchor="d9" data-label="D9 success metric">
+    <button class="cbtn">comment</button>
+    <div class="q">D9 — The one metric that decides if this worked</div>
+    <div class="why">Pick the one you'd actually put on a dashboard in episode 1.</div>
+    <div data-radio="d9">
+      <label class="opt"><input type="radio" name="d9" value="structure"><span><span class="oh">Structure fidelity rate</span><span class="od">% of renders where walls/windows/doors are preserved. Measures the promise directly.</span></span></label>
+      <label class="opt"><input type="radio" name="d9" value="second"><span><span class="oh">Second-render rate</span><span class="od">% of users who run a second render. If the first result was a stranger's room, they leave.</span></span></label>
+      <label class="opt"><input type="radio" name="d9" value="save"><span><span class="oh">Save / download rate</span><span class="od">Closest proxy for "this is good enough to act on."</span></span></label>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="part" data-part="hld" data-partname="How it works">
+
+<section data-anchor="h-overview" data-label="System overview">
+  <button class="cbtn">comment</button>
+  <h2>The whole system</h2>
+  <p class="sub">Every box is a thing we build or pay for. Nothing else exists.</p>
+  <div class="plain"><b>In plain words:</b> the phone app sends photos to our server. The server saves them, puts the job in a waiting line, and a separate machine with a graphics card does the slow work. The phone asks "is it done yet" until it is.</div>
+  <pre class="mermaid">
+flowchart TB
+  A["iOS app"] -->|"photos + style"| B["API server<br/>(container)"]
+  B --> C[("Database<br/>users, rooms, jobs")]
+  B --> D["Photo storage"]
+  B -->|"adds job"| E["Job queue"]
+  E --> F["Render worker<br/>(GPU)"]
+  F -->|"1 . find structure"| G["Structure model<br/>depth + segmentation"]
+  F -->|"2 . generate inside mask"| H["Image model"]
+  F --> D
+  F --> C
+  B --> I["Metrics + logs"]
+  I --> J["Dashboard"]
+  </pre>
+  <p>The API server never generates images itself. It takes requests, writes to the database, and hands slow work to the queue. That split is what lets the API stay fast and stay small enough to run many copies of.</p>
+</section>
+
+<section data-anchor="h-pipeline" data-label="Render pipeline">
+  <button class="cbtn">comment</button>
+  <h2>What happens when someone hits render</h2>
+  <div class="plain"><b>In plain words:</b> we look at the photo and work out where the walls, windows and floor are. We draw a mask over everything that must not change. Then we only let the image model paint outside that mask.</div>
+  <pre class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant A as API
+  participant Q as Queue
+  participant W as Worker
+  U->>A: upload photos
+  A->>A: check size, type, count
+  A-->>U: room id
+  U->>A: render (style, keep-items)
+  A->>A: check credits + rate limit
+  A->>Q: enqueue job
+  A-->>U: job id, status queued
+  Q->>W: pick up job
+  W->>W: find structure (depth + segmentation)
+  W->>W: build protected mask
+  alt confidence is low
+    W->>W: flag low confidence
+    Note over W: we still continue<br/>(decision C3)
+  end
+  W->>W: generate, mask locked
+  W->>W: score structure fidelity
+  W-->>A: result + score
+  U->>A: poll job
+  A-->>U: done, before/after
+  </pre>
+</section>
+
+<section data-anchor="h-lock" data-label="Structure lock">
+  <button class="cbtn">comment</button>
+  <h2>How the structure lock actually works</h2>
+  <p class="sub">This is the product. If this section is wrong, nothing else matters.</p>
+  <p>Normal AI decor apps hand the whole photo to an image model and ask for a redesign. The model redraws everything, including walls, because nothing told it not to. That is the complaint we found 7 times.</p>
+  <p>We add a step before generation:</p>
+  <ol>
+    <li><strong>Depth</strong> — work out how far away every pixel is, which reveals the shape of the room.</li>
+    <li><strong>Segmentation</strong> — label every pixel: wall, window, door, floor, ceiling, light, furniture.</li>
+    <li><strong>Protected mask</strong> — everything in your definition of structure (D10: walls, windows, doors, ceiling, built-ins, flooring, light fixtures) becomes a locked region.</li>
+    <li><strong>Constrained generation</strong> — the image model may only paint the unlocked pixels. Locked pixels are copied from the original photo, not regenerated.</li>
+    <li><strong>Fidelity score</strong> — compare structure in the output against the original. That number is D9, your headline metric.</li>
+  </ol>
+  <div class="plain"><b>Why this beats the competition:</b> they ask a model politely to keep the room. We make it physically unable to change it.</div>
+  <div class="d newq" data-anchor="t7" data-label="T7 structure detection">
+    <button class="cbtn">comment</button>
+    <div class="q">T7 — How do we find the structure?</div>
+    <div class="why">Accuracy here sets the ceiling on the whole product.</div>
+    <div data-radio="t7">
+      <label class="opt"><input type="radio" name="t7" value="depth-seg"><span><span class="oh">Depth model + segmentation model</span><span class="od">Two models, best accuracy, slowest and priciest per render.</span></span></label>
+      <label class="opt"><input type="radio" name="t7" value="seg-only"><span><span class="oh">Segmentation only</span><span class="od">One model. Good on walls and windows, weaker on flooring and depth.</span></span></label>
+      <label class="opt"><input type="radio" name="t7" value="hosted"><span><span class="oh">A hosted vision API</span><span class="od">No models to run. Costs per call and ties the core mechanism to a vendor.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="h-photos" data-label="Photo handling">
+  <button class="cbtn">comment</button>
+  <h2>Where photos live</h2>
+  <p>Photos are pictures of where people live. They are the most sensitive thing this app touches, and the rules need deciding before code exists, not after.</p>
+  <div class="d newq" data-anchor="t3" data-label="T3 photo storage">
+    <button class="cbtn">comment</button>
+    <div class="q">T3 — Where are photos stored?</div>
+    <div data-radio="t3">
+      <label class="opt"><input type="radio" name="t3" value="s3"><span><span class="oh">Object storage (S3-compatible)</span><span class="od">The normal answer. Runs locally as MinIO in Docker, swaps to a real bucket later with no code change.</span></span></label>
+      <label class="opt"><input type="radio" name="t3" value="disk"><span><span class="oh">A folder on the server</span><span class="od">Simplest. Breaks the moment there is more than one server.</span></span></label>
+      <label class="opt"><input type="radio" name="t3" value="db"><span><span class="oh">In the database</span><span class="od">One place to back up. Makes the database large and slow.</span></span></label>
+    </div>
+  </div>
+  <div class="d newq" data-anchor="t8" data-label="T8 photo retention">
+    <button class="cbtn">comment</button>
+    <div class="q">T8 — How long do we keep photos?</div>
+    <div class="why">Shorter is safer and cheaper. Longer lets people come back to old rooms.</div>
+    <div data-radio="t8">
+      <label class="opt"><input type="radio" name="t8" value="render"><span><span class="oh">Delete originals once the render is done</span><span class="od">Safest. No history, no re-runs.</span></span></label>
+      <label class="opt"><input type="radio" name="t8" value="30d"><span><span class="oh">30 days, then auto-delete</span><span class="od">Re-runs stay possible and the risk window is bounded.</span></span></label>
+      <label class="opt"><input type="radio" name="t8" value="user"><span><span class="oh">Until the user deletes them</span><span class="od">Best product, biggest responsibility.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="h-deps" data-label="Dependencies">
+  <button class="cbtn">comment</button>
+  <h2>Outside things we depend on, and what breaks</h2>
+  <table class="api">
+    <tr><th>Thing</th><th>Used for</th><th>If it is down</th></tr>
+    <tr><td>Image model</td><td>Generating the restyled room</td><td>No renders. Jobs stay queued, users see "busy", credits are not spent.</td></tr>
+    <tr><td>Structure model</td><td>Finding walls and windows</td><td>No renders. Never fall back to unconstrained generation — that ships the bug we exist to fix.</td></tr>
+    <tr><td>Photo storage</td><td>Holding uploads and results</td><td>No uploads. Existing finished renders still viewable if cached.</td></tr>
+    <tr><td>Database</td><td>Everything</td><td>Full outage. Health check fails, deploy halts.</td></tr>
+  </table>
+  <div class="plain"><b>Rule:</b> when the structure model is unavailable we refuse to render. A render without a structure lock is not a degraded version of this product — it is a competitor's product.</div>
+</section>
+
+
+</div>
+
+<div class="part" data-part="contract" data-partname="Contract (API + data)">
+
+<section data-anchor="c-model" data-label="Data model">
+  <button class="cbtn">comment</button>
+  <h2>What we store</h2>
+  <div class="plain"><b>In plain words:</b> a user has rooms, a room has photos, a render is one attempt at restyling a room, and a job tracks that attempt while it runs.</div>
+  <pre class="mermaid">
+erDiagram
+  USER ||--o{ ROOM : owns
+  USER ||--o{ CREDIT_LEDGER : has
+  ROOM ||--o{ PHOTO : contains
+  ROOM ||--o{ RENDER : has
+  RENDER ||--|| STRUCTURE_MAP : uses
+  USER {
+    uuid id
+    string email
+    string password_hash
+    timestamp created_at
+    timestamp deleted_at
+  }
+  ROOM {
+    uuid id
+    uuid user_id
+    string label
+    timestamp created_at
+  }
+  PHOTO {
+    uuid id
+    uuid room_id
+    string storage_key
+    int width
+    int height
+    timestamp expires_at
+  }
+  STRUCTURE_MAP {
+    uuid id
+    uuid room_id
+    string mask_key
+    float confidence
+    json labels
+  }
+  RENDER {
+    uuid id
+    uuid room_id
+    string status
+    string style
+    json keep_items
+    string result_key
+    float fidelity_score
+    bool low_confidence
+    string error_code
+    timestamp created_at
+  }
+  CREDIT_LEDGER {
+    uuid id
+    uuid user_id
+    int delta
+    string reason
+    timestamp created_at
+  }
+  </pre>
+  <p><code>credit_ledger</code> is a running list of additions and subtractions rather than a single number. A number can drift; a list can be recounted and audited. Since D14 gives one room three restyles, credits are spent per room, not per image.</p>
+</section>
+
+<section data-anchor="c-states" data-label="Render states">
+  <button class="cbtn">comment</button>
+  <h2>The life of a render</h2>
+  <pre class="mermaid">
+stateDiagram-v2
+  [*] --> queued
+  queued --> detecting : worker picks up
+  detecting --> failed : structure model down
+  detecting --> low_confidence : score below threshold
+  detecting --> generating : structure locked
+  low_confidence --> generating : continue with warning (C3)
+  generating --> done : image returned
+  generating --> failed : image model error
+  failed --> queued : retry, max 2
+  done --> [*]
+  failed --> [*] : credit refunded
+  </pre>
+  <p>A failed render refunds its credit. People will not forgive being charged for our outage, and it is the cheapest goodwill available.</p>
+</section>
+
+<section data-anchor="c-api" data-label="API endpoints">
+  <button class="cbtn">comment</button>
+  <h2>Every endpoint</h2>
+  <p class="sub">This is the contract both halves code against.</p>
+  <table class="api">
+    <tr><th>Method + path</th><th>Body</th><th>Returns</th><th>Auth</th><th>Limit</th></tr>
+    <tr><td><code>POST /v1/auth/signup</code></td><td>email, password</td><td>user, access + refresh token</td><td>no</td><td>5/hr per IP</td></tr>
+    <tr><td><code>POST /v1/auth/login</code></td><td>email, password</td><td>access + refresh token</td><td>no</td><td>10/hr per IP</td></tr>
+    <tr><td><code>POST /v1/auth/refresh</code></td><td>refresh token</td><td>new access token</td><td>no</td><td>60/hr</td></tr>
+    <tr><td><code>GET /v1/me</code></td><td>—</td><td>user, credits left</td><td>yes</td><td>60/min</td></tr>
+    <tr><td><code>POST /v1/rooms</code></td><td>label</td><td>room</td><td>yes</td><td>30/hr</td></tr>
+    <tr><td><code>POST /v1/rooms/{id}/photos</code></td><td>image, multipart</td><td>photo</td><td>yes</td><td>20/hr</td></tr>
+    <tr><td><code>POST /v1/rooms/{id}/renders</code></td><td>style, prompt, keep_items, idempotency_key</td><td>render, status queued</td><td>yes</td><td>credits</td></tr>
+    <tr><td><code>GET /v1/renders/{id}</code></td><td>—</td><td>status, fidelity, low_confidence</td><td>yes</td><td>120/min</td></tr>
+    <tr><td><code>DELETE /v1/rooms/{id}</code></td><td>—</td><td>204, photos deleted</td><td>yes</td><td>30/hr</td></tr>
+    <tr><td><code>GET /health</code></td><td>—</td><td>ok / degraded / down</td><td>no</td><td>none</td></tr>
+    <tr><td><code>GET /metrics</code></td><td>—</td><td>Prometheus text</td><td>internal</td><td>none</td></tr>
+  </table>
+  <div class="plain"><b>idempotency_key:</b> a unique ID the app makes up and sends with a render request. If the phone loses signal and retries, the server sees the same key and returns the existing render instead of charging a second credit.</div>
+  <h3>Render request and response</h3>
+  <pre class="code">POST /v1/rooms/{id}/renders
+{
+  "style": "warm-minimal",
+  "prompt": "lighter walls, keep it cosy",
+  "keep_items": ["photo_1:sofa", "photo_1:bookshelf"],
+  "idempotency_key": "b3f1e2..."
+}
+
+202 Accepted
+{
+  "render_id": "r_8fd21",
+  "status": "queued",
+  "credits_left": 2
+}
+
+GET /v1/renders/r_8fd21
+{
+  "render_id": "r_8fd21",
+  "status": "done",
+  "low_confidence": false,
+  "fidelity_score": 0.94,
+  "before_url": "...",
+  "after_url": "...",
+  "mask_url": "..."
+}</pre>
+  <div class="d newq" data-anchor="t4" data-label="T4 job updates">
+    <button class="cbtn">comment</button>
+    <div class="q">T4 — How does the app find out a render finished?</div>
+    <div class="why">Renders take 10-60 seconds. Something has to bridge that wait.</div>
+    <div data-radio="t4">
+      <label class="opt"><input type="radio" name="t4" value="poll"><span><span class="oh">The app asks every 2 seconds</span><span class="od">Dead simple, works everywhere, slightly wasteful. Easy to show on a metrics dashboard.</span></span></label>
+      <label class="opt"><input type="radio" name="t4" value="ws"><span><span class="oh">Websocket push</span><span class="od">Instant and elegant. Another moving part to keep alive and monitor.</span></span></label>
+      <label class="opt"><input type="radio" name="t4" value="apns"><span><span class="oh">Push notification</span><span class="od">Lets people leave the app. Needs Apple push setup and certificates.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="c-errors" data-label="Error catalogue">
+  <button class="cbtn">comment</button>
+  <h2>Every error</h2>
+  <table class="api">
+    <tr><th>Code</th><th>HTTP</th><th>Cause</th><th>What the user sees</th></tr>
+    <tr><td><code>invalid_credentials</code></td><td>401</td><td>Wrong email or password</td><td>"Email or password is wrong"</td></tr>
+    <tr><td><code>token_expired</code></td><td>401</td><td>Access token aged out</td><td>Nothing — app refreshes silently</td></tr>
+    <tr><td><code>no_credits</code></td><td>402</td><td>Free renders used up</td><td>"You have used your 3 free rooms"</td></tr>
+    <tr><td><code>rate_limited</code></td><td>429</td><td>Too many requests</td><td>"Slow down for a moment"</td></tr>
+    <tr><td><code>photo_too_large</code></td><td>413</td><td>Over 12 MB</td><td>"That photo is too big"</td></tr>
+    <tr><td><code>too_few_photos</code></td><td>400</td><td>Fewer than 2 photos</td><td>"Add at least 2 photos of this room"</td></tr>
+    <tr><td><code>structure_unavailable</code></td><td>503</td><td>Structure model down</td><td>"We cannot check your room right now" — no render, no charge</td></tr>
+    <tr><td><code>render_failed</code></td><td>500</td><td>Image model error after retries</td><td>"That did not work. Your credit is back."</td></tr>
+  </table>
+</section>
+
+<section data-anchor="c-auth" data-label="Auth flow">
+  <button class="cbtn">comment</button>
+  <h2>Signing in</h2>
+  <pre class="mermaid">
+sequenceDiagram
+  participant A as iOS app
+  participant S as API
+  participant D as Database
+  A->>S: POST /v1/auth/signup
+  S->>S: hash password (argon2)
+  S->>D: create user + 3 credits
+  S-->>A: access token (15 min) + refresh token (30 days)
+  Note over A: access token in memory<br/>refresh token in Keychain
+  A->>S: POST /v1/rooms (Bearer access)
+  S-->>A: 401 token_expired
+  A->>S: POST /v1/auth/refresh
+  S-->>A: new access token
+  A->>S: retry original request
+  </pre>
+  <div class="d newq" data-anchor="t5" data-label="T5 auth build vs buy">
+    <button class="cbtn">comment</button>
+    <div class="q">T5 — Build auth or buy it?</div>
+    <div class="why">CLAUDE.md demands real authentication. It does not say who writes it.</div>
+    <div data-radio="t5">
+      <label class="opt"><input type="radio" name="t5" value="build"><span><span class="oh">Build it — argon2, our own tokens</span><span class="od">More teaching material than any other choice, and no vendor in the login path. You own the security mistakes.</span></span></label>
+      <label class="opt"><input type="radio" name="t5" value="buy"><span><span class="oh">Use a provider</span><span class="od">What you would do at work. Faster, safer, and a smaller video.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section data-anchor="c-stack" data-label="Stack choices">
+  <button class="cbtn">comment</button>
+  <h2>The stack</h2>
+  <p class="sub">CLAUDE.md says settle these openly rather than defaulting quietly. Whatever you pick here, the other 29 apps inherit.</p>
+
+  <div class="d newq" data-anchor="t1" data-label="T1 image model">
+    <button class="cbtn">comment</button>
+    <div class="q">T1 — Where does image generation run?</div>
+    <div class="why">The single biggest cost and quality decision in the app.</div>
+    <div data-radio="t1">
+      <label class="opt"><input type="radio" name="t1" value="api"><span><span class="oh">A hosted image API</span><span class="od">Pennies per image, no GPU to run, ships in days. You are exposed to their pricing and their content filters.</span></span></label>
+      <label class="opt"><input type="radio" name="t1" value="self"><span><span class="oh">Self-hosted on a rented GPU</span><span class="od">Full control of the masking, far better video, a fixed monthly bill whether or not anyone uses it.</span></span></label>
+      <label class="opt"><input type="radio" name="t1" value="hybrid"><span><span class="oh">Hosted now, self-hosted later</span><span class="od">Ship first, move when the bill justifies it. Needs the code to not care which is behind it.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d newq" data-anchor="t2" data-label="T2 database">
+    <button class="cbtn">comment</button>
+    <div class="q">T2 — Database</div>
+    <div data-radio="t2">
+      <label class="opt"><input type="radio" name="t2" value="postgres"><span><span class="oh">PostgreSQL</span><span class="od">Boring and correct. Handles 10k users without noticing. Runs in Docker locally.</span></span></label>
+      <label class="opt"><input type="radio" name="t2" value="sqlite"><span><span class="oh">SQLite</span><span class="od">One file, no server. Fine at this scale, awkward with multiple workers writing.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d newq" data-anchor="t6" data-label="T6 backend framework">
+    <button class="cbtn">comment</button>
+    <div class="q">T6 — Backend language</div>
+    <div class="why">The worker does image work, so Python is already in the system somewhere.</div>
+    <div data-radio="t6">
+      <label class="opt"><input type="radio" name="t6" value="fastapi"><span><span class="oh">Python + FastAPI</span><span class="od">Same language as the model code. One language across API and worker.</span></span></label>
+      <label class="opt"><input type="radio" name="t6" value="node"><span><span class="oh">Node + TypeScript</span><span class="od">Types shared with a future web client. Two languages in one system.</span></span></label>
+      <label class="opt"><input type="radio" name="t6" value="go"><span><span class="oh">Go</span><span class="od">Fastest and smallest containers. Furthest from the model code.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d newq" data-anchor="t9" data-label="T9 queue">
+    <button class="cbtn">comment</button>
+    <div class="q">T9 — Job queue</div>
+    <div data-radio="t9">
+      <label class="opt"><input type="radio" name="t9" value="redis"><span><span class="oh">Redis + a worker process</span><span class="od">Standard, visible, easy to show failing and recovering on camera.</span></span></label>
+      <label class="opt"><input type="radio" name="t9" value="pgqueue"><span><span class="oh">A table in Postgres</span><span class="od">One less service. Genuinely fine at this scale.</span></span></label>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="part" data-part="ops" data-partname="Operations">
+
+<section data-anchor="o-health" data-label="Health checks">
+  <button class="cbtn">comment</button>
+  <h2>Health checks</h2>
+  <p><code>GET /health</code> returns one of three answers, and the difference matters: a deploy should stop on <em>down</em>, page someone on <em>degraded</em>, and do nothing on <em>ok</em>.</p>
+  <table class="api">
+    <tr><th>Check</th><th>Fails when</th><th>Result</th></tr>
+    <tr><td>Database</td><td>A simple query fails or takes over 1s</td><td>down</td></tr>
+    <tr><td>Photo storage</td><td>Cannot write a test object</td><td>down</td></tr>
+    <tr><td>Queue</td><td>Unreachable</td><td>down</td></tr>
+    <tr><td>Worker heartbeat</td><td>No worker seen in 60s</td><td>degraded</td></tr>
+    <tr><td>Queue depth</td><td>Over 100 waiting jobs</td><td>degraded</td></tr>
+  </table>
+  <div class="plain"><b>Why split them:</b> a health check that only says yes or no makes every problem look like an outage, so people stop trusting it.</div>
+</section>
+
+<section data-anchor="o-metrics" data-label="Metrics">
+  <button class="cbtn">comment</button>
+  <h2>What goes on the dashboard</h2>
+  <table class="api">
+    <tr><th>Metric</th><th>Why it is there</th></tr>
+    <tr><td><strong>Structure fidelity score</strong> — average and 5th percentile</td><td>D9. The promise, measured. The 5th percentile matters more than the average: it is the worst experience people actually get.</td></tr>
+    <tr><td><strong>Low-confidence render rate</strong></td><td>How often C3's accepted risk actually fires. This is the number that tells you whether accepting it was right.</td></tr>
+    <tr><td>Render duration, 50th and 95th percentile</td><td>Whether the wait is bearable</td></tr>
+    <tr><td>Queue depth and worker count</td><td>Whether we are keeping up</td></tr>
+    <tr><td>Render failure rate by error code</td><td>What is actually breaking</td></tr>
+    <tr><td>Signup to first render conversion</td><td>Whether D13's account-first gate costs us people</td></tr>
+    <tr><td>Second-render rate</td><td>Whether the first result was good enough to try again</td></tr>
+    <tr><td>Cost per render</td><td>Whether the free tier is affordable</td></tr>
+  </table>
+  <div class="plain"><b>The two that matter:</b> structure fidelity and low-confidence rate. Together they tell you whether the one thing this product promises is actually true.</div>
+</section>
+
+<section data-anchor="o-logging" data-label="Logging">
+  <button class="cbtn">comment</button>
+  <h2>Logging</h2>
+  <p>Structured JSON lines, one per request, each carrying a request id that follows the work from the API into the worker and back.</p>
+  <p><strong>Always logged:</strong> request id, user id, route, status, duration, error code, render id, fidelity score, model version.</p>
+  <p><strong>Never logged:</strong> photos or photo URLs, passwords or tokens, email addresses, prompt text.</p>
+  <div class="plain"><b>Why prompt text is excluded:</b> people describe their homes and their lives in it. It is not worth having in a log file you will one day paste into a chat window.</div>
+</section>
+
+<section data-anchor="o-failure" data-label="Failure handling">
+  <button class="cbtn">comment</button>
+  <h2>When things break</h2>
+  <table class="api">
+    <tr><th>Failure</th><th>What happens</th></tr>
+    <tr><td>Image model errors</td><td>Retry twice with backoff, then fail the render and refund the credit</td></tr>
+    <tr><td>Structure model down</td><td>Refuse to render. Never fall back to unconstrained generation.</td></tr>
+    <tr><td>Worker dies mid-job</td><td>Job returns to queued after a 5 minute lease expires</td></tr>
+    <tr><td>Queue backed up</td><td>Health goes degraded, new renders still accepted with an honest wait estimate</td></tr>
+    <tr><td>Storage full</td><td>Uploads rejected with a clear message; existing renders keep working</td></tr>
+    <tr><td>Database down</td><td>Health down, deploys blocked, 503 on everything</td></tr>
+  </table>
+</section>
+
+<section data-anchor="o-cicd" data-label="CI/CD">
+  <button class="cbtn">comment</button>
+  <h2>Getting code to production</h2>
+  <pre class="mermaid">
+flowchart LR
+  A["push branch"] --> B["lint + types"]
+  B --> C["unit tests"]
+  C --> D["integration tests<br/>real Postgres in CI"]
+  D --> E{"all green?"}
+  E -->|no| F["blocked"]
+  E -->|yes| G["build image"]
+  G --> H["deploy to staging"]
+  H --> I["smoke test<br/>real render end to end"]
+  I --> J{"health ok?"}
+  J -->|no| K["auto rollback"]
+  J -->|yes| L["manual approve"]
+  L --> M["production"]
+  </pre>
+  <p>The smoke test runs one real render against staging and checks the fidelity score is above threshold. A deploy that generates images but breaks the structure lock would pass every unit test — this is the gate that catches it.</p>
+</section>
+
+<section data-anchor="o-env" data-label="Environments">
+  <button class="cbtn">comment</button>
+  <h2>Environments</h2>
+  <p><strong>Local</strong> — <code>docker compose up</code> brings the API, Postgres, storage, queue and a worker. This is where the series starts, and everything must work here first.</p>
+  <p><strong>Staging</strong> — same containers, real deploy path, fake payment, small GPU.</p>
+  <p><strong>Production</strong> — same again, with real credentials and real monitoring.</p>
+  <div class="plain"><b>Rule:</b> the same compose file and the same images everywhere. Environments differ by configuration only, never by code.</div>
+</section>
+
+<section data-anchor="o-milestones" data-label="Milestones">
+  <button class="cbtn">comment</button>
+  <h2>First runnable slice</h2>
+  <p>The smallest thing that proves the idea works, in order:</p>
+  <ol>
+    <li>Docker compose with API, Postgres, storage, queue — <code>/health</code> answers</li>
+    <li>Signup, login, tokens — a real user exists</li>
+    <li>Upload photos to a room — bytes land in storage</li>
+    <li><strong>Structure detection and the mask</strong> — the risky part, proven before anything is built on it</li>
+    <li>One constrained render end to end, fidelity scored</li>
+    <li>The verify screen with the slider</li>
+    <li>Rate limits, metrics, dashboard, CI/CD</li>
+  </ol>
+  <div class="plain"><b>Why step 4 comes early:</b> if the structure lock cannot be made to work, nothing else in this app matters. Build the part that can kill the project first, while it is cheap to stop.</div>
+</section>
+</div>
+
+</main>
+
+<aside>
+  <div class="dsec">
+    <h2>Decisions</h2>
+    <p class="sub" style="margin:2px 0 0" id="dprog">—</p>
+    <div class="bar"><i id="dbar" style="width:0"></i></div>
+    <div class="dlist" id="dlist"></div>
+  </div>
+  <h2 style="margin-top:16px">Feedback queue</h2>
+  <p class="sub" style="margin:2px 0 0">Nothing reaches Claude until you confirm.</p>
+  <div id="queue"><div class="empty">No comments yet.<br>Hover any block and hit <em>comment</em>.</div></div>
+  <button class="primary" id="send" disabled>Confirm &amp; send to Claude</button>
+</aside>
+</div>
+
+<div id="pop">
+  <div class="pa" id="popanchor"></div>
+  <textarea id="poptext" placeholder="What's wrong, missing, or should change here?"></textarea>
+  <div class="row">
+    <button id="popcancel">Cancel</button>
+    <button id="popadd" class="add">Add to queue</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script src="vendor/mermaid.min.js"></script>
+<script>
+const S = {decisions:{}, comments:[], batches:[]};
+let ROUND = 1;
+const $ = s => document.querySelector(s);
+const toast = m => { const t=$('#toast'); t.textContent=m; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),1600); };
+const post = (u,b) => fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify(b)}).then(r=>r.json());
+
+const FLOW = [
+  {k:'upload', t:'Upload', h:'Upload your room',
+   b:['One clear photo of the room','No account required to get this far','Copy sets the promise: we will not change your room']},
+  {k:'detect', t:'Structure detected', h:'This is what we are protecting',
+   b:['Walls, windows, doors, ceiling line drawn over the photo','User confirms or nudges the detection','This screen is the differentiator — it exists in no competitor']},
+  {k:'style',  t:'Choose a look', h:'Pick a direction',
+   b:['Style choice per D5','Optional words to refine','Nothing here can move a wall']},
+  {k:'render', t:'Render', h:'Generating',
+   b:['Progress with an honest estimate','Failure states are visible, not silent','Rate limited per D6']},
+  {k:'verify', t:'Verify', h:'Same room, new look',
+   b:['Proof mechanism per D3','Structure fidelity shown, not claimed','Regenerate or adjust']},
+  {k:'keep',   t:'Keep it', h:'Save or export',
+   b:['Download the image','Saved to the account if signed in','Prompt to try a second room']},
+];
+let cur = 0;
+function drawFlow(){
+  $('#flow').innerHTML = FLOW.map((f,i)=>
+    `<div class="step ${i===cur?'on':''}" data-i="${i}">${i+1}. ${f.t}</div>`).join('');
+  const f = FLOW[cur];
+  $('#screen').innerHTML = `<h4>${f.h}</h4><ul>${f.b.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  document.querySelectorAll('.step').forEach(s=>s.onclick=()=>{cur=+s.dataset.i;drawFlow();});
+}
+
+function renderQueue(){
+  const q = S.comments.filter(c=>c.status==='queued');
+  $('#send').disabled = q.length===0;
+  const gs=[...document.querySelectorAll('[data-radio],[data-check]')];
+  const undecided=gs.filter(g=>!g.querySelector('input:checked')).length;
+  const bits=[];
+  if(q.length) bits.push(`${q.length} comment${q.length===1?'s':''}`);
+  bits.push(`${gs.length-undecided}/${gs.length} decisions`);
+  $('#send').disabled = false;
+  $('#send').textContent = `Confirm & send round ${ROUND} — ${bits.join(' + ')}`;
+  $('#queue').innerHTML = q.length ? q.map(c=>
+    `<div class="qi"><button class="qx" data-id="${c.id}">×</button>
+     <div class="qa">${c.anchorLabel}</div>${c.text.replace(/</g,'&lt;')}</div>`).join('')
+    : '<div class="empty">No comments yet.<br>Hover any block and hit <em>comment</em>.</div>';
+  document.querySelectorAll('.qx').forEach(b=>b.onclick=async()=>{
+    const r = await post('/api/comment/delete',{id:b.dataset.id});
+    S.comments = r.comments; renderQueue(); markAnchors();
+  });
+}
+function markAnchors(){
+  document.querySelectorAll('[data-anchor]').forEach(el=>{
+    const has = S.comments.some(c=>c.anchor===el.dataset.anchor && c.status==='queued');
+    const btn = el.querySelector(':scope > .cbtn');
+    if(btn){ btn.classList.toggle('has',has); btn.textContent = has ? 'commented' : 'comment'; }
+  });
+}
+function renderDecisions(){
+  const groups=[...document.querySelectorAll('[data-radio],[data-check]')];
+  let done=0;
+  $('#dlist').innerHTML = groups.map(g=>{
+    const id=(g.dataset.radio||g.dataset.check);
+    const blk=g.closest('.d');
+    const checked=[...g.querySelectorAll('input:checked')];
+    if(checked.length) done++;
+    const val=checked.map(i=>i.closest('label').querySelector('.oh').textContent).join(', ');
+    return `<div class="dr ${checked.length?'done':'todo'}" data-goto="${blk.dataset.anchor}">
+      <span class="dot"></span><span class="dn">${id.toUpperCase()}</span>
+      <span class="dv">${val||'not decided'}</span></div>`;
+  }).join('');
+  $('#dprog').textContent=`${done} of ${groups.length} decided`;
+  $('#dbar').style.width=(groups.length?done/groups.length*100:0)+'%';
+  document.querySelectorAll('.dr').forEach(r=>r.onclick=()=>{
+    const el=document.querySelector(`[data-anchor="${r.dataset.goto}"]`);
+    if(!el) return;
+    const part=el.closest('.part');
+    if(part && !part.classList.contains('on')) showPart(part.dataset.part);
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  });
+}
+function markSettled(){
+  document.querySelectorAll('section[data-anchor]').forEach(sec=>{
+    const gs=[...sec.querySelectorAll('[data-radio],[data-check]')];
+    if(!gs.length) return;
+    const done=gs.every(g=>g.querySelector('input:checked'));
+    const isNew=sec.querySelector('.newq,.conflict');
+    sec.classList.toggle('settled', done && !isNew);
+  });
+}
+function countDecisions(){
+  const n = Object.keys(S.decisions).length;
+  $('#dcount').textContent = `${n} decision${n===1?'':'s'} recorded`;
+}
+
+let target = null;
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('.cbtn');
+  if(!btn){ if(!e.target.closest('#pop')) $('#pop').style.display='none'; return; }
+  const el = btn.closest('[data-anchor]');
+  target = {anchor:el.dataset.anchor, label:el.dataset.label,
+            text:(el.querySelector('h2,.q')||{}).textContent||''};
+  const p = $('#pop'), r = btn.getBoundingClientRect();
+  $('#popanchor').textContent = target.label;
+  $('#poptext').value=''; p.style.display='block';
+  p.style.top = (window.scrollY + r.bottom + 8)+'px';
+  p.style.left = Math.max(12, Math.min(r.right - 330 + window.scrollX,
+                 document.body.clientWidth - 344))+'px';
+  $('#poptext').focus();
+});
+$('#popcancel').onclick = ()=> $('#pop').style.display='none';
+$('#popadd').onclick = async ()=>{
+  const t = $('#poptext').value.trim();
+  if(!t || !target) return;
+  const r = await post('/api/comment',{id:'c'+Date.now(), anchor:target.anchor,
+    anchorLabel:target.label, anchorText:target.text, text:t});
+  S.comments = r.comments; $('#pop').style.display='none';
+  renderQueue(); markAnchors(); toast('Queued — not sent yet');
+};
+$('#send').onclick = async ()=>{
+  const r = await post('/api/send',{});
+  S.comments.forEach(c=>{ if(c.status==='queued') c.status='sent'; });
+  renderQueue(); markAnchors();
+  ROUND += 1; $('#round').textContent = `Round ${ROUND}`;
+  renderQueue();
+  toast(`Round ${ROUND-1} sent — ${r.sent} comment${r.sent===1?'':'s'} + decisions`);
+};
+
+document.addEventListener('change', async e=>{
+  const inp = e.target;
+  if(inp.type==='radio'){
+    S.decisions[inp.name]=inp.value;
+    await post('/api/decision',{id:inp.name,value:inp.value});
+  } else if(inp.type==='checkbox'){
+    const vals=[...document.querySelectorAll(`input[name="${inp.name}"]:checked`)]
+      .map(x=>x.value);
+    S.decisions[inp.name]=vals;
+    await post('/api/decision',{id:inp.name,value:vals});
+  } else return;
+  document.querySelectorAll('label.opt').forEach(l=>
+    l.classList.toggle('sel', l.querySelector('input').checked));
+  countDecisions(); renderDecisions(); renderQueue(); markSettled(); toast('Saved');
+});
+
+// ---- parts / tabs ----
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+mermaid.initialize({startOnLoad:false, theme: dark?'dark':'neutral',
+  themeVariables:{fontFamily:'-apple-system,BlinkMacSystemFont,sans-serif',fontSize:'13px'},
+  flowchart:{curve:'basis'}, securityLevel:'loose'});
+
+async function drawDiagrams(root){
+  const els=[...root.querySelectorAll('pre.mermaid:not([data-done])')];
+  if(!els.length) return;
+  els.forEach(e=>e.setAttribute('data-done','1'));
+  try { await mermaid.run({nodes:els}); }
+  catch(err){ console.warn('mermaid', err); }
+}
+function showPart(key){
+  document.querySelectorAll('.part').forEach(p=>p.classList.toggle('on',p.dataset.part===key));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===key));
+  const el=document.querySelector(`.part[data-part="${key}"]`);
+  if(el) drawDiagrams(el);
+  localStorage.setItem('part',key);
+}
+function buildNav(){
+  const parts=[...document.querySelectorAll('.part')];
+  $('#nav').innerHTML=parts.map(p=>{
+    const gs=p.querySelectorAll('[data-radio],[data-check]').length;
+    return `<button data-k="${p.dataset.part}">${p.dataset.partname}` +
+           (gs?` <span style="opacity:.6">(${gs})</span>`:'') + `</button>`;
+  }).join('');
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>showPart(b.dataset.k));
+  let want='product';
+  try{ want=localStorage.getItem('part')||'product'; }catch(e){}
+  if(!parts.some(p=>p.dataset.part===want)) want='product';
+  showPart(want);
+}
+
+fetch('/api/state').then(r=>r.json()).then(st=>{
+  S.decisions = st.decisions||{}; S.comments = st.comments||[];
+  S.batches = st.batches||[]; ROUND = S.batches.length + 1;
+  $('#round').textContent = `Round ${ROUND}`;
+  post('/api/groups',{groups:[...document.querySelectorAll('[data-radio],[data-check]')]
+    .map(g=>g.dataset.radio||g.dataset.check)});
+  for(const [k,v] of Object.entries(S.decisions)){
+    const vals = Array.isArray(v)?v:[v];
+    vals.forEach(val=>{
+      const i=document.querySelector(`input[name="${k}"][value="${val}"]`);
+      if(i) i.checked=true;
+    });
+  }
+  document.querySelectorAll('label.opt').forEach(l=>
+    l.classList.toggle('sel', l.querySelector('input').checked));
+  drawFlow(); renderQueue(); markAnchors(); countDecisions(); renderDecisions();
+  markSettled(); buildNav();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app_1 — Product & Technical Spec</title>
+<style>
+  :root{
+    --bg:#faf9f7; --panel:#fff; --ink:#1a1a18; --muted:#6b6b66; --faint:#9a9a94;
+    --line:#e4e2dd; --accent:#2d5f4f; --soft:#e8f0ec; --warn:#8a5a2b;
+    --warnsoft:#f7efe4; --quote:#f2f0eb; --phone:#111;
+    --s1:6px; --s2:8px; --s3:10px; --s4:12px; --s5:16px; --s6:24px; --s7:32px;
+    --r:10px; --r2:14px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#151519; --panel:#1d1d22; --ink:#ecebe6; --muted:#9d9d97; --faint:#6e6e69;
+      --line:#2d2d34; --accent:#7fc0a6; --soft:#213029; --warn:#d2a26c;
+      --warnsoft:#2e261c; --quote:#24242b; --phone:#000;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  h1,h2,h3,h4{letter-spacing:-.015em}
+
+  header{position:sticky;top:0;z-index:60;background:var(--panel);
+    border-bottom:1px solid var(--line);padding:var(--s4) var(--s6);
+    display:flex;align-items:center;gap:var(--s5)}
+  header h1{font-size:15px;margin:0;font-weight:650}
+  header .sd{font-family:Georgia,serif;font-style:italic;color:var(--muted);font-size:14px}
+  .tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);
+    background:var(--soft);padding:3px var(--s2);border-radius:var(--s1);font-weight:650}
+  .spacer{flex:1}
+  .count{font-size:13px;color:var(--muted)}
+
+  .layout{display:grid;grid-template-columns:206px minmax(0,1fr) 316px;
+    gap:var(--s7);max-width:1400px;margin:0 auto;padding:var(--s6) var(--s6) 140px}
+  @media(max-width:1200px){.layout{grid-template-columns:186px minmax(0,1fr)}
+    aside.right{display:none}}
+  @media(max-width:820px){.layout{grid-template-columns:1fr}nav.toc{display:none}}
+
+  nav.toc{position:sticky;top:78px;align-self:start;max-height:calc(100vh - 110px);
+    overflow-y:auto;font-size:13px;padding-right:var(--s2)}
+  nav.toc .grp{color:var(--faint);text-transform:uppercase;letter-spacing:.07em;
+    font-size:10.5px;font-weight:700;margin:var(--s5) 0 var(--s2)}
+  nav.toc .grp:first-child{margin-top:0}
+  nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:5px var(--s3);
+    border-left:2px solid transparent;border-radius:0 var(--s1) var(--s1) 0;line-height:1.35}
+  nav.toc a:hover{color:var(--ink);background:var(--panel)}
+  nav.toc a.on{color:var(--accent);border-left-color:var(--accent);
+    background:var(--soft);font-weight:600}
+
+  section{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);
+    padding:var(--s6) 28px;margin-bottom:var(--s6);position:relative;scroll-margin-top:84px}
+  section:hover > .cbtn{opacity:1}
+  section > h2{font-size:21px;margin:0 0 var(--s1)}
+  .num{color:var(--faint);font-weight:600;font-size:14px;margin-right:var(--s2)}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 var(--s5)}
+  h3{font-size:15px;margin:var(--s6) 0 var(--s3)}
+  p{margin:var(--s4) 0}
+  ol,ul{margin:var(--s4) 0;padding-left:22px}
+  li{margin:var(--s1) 0}
+
+  blockquote{margin:var(--s3) 0;padding:var(--s3) var(--s5);background:var(--quote);
+    border-left:2px solid var(--line);border-radius:0 var(--s2) var(--s2) 0;font-size:13.5px}
+  blockquote cite{display:block;margin-top:var(--s1);color:var(--muted);
+    font-style:normal;font-size:12px}
+  .plain{background:var(--soft);border-left:3px solid var(--accent);
+    padding:var(--s3) var(--s5);border-radius:0 var(--s2) var(--s2) 0;
+    margin:var(--s4) 0;font-size:13.5px}
+  .plain b{color:var(--accent)}
+  .risk{background:var(--warnsoft);border-left:3px solid var(--warn);
+    padding:var(--s3) var(--s5);border-radius:0 var(--s2) var(--s2) 0;
+    margin:var(--s4) 0;font-size:13.5px}
+  .risk b{color:var(--warn)}
+
+  .cbtn{position:absolute;top:var(--s5);right:var(--s5);opacity:0;transition:opacity .15s;
+    background:var(--bg);border:1px solid var(--line);color:var(--muted);font:inherit;
+    font-size:12px;padding:4px var(--s3);border-radius:var(--s2);cursor:pointer}
+  .cbtn:hover{color:var(--accent);border-color:var(--accent)}
+  .cbtn.has{opacity:1;color:var(--accent);border-color:var(--accent);background:var(--soft)}
+
+  .d{border:1px solid var(--line);border-radius:var(--r);padding:var(--s5) 18px;
+    margin:var(--s5) 0;position:relative}
+  .d:hover .cbtn{opacity:1}
+  .d.open{border-left:3px solid var(--accent)}
+  .q{font-weight:650;font-size:14.5px;margin-bottom:3px}
+  .why{color:var(--muted);font-size:13px;margin-bottom:var(--s4)}
+  label.opt{display:flex;gap:var(--s3);align-items:flex-start;padding:9px var(--s4);
+    border:1px solid transparent;border-radius:var(--s2);cursor:pointer;font-size:14px}
+  label.opt:hover{background:var(--bg)}
+  label.opt.sel{border-color:var(--accent);background:var(--soft)}
+  label.opt input{margin-top:3px;accent-color:var(--accent);flex:none}
+  .oh{font-weight:550}
+  .od{color:var(--muted);font-size:12.5px;display:block;margin-top:1px}
+
+  .mm{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);
+    padding:18px;margin:var(--s4) 0;overflow-x:auto;text-align:center}
+  table.t{width:100%;border-collapse:collapse;font-size:13px;margin:var(--s4) 0}
+  table.t th,table.t td{border:1px solid var(--line);padding:var(--s2) var(--s3);
+    text-align:left;vertical-align:top}
+  table.t th{background:var(--bg);font-weight:650}
+  code{background:var(--quote);padding:1px 5px;border-radius:5px;font-size:12.5px}
+  pre.code{background:var(--quote);padding:var(--s5);border-radius:var(--r);
+    overflow-x:auto;font-size:12.5px;line-height:1.5;margin:var(--s4) 0}
+  details.ref{border:1px solid var(--line);border-radius:var(--r);padding:var(--s4) 18px;
+    margin:var(--s4) 0;background:var(--bg)}
+  details.ref summary{cursor:pointer;font-weight:650;font-size:14px;color:var(--accent)}
+  details.ref[open] summary{margin-bottom:var(--s4)}
+
+  /* phone mockups */
+  .screens{display:flex;gap:var(--s2);flex-wrap:wrap;margin:var(--s5) 0}
+  .schip{background:var(--bg);border:1px solid var(--line);border-radius:var(--s2);
+    padding:8px var(--s4);cursor:pointer;font-size:13px;font:inherit;font-size:13px}
+  .schip.on{border-color:var(--accent);background:var(--soft);color:var(--accent);font-weight:650}
+  .stage{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;margin-top:var(--s5)}
+  .phone{width:264px;flex:none;background:var(--phone);border-radius:34px;padding:10px;
+    border:1px solid var(--line)}
+  .pscreen{background:var(--panel);border-radius:26px;height:520px;overflow:hidden;
+    display:flex;flex-direction:column;position:relative}
+  .pbar{height:26px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;font-size:10.5px;color:var(--muted);flex:none}
+  .notch{position:absolute;top:6px;left:50%;transform:translateX(-50%);
+    width:82px;height:19px;background:var(--phone);border-radius:11px;z-index:2}
+  .pbody{flex:1;padding:var(--s5);overflow-y:auto}
+  .pnav{font-size:11px;color:var(--muted);margin-bottom:var(--s2)}
+  .ph1{font-size:17px;font-weight:650;margin:0 0 var(--s1);letter-spacing:-.02em}
+  .psub{font-size:11.5px;color:var(--muted);line-height:1.45;margin:0 0 var(--s4)}
+  .pslot{border:1.5px dashed var(--line);border-radius:var(--r);height:74px;
+    display:flex;align-items:center;justify-content:center;color:var(--faint);
+    font-size:11px;margin-bottom:var(--s2)}
+  .pimg{background:linear-gradient(140deg,#cfd6d2,#e8e4dd);border-radius:var(--r);
+    height:132px;position:relative;overflow:hidden;margin-bottom:var(--s3)}
+  .pmask{position:absolute;inset:0}
+  .pmask i{position:absolute;border:1.5px solid var(--accent);border-radius:3px;
+    background:rgba(45,95,79,.14)}
+  .pbtn{background:var(--accent);color:#fff;text-align:center;padding:11px;
+    border-radius:var(--r);font-size:13px;font-weight:600;margin-top:var(--s3)}
+  .pbtn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  .pchips{display:flex;gap:var(--s1);flex-wrap:wrap;margin-bottom:var(--s3)}
+  .pchip{border:1px solid var(--line);border-radius:20px;padding:5px var(--s3);font-size:11px}
+  .pchip.on{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .pnote{font-size:10.5px;color:var(--muted);margin-top:var(--s2);line-height:1.4}
+  .pwarn{background:var(--warnsoft);border-left:2px solid var(--warn);padding:var(--s2) var(--s3);
+    border-radius:0 var(--s1) var(--s1) 0;font-size:10.5px;color:var(--warn);margin:var(--s2) 0}
+  .pmeta{flex:1;min-width:250px}
+  .pmeta h4{margin:0 0 var(--s2);font-size:15px}
+  .pmeta ul{padding-left:20px;margin:var(--s2) 0;font-size:13.5px}
+
+  aside.right{position:sticky;top:78px;align-self:start;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--r2);padding:var(--s5) 18px;
+    max-height:calc(100vh - 110px);display:flex;flex-direction:column}
+  aside.right h2{font-size:15px;margin:0}
+  .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:9px}
+  .bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+  .dlist{overflow-y:auto;max-height:30vh;margin:var(--s3) -4px 0;padding:0 4px}
+  .dr{display:flex;gap:9px;align-items:center;padding:5px var(--s2);
+    border-radius:var(--s1);cursor:pointer;font-size:12.5px}
+  .dr:hover{background:var(--bg)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--line);flex:none}
+  .dr.done .dot{background:var(--accent)}
+  .dn{color:var(--muted);font-weight:700;flex:none}
+  .dr.todo .dv{color:var(--muted);font-style:italic}
+  #queue{flex:1;overflow-y:auto;margin:var(--s4) -4px;padding:0 4px;min-height:60px}
+  .qi{border:1px solid var(--line);border-radius:var(--s2);padding:var(--s3) var(--s4);
+    margin-bottom:9px;font-size:13px;background:var(--bg)}
+  .qa{color:var(--accent);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    font-weight:700;margin-bottom:5px}
+  .qx{float:right;cursor:pointer;color:var(--muted);border:0;background:none;
+    font-size:15px;line-height:1;padding:0 0 0 var(--s2)}
+  .qx:hover{color:var(--warn)}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:var(--s6) var(--s3)}
+  button.primary{width:100%;background:var(--accent);color:#fff;border:0;padding:11px;
+    border-radius:var(--r);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
+  button.primary:hover{filter:brightness(1.08)}
+
+  #pop{position:absolute;z-index:100;width:328px;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--r);padding:var(--s4);
+    box-shadow:0 10px 34px rgba(0,0,0,.18);display:none}
+  #pop .pa{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--accent);font-weight:700;margin-bottom:var(--s2)}
+  #pop textarea{width:100%;min-height:88px;border:1px solid var(--line);
+    border-radius:var(--s2);padding:9px;font:inherit;font-size:13.5px;resize:vertical;
+    background:var(--bg);color:var(--ink)}
+  #pop .row{display:flex;gap:var(--s2);margin-top:var(--s3)}
+  #pop button{flex:1;padding:var(--s2);border-radius:var(--s2);font:inherit;font-size:13px;
+    cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  #pop button.add{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:650}
+  #toast{position:fixed;bottom:var(--s6);left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--bg);padding:var(--s3) 18px;border-radius:var(--s2);
+    font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:200}
+  #toast.on{opacity:1}
+  .flash{animation:fl 1.1s ease-out}
+  @keyframes fl{0%{background:var(--soft)}100%{background:transparent}}
+</style>
+</head>
+<body>
+<header>
+  <h1>app_1</h1>
+  <span class="sd">Product &amp; technical spec</span>
+  <span class="tag" id="round">Round 1</span>
+  <div class="spacer"></div>
+  <span class="count" id="dcount">—</span>
+</header>
+
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main>
+
+<section id="s-summary" data-anchor="summary" data-label="Summary" data-group="The case" data-title="Summary">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">1</span>Summary</h2>
+  <p>An iOS app that restyles a photo of your room without changing the room. You send one photo — more if you want a better result — we work out where the walls, windows, doors and floor are and lock their positions, and only then do we let an image model repaint what is left. Colour, finish and furnishings are free to change; the shape of the room is not. You get a before and after view so you can check for yourself.</p>
+  <p>Every competing app in this category redraws the room. That is the single most repeated complaint about all of them, and it is the only thing this product is trying to fix.</p>
+</section>
+
+<section id="s-problem" data-anchor="problem" data-label="The problem" data-group="The case" data-title="The problem">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">2</span>The problem</h2>
+  <p class="sub">Found in 63 verbatim complaints from 45 people. Full evidence in <code>research/home-decorating.md</code>.</p>
+  <p>People photograph their living room, ask an AI app to restyle it, and get back a different room — new windows, moved walls, furniture they never owned. Seven separate reviewers across four different apps describe the same failure.</p>
+  <blockquote>"The app advertises that you can take a photo of a room and have it rearrange the furniture and items into a new design. Unfortunately, that is not how the app actually works."<cite>1neVerkn0ws</cite></blockquote>
+  <blockquote>"adds addition windows and doors, changes room configuration and does not use your existing room"<cite>LiaGator</cite></blockquote>
+  <blockquote>"it still gives me an image of whole new furnitures and it restructures my whole house, nothing like i asked for."<cite>balls242</cite></blockquote>
+  <blockquote>"does what it wants, changes your photos to what it wants even when you give direction"<cite>loveulo13</cite></blockquote>
+  <p>This is a quality failure, not a business-model failure. People want what is being sold. It does not work.</p>
+</section>
+
+<section id="s-req" data-anchor="requirements" data-label="Design requirements" data-group="The case" data-title="Design requirements">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">3</span>What the evidence demands</h2>
+  <p class="sub">Constraints the research forces on any solution, written before we design one. Everything after this section has to satisfy these.</p>
+  <table class="t">
+    <tr><th>#</th><th>Requirement</th><th>Because</th></tr>
+    <tr><td><strong>R1</strong></td><td>The result must contain the user's actual room. Geometry cannot move — walls, openings, proportions.</td><td>The complaint, stated seven times.</td></tr>
+    <tr><td><strong>R2</strong></td><td>The user must be able to check that themselves, not take our word for it.</td><td>Every competitor claims to respect your room. Claims are worthless here; only proof separates us.</td></tr>
+    <tr><td><strong>R3</strong></td><td>It must work from a single photo an ordinary person can take on a phone they already own.</td><td>Requiring a scan or special hardware shrinks the audience to people who already have options.</td></tr>
+    <tr><td><strong>R4</strong></td><td>Someone must be able to see it work before paying.</td><td>"They want to charge you before the you're able to determine at all whether what the app offers is worth anything" — Isabella_belli</td></tr>
+    <tr><td><strong>R5</strong></td><td>When the system is unsure, it must say so rather than quietly guessing.</td><td>A silent wrong answer is exactly the failure we exist to fix.</td></tr>
+    <tr><td><strong>R6</strong></td><td>Furniture people already own must be able to stay.</td><td>"does not use your existing room" is about contents as much as walls.</td></tr>
+  </table>
+  <div class="plain"><b>Use these as the test.</b> Any decision later in this document that breaks one of these six is either wrong, or is a risk we are taking deliberately and writing down.</div>
+</section>
+
+<section id="s-pos" data-anchor="positioning" data-label="Positioning" data-group="The case" data-title="Positioning">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">4</span>Positioning <span class="tag">locked</span></h2>
+  <p class="sub">Settled at stage 2. Everything below obeys this.</p>
+  <p><strong>It's basically DecorAI or Interium, but it never invents architecture.</strong> The flow is the one the category already taught people — upload a photo, get design options back — but the room's structure is extracted and locked before anything is generated, and the user can see what is being protected.</p>
+  <p>The wedge is credibility, not features. We are not trying to have more styles or a nicer gallery. We are trying to be the one that gives you back your own room.</p>
+</section>
+
+<section id="s-who" data-anchor="user" data-label="Who it's for" data-group="The case" data-title="Who it's for">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">5</span>Who it's for</h2>
+  <p>Someone who has just moved in, and who brought furniture from their last place that does not suit the new one. They have rooms they do not like, things they are not willing to throw away, and no method for reconciling the two.</p>
+  <p>This was decided in round 3 (D1 with C1). It matters because it sets what "keep my furniture" means: not a lifetime of accumulated things, but a specific sofa and bookshelf that have to work somewhere.</p>
+</section>
+
+<section id="s-scope" data-anchor="scope" data-label="Scope" data-group="The case" data-title="Scope">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">6</span>What it does, and what it does not</h2>
+  <h3>Does</h3>
+  <p>Takes one photo of one room. Outlines everything it can see, and asks the user to confirm and mark what they want removed. Finds the structure. Locks it. Restyles everything else in a chosen direction, keeping any furniture the user taps. Shows the result beside the original so it can be checked. One free room, three restyles.</p>
+  <h3>Does not — v1 exclusions</h3>
+  <ul>
+    <li>Shopping links or buyable products</li>
+    <li>AR or live camera preview</li>
+    <li>Floor plans and 3D walkthroughs</li>
+    <li>A human designer marketplace</li>
+    <li>Social feed, sharing or challenges</li>
+    <li>Multi-room projects</li>
+    <li>Collaboration with a partner or spouse</li>
+  </ul>
+  <div class="plain"><b>Every one of these is defensible on its own.</b> That is exactly why they are written down. The apps in this category that failed did not fail from missing features.</div>
+</section>
+
+<section id="s-flow" data-anchor="flow" data-label="User flow" data-group="The experience" data-title="User flow">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">7</span>How someone gets through it</h2>
+  <p class="sub">Six screens. Screen 2 is the one no competitor has.</p>
+  <div class="mm"><pre class="mermaid">
+flowchart TD
+  A["Open app"] --> B["Sign in with Apple<br/>1 free room"]
+  B --> C["Add a photo<br/>extras optional"]
+  C --> D["We find the structure"]
+  D --> E{"Confident?"}
+  E -->|yes| F["Show what is locked"]
+  E -->|no| G["Show it anyway,<br/>with a warning"]
+  G --> F
+  F --> H["Tap furniture to keep"]
+  H --> I["Pick a style"]
+  I --> J["Render"]
+  J --> K["Compare with slider"]
+  K --> L{"Happy?"}
+  L -->|no| I
+  L -->|yes| M["Save"]
+  </pre></div>
+  <p>The loop that matters is <strong>style → render → compare → style again</strong>. D14 gives three restyles per room, which is enough to go round it twice and still keep the one you liked.</p>
+</section>
+
+<section id="s-ui" data-anchor="ui" data-label="UI / UX" data-group="The experience" data-title="UI / UX">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">8</span>The screens</h2>
+  <p class="sub">Click through them. Where there is a real layout choice, pick one — it records as a decision.</p>
+  <div class="screens" id="screens"></div>
+  <div class="stage">
+    <div class="phone"><div class="pscreen"><div class="notch"></div>
+      <div class="pbar"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="pbody" id="pbody"></div>
+    </div></div>
+    <div class="pmeta" id="pmeta"></div>
+  </div>
+
+  <div class="d open" data-anchor="u1" data-label="U1 extra photos">
+    <button class="cbtn">comment</button>
+    <div class="q">U1 — One photo is required. Do we ask for more?</div>
+    <div class="why">Round 5 dropped the 2-3 photo requirement. Extra photos still improve structure detection, so the question is how hard we push.</div>
+    <div data-radio="u1">
+      <label class="opt"><input type="radio" name="u1" value="silent"><span><span class="oh">Do not ask</span><span class="od">One photo, straight through. Lowest friction, weakest geometry.</span></span></label>
+      <label class="opt"><input type="radio" name="u1" value="offer"><span><span class="oh">Offer, do not require</span><span class="od">"Add another for a better result." Most people skip it; those who care get a better render.</span></span></label>
+      <label class="opt"><input type="radio" name="u1" value="on-fail"><span><span class="oh">Only ask when confidence is low</span><span class="od">Silent when it works, asks exactly when an extra photo would help. Most work to build.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="u2" data-label="U2 mask display">
+    <button class="cbtn">comment</button>
+    <div class="q">U2 — How do we draw what is locked?</div>
+    <div class="why">This is R2 made visual. It is the most important image in the app.</div>
+    <div data-radio="u2">
+      <label class="opt"><input type="radio" name="u2" value="fill"><span><span class="oh">Tinted fill over protected areas</span><span class="od">Unmistakable. Can obscure the room underneath.</span></span></label>
+      <label class="opt"><input type="radio" name="u2" value="outline"><span><span class="oh">Outline only</span><span class="od">You still see your room. Subtler, and easier to misread on a busy photo.</span></span></label>
+      <label class="opt"><input type="radio" name="u2" value="dim"><span><span class="oh">Dim everything that will change</span><span class="od">Inverts it — highlights what we are free to touch. Arguably the more honest framing.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="u3" data-label="U3 verify layout">
+    <button class="cbtn">comment</button>
+    <div class="q">U3 — How is the before/after shown?</div>
+    <div class="why">D3 chose a slider. This is how it sits on a phone.</div>
+    <div data-radio="u3">
+      <label class="opt"><input type="radio" name="u3" value="full"><span><span class="oh">Full-width slider</span><span class="od">Biggest image, most dramatic. Fidelity score sits underneath.</span></span></label>
+      <label class="opt"><input type="radio" name="u3" value="stack"><span><span class="oh">Stacked before and after</span><span class="od">Both visible at once, no interaction needed. Each image is smaller.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="u4" data-label="U4 style picker">
+    <button class="cbtn">comment</button>
+    <div class="q">U4 — How are styles chosen?</div>
+    <div class="why">D5 chose presets plus optional words.</div>
+    <div data-radio="u4">
+      <label class="opt"><input type="radio" name="u4" value="cards"><span><span class="oh">Scrollable image cards</span><span class="od">Generic sample photos per style, produced once. Not rendered from the user's room — nobody waits.</span></span></label>
+      <label class="opt"><input type="radio" name="u4" value="chips"><span><span class="oh">Text chips</span><span class="od">Fast, compact, no assets to produce. Less persuasive.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section id="s-success" data-anchor="success" data-label="Success criteria" data-group="The experience" data-title="Success criteria">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">9</span>How we know it worked</h2>
+  <p>The headline metric is <strong>geometric fidelity</strong> — are the wall edges, window openings, door frames and ceiling line in the same places they were in the photo.</p>
+  <div class="plain"><b>Why geometric and not pixel similarity:</b> a pixel comparison punishes a repaint, so a successful restyle would score badly. Measuring geometry scores the promise and ignores the thing we are deliberately changing.</div>
+  <p>It is the right metric because it measures the promise directly rather than a proxy for it. If fidelity is high and nobody comes back, the idea was wrong. If fidelity is low, the execution is wrong. Most metrics cannot tell you which.</p>
+  <div class="plain"><b>Watch the 5th percentile, not the average.</b> An average of 0.94 hides the one render in twenty that came back as somebody else's room — and that render is the one that gets screenshotted into a review.</div>
+</section>
+
+<section id="s-risks" data-anchor="risks" data-label="Accepted risks" data-group="The experience" data-title="Accepted risks">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">10</span>Risks we are taking on purpose</h2>
+  <div class="risk"><b>The fidelity chain (C3).</b> D10 makes the widest promise available — walls, windows, doors, ceiling, built-ins, flooring and light fixtures. D12 supplies the weakest input, freeform photos. D11 renders anyway when confidence is low. Taken together this breaks <strong>R5</strong>.
+  <p style="margin:8px 0 0">The failure is concrete: bad photos in, uncertain detection, a render ships with a small warning, and someone receives a room with a window that is not theirs — the exact complaint this product exists to fix, now with a disclaimer attached.</p>
+  <p style="margin:8px 0 0">Accepted deliberately in round 4 as the fastest route to shipping. The mitigation is that fidelity is the headline metric, so the cost lands on the dashboard instead of hiding. Revisit once there is real data.</p></div>
+
+  <div class="risk"><b>C4 — one photo made the fidelity chain worse.</b> Round 5 dropped the 2-3 photo requirement, which is right for friction and wrong for accuracy. Depth estimation from a single photo is materially weaker than from several angles, because there is no parallax to work with.
+  <p style="margin:8px 0 0">So the chain now reads: the widest promise (D10 — walls, windows, doors, ceiling, built-ins, flooring, fixtures), the weakest possible input (one freeform photo), and permission to ship anyway when unsure (D11). Every lever is now at its loosest setting, and <strong>R1, R2 and R5 all depend on getting this right</strong>.</p>
+  <p style="margin:8px 0 0">This is not an argument against one photo. It is an argument that one of the other two levers should move to pay for it.</p></div>
+  <div class="d open" data-anchor="c4" data-label="C4 pay for the single photo">
+    <button class="cbtn">comment</button>
+    <div class="q">C4 — Which lever moves to pay for the single photo?</div>
+    <div data-radio="c4">
+      <label class="opt"><input type="radio" name="c4" value="narrow"><span><span class="oh">Narrow the promise (D10)</span><span class="od">Protect walls, windows, doors and ceiling. Drop flooring and fixtures, which are the hardest to hold from one angle and the least noticed when they shift.</span></span></label>
+      <label class="opt"><input type="radio" name="c4" value="ask"><span><span class="oh">Ask for a second photo only when unsure (U1)</span><span class="od">Keeps one photo as the normal path and buys accuracy exactly where it is missing. Costs nothing to the people it does not affect.</span></span></label>
+      <label class="opt"><input type="radio" name="c4" value="correct"><span><span class="oh">Let people fix the detection (D11)</span><span class="od">Show the guess, let them drag the walls right. Turns the weak moment into the trust moment.</span></span></label>
+      <label class="opt"><input type="radio" name="c4" value="accept"><span><span class="oh">Accept it, again</span><span class="od">Ship the loosest configuration and let the fidelity metric report the damage. Fastest, and consistent with C3.</span></span></label>
+    </div>
+  </div>
+  <div class="risk"><b>T11 — the mask is not enforced.</b> T10 chose OpenAI, whose mask is documented as "followed loosely" over a whole-image recreation. T11 chose to trust it rather than paste the original pixels back afterwards. The product's central promise therefore has no mechanism behind it beyond the vendor's best effort and the user's confirmation at the outline step.
+  <p style="margin:8px 0 0">Decided in round 7 with the limitation known. Compositing remains available later at roughly twenty lines of code, and would convert the promise from hoped-for to guaranteed without changing any other decision.</p></div>
+  <div class="risk"><b>Account before first render (D13).</b> Sits against <strong>R4</strong>, though round 5 softened it considerably: Sign in with Apple is one tap with no password and no email handed over. The friction is now small enough that this is close to retired as a risk.</div>
+</section>
+
+<section id="s-treq" data-anchor="techreq" data-label="Technical requirements" data-group="The build" data-title="Technical requirements">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">11</span>Technical requirements</h2>
+  <p class="sub">What the system must do, before any decision about how. These come from the six product requirements above plus the series baseline.</p>
+  <table class="t">
+    <tr><th>#</th><th>Requirement</th><th>From</th></tr>
+    <tr><td><strong>TR1</strong></td><td>A render finishes in under 60 seconds at the 95th percentile.</td><td>People stare at a phone while it works.</td></tr>
+    <tr><td><strong>TR2</strong></td><td>Cost per render is low enough that 1 free room × 3 restyles is affordable at 10,000 users.</td><td>R4 — free proof before payment.</td></tr>
+    <tr><td><strong>TR3</strong></td><td>Structure detection must emit a numeric confidence, not just a result.</td><td>R5 and D11 are impossible without it.</td></tr>
+    <tr><td><strong>TR4</strong></td><td>Photos are deletable on request, never written to logs, never sent anywhere not listed here.</td><td>These are pictures of where people live.</td></tr>
+    <tr><td><strong>TR5</strong></td><td>Any dependency can fail without corrupting state or charging a user for nothing.</td><td>Series baseline: deliberate failure handling.</td></tr>
+    <tr><td><strong>TR6</strong></td><td>The whole system runs on one laptop with <code>docker compose up</code>.</td><td>Series baseline: local deploy first.</td></tr>
+    <tr><td><strong>TR7</strong></td><td>Structure fidelity is measurable automatically on every render.</td><td>It is the success metric; it cannot be hand-scored.</td></tr>
+  </table>
+</section>
+
+<section id="s-hld" data-anchor="hld" data-label="System design" data-group="The build" data-title="System design">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">12</span>How the system is built</h2>
+  <div class="plain"><b>In plain words:</b> the phone talks to one server. That server is deliberately dull — it writes to a database and drops slow work into a waiting line. A separate machine with a graphics card takes work off the line and does the heavy lifting.</div>
+  <div class="mm"><pre class="mermaid">
+flowchart TB
+  A["iOS app"] -->|"photos + style"| B["API server<br/>(container)"]
+  B --> C[("Database")]
+  B --> D["Photo storage"]
+  B -->|"adds job"| E["Job queue"]
+  E --> F["Render worker<br/>(GPU)"]
+  F -->|"1 . find structure"| G["Depth + segmentation"]
+  F -->|"2 . paint outside mask"| H["Image model"]
+  F --> D
+  F --> C
+  B --> I["Metrics + logs"] --> J["Dashboard"]
+  </pre></div>
+  <p>The API never generates images. That split is why the API can stay small, start fast, and be run as several copies behind a load balancer while exactly one expensive GPU machine does the slow work.</p>
+
+  <h3>What happens on render</h3>
+  <div class="mm"><pre class="mermaid">
+sequenceDiagram
+  participant U as App
+  participant A as API
+  participant Q as Queue
+  participant W as Worker
+  U->>A: upload photo
+  A->>W: identify objects + structure
+  W-->>U: outlines to confirm
+  U->>A: corrections + keep_items
+  U->>A: render (style, keep_items, idempotency key)
+  A->>A: check credits + rate limit
+  A->>Q: enqueue
+  A-->>U: render id, queued
+  Q->>W: pick up
+  W->>W: depth + segmentation
+  W->>W: build protected mask
+  alt confidence low
+    W->>W: mark low_confidence
+    Note over W: continues anyway (C3)
+  end
+  W->>W: generate, mask locked
+  W->>W: score fidelity
+  W-->>A: result + score
+  U->>A: poll
+  A-->>U: done, before/after
+  </pre></div>
+
+  <h3>The structure lock</h3>
+  <p class="sub">This is the product. If this is wrong, nothing else matters.</p>
+  <p>Competitors hand the whole photo to an image model and ask for a redesign. The model redraws everything, walls included, because nothing stopped it. We insert four steps before generation:</p>
+  <ol>
+    <li><strong>Depth</strong> — how far away every pixel is, which gives the shape of the room.</li>
+    <li><strong>Segmentation</strong> — label every pixel: wall, window, door, floor, ceiling, light, furniture.</li>
+    <li><strong>Protected mask</strong> — the geometry covered by D10b becomes locked: edges and openings, not whole painted surfaces.</li>
+    <li><strong>Fidelity score</strong> — compare structure in the output against the input. That number is the success metric.</li>
+  </ol>
+  <div class="plain"><b>Why this beats them:</b> they ask a model nicely to keep your room. We make it unable to change it.</div>
+
+  
+  <div class="d open" data-anchor="d10b" data-label="D10b geometry vs surface">
+    <button class="cbtn">comment</button>
+    <div class="q">D10b — Reopening D10: what does "structure" protect?</div>
+    <div class="why">D10 currently protects walls, windows, doors, ceiling, built-ins, flooring <em>and</em> light fixtures. If all of that is locked, a theme can only swap furniture — the same beige room with a different sofa. The complaints we found were about walls being <em>moved</em> and windows being <em>invented</em>, never about repainting.</div>
+    <div data-radio="d10b">
+      <label class="opt"><input type="radio" name="d10b" value="geometry"><span><span class="oh">Geometry only</span><span class="od">Lock where things are: wall positions, window and door openings, ceiling line, room proportions, floor plane. Colour, finish, textiles and fixtures are all fair game. Sharper promise, better results, more forgiving mask.</span></span></label>
+      <label class="opt"><input type="radio" name="d10b" value="geo-plus"><span><span class="oh">Geometry plus built-ins</span><span class="od">As above, but fireplaces, cabinetry and radiators keep their form too. Their surfaces can still change.</span></span></label>
+      <label class="opt"><input type="radio" name="d10b" value="keep-d10"><span><span class="oh">Keep D10 as it is</span><span class="od">Everything architectural stays exactly as photographed. Safest promise, and the restyle is furniture-only.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t7" data-label="T7 structure detection">
+    <button class="cbtn">comment</button>
+    <div class="q">T7 — How do we find the structure?</div>
+    <div class="why">Accuracy here caps the whole product. TR3 requires a confidence number out of it.</div>
+    <div data-radio="t7">
+      <label class="opt"><input type="radio" name="t7" value="depth-seg"><span><span class="oh">Depth model + segmentation model</span><span class="od">Best accuracy, two models to run, slowest and priciest per render.</span></span></label>
+      <label class="opt"><input type="radio" name="t7" value="seg-only"><span><span class="oh">Segmentation only</span><span class="od">One model. Good on walls and windows, weak on flooring — which D10 promised.</span></span></label>
+      <label class="opt"><input type="radio" name="t7" value="hosted"><span><span class="oh">A hosted vision API</span><span class="od">Nothing to run. Ties the core mechanism to a vendor and a per-call bill.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t1" data-label="T1 image model">
+    <button class="cbtn">comment</button>
+    <div class="q">T1 — Where does image generation run?</div>
+    <div class="why">Biggest cost and quality decision in the app. TR2 depends on it.</div>
+    <div data-radio="t1">
+      <label class="opt"><input type="radio" name="t1" value="api"><span><span class="oh">A hosted image API</span><span class="od">Pennies per image, no GPU to manage, ships in days. Exposed to their pricing and their filters, and masked generation must be supported.</span></span></label>
+      <label class="opt"><input type="radio" name="t1" value="self"><span><span class="oh">Self-hosted on a rented GPU</span><span class="od">Full control of masking, much better video, a fixed monthly bill whether or not anyone uses it.</span></span></label>
+      <label class="opt"><input type="radio" name="t1" value="hybrid"><span><span class="oh">Hosted now, self-hosted later</span><span class="od">Ship first, move when the bill justifies it. Only works if the code never learns which is behind it.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t10" data-label="T10 which image model">
+    <button class="cbtn">comment</button>
+    <div class="q">T10 — Which model, specifically?</div>
+    <div class="why">You picked self-hosted (T1) and asked about OpenAI. Those are different answers — OpenAI's image models are API-only and cannot be self-hosted. What actually matters is that the model accepts a mask and paints only outside it.</div>
+    <div data-radio="t10">
+      <label class="opt"><input type="radio" name="t10" value="sd-controlnet"><span><span class="oh">Self-hosted Stable Diffusion / Flux + ControlNet</span><span class="od">Matches your T1 answer. Total control of masking and depth conditioning, a fixed GPU bill, and by far the most to teach.</span></span></label>
+      <label class="opt"><input type="radio" name="t10" value="hosted-edit"><span><span class="oh">A hosted image-edit API (OpenAI or similar)</span><span class="od">What you were asking about. Pennies per image, nothing to run — but you rely on their mask handling being good enough, and this contradicts T1.</span></span></label>
+      <label class="opt"><input type="radio" name="t10" value="verify"><span><span class="oh">Let me check what is actually available first</span><span class="od">My knowledge of this market is a few months old and it moves fast. I would compare current masked-generation quality and price before you commit.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t3" data-label="T3 photo storage">
+    <button class="cbtn">comment</button>
+    <div class="q">T3 — Where do photos live?</div>
+    <div data-radio="t3">
+      <label class="opt"><input type="radio" name="t3" value="s3"><span><span class="oh">Object storage (S3-compatible)</span><span class="od">MinIO in Docker locally, a real bucket in production, no code change between them.</span></span></label>
+      <label class="opt"><input type="radio" name="t3" value="disk"><span><span class="oh">A folder on the server</span><span class="od">Round 5: chosen "for now", knowingly temporary. Works until there is a second server, then breaks. Keep the storage calls behind one small interface so swapping to object storage is a day, not a rewrite.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t8" data-label="T8 photo retention">
+    <button class="cbtn">comment</button>
+    <div class="q">T8 — How long do we keep photos?</div>
+    <div class="why">TR4. Shorter is safer and cheaper; longer lets people return to a room.</div>
+    <div data-radio="t8">
+      <label class="opt"><input type="radio" name="t8" value="render"><span><span class="oh">Delete originals once rendered</span><span class="od">Safest. No re-runs, no history.</span></span></label>
+      <label class="opt"><input type="radio" name="t8" value="30d"><span><span class="oh">30 days, then automatic deletion</span><span class="od">Re-runs stay possible, risk window bounded.</span></span></label>
+      <label class="opt"><input type="radio" name="t8" value="user"><span><span class="oh">Until the user deletes them</span><span class="od">Best product, biggest responsibility.</span></span></label>
+    </div>
+  </div>
+</section>
+
+
+
+<section id="s-fe" data-anchor="frontend" data-label="The iOS app" data-group="The build" data-title="The iOS app">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">13</span>The iOS app</h2>
+  <p class="sub">Decided so far: "iOS" (D7) and "the baseline lives in the backend" (C2). That is a platform, not a stack. Everything below was missing.</p>
+
+  <div class="plain"><b>What the client actually has to do:</b> take a photo, upload it, draw outlines over an image and let the user tap and correct them, show a stacked before/after, and poll a job every two seconds. The outline screen is the hard one — it is the product, and it is real drawing work.</div>
+
+  <div class="d open" data-anchor="f1" data-label="F1 how the app is built">
+    <button class="cbtn">comment</button>
+    <div class="q">F1 — How is the app built?</div>
+    <div class="why">C2 committed to an iOS client. This decides in what.</div>
+    <div data-radio="f1">
+      <label class="opt"><input type="radio" name="f1" value="swiftui"><span><span class="oh">Swift + SwiftUI</span><span class="od">Native, no bridge, best camera and image performance. Canvas and gestures are first class, which matters for the outline screen. iOS only — a web version later means writing it twice.</span></span></label>
+      <label class="opt"><input type="radio" name="f1" value="uikit"><span><span class="oh">Swift + UIKit</span><span class="od">More control over custom drawing and touch handling, more code for everything else. Only worth it if SwiftUI's canvas proves insufficient.</span></span></label>
+      <label class="opt"><input type="radio" name="f1" value="rn"><span><span class="oh">React Native</span><span class="od">One codebase for a future web or Android version, and TypeScript types shared with the backend. Image editing and gesture work is where React Native is weakest, and that is our hardest screen.</span></span></label>
+      <label class="opt"><input type="radio" name="f1" value="flutter"><span><span class="oh">Flutter</span><span class="od">Excellent custom drawing, one codebase. A third language in the project, and Dart on top of Python and Swift.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="f2" data-label="F2 outline editing">
+    <button class="cbtn">comment</button>
+    <div class="q">F2 — How does the outline screen work?</div>
+    <div class="why">T12 chose vision outlines only, which are approximate. Whether the user can fix them is a client decision, and it is the difference between R2 being real and being a claim.</div>
+    <div data-radio="f2">
+      <label class="opt"><input type="radio" name="f2" value="view"><span><span class="oh">Show only — confirm or reject</span><span class="od">Simplest. If the outlines are wrong the only option is a different photo.</span></span></label>
+      <label class="opt"><input type="radio" name="f2" value="toggle"><span><span class="oh">Tap regions on and off</span><span class="od">The user removes wrong outlines and marks what to delete. No dragging, most of the value.</span></span></label>
+      <label class="opt"><input type="radio" name="f2" value="drag"><span><span class="oh">Drag the vertices</span><span class="od">Full correction. The strongest answer to T12's accuracy gap, and by far the most client work.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="f3" data-label="F3 client CI/CD">
+    <button class="cbtn">comment</button>
+    <div class="q">F3 — How does the app get built and shipped?</div>
+    <div class="why">Your baseline demands CI/CD. For iOS that means macOS runners, code signing and TestFlight — slower and fiddlier than the backend, and the part people quietly skip.</div>
+    <div data-radio="f3">
+      <label class="opt"><input type="radio" name="f3" value="gha"><span><span class="oh">GitHub Actions on a macOS runner</span><span class="od">Same CI as the backend, one place to look. macOS minutes cost roughly ten times Linux, and certificate handling is the fiddliest part of the whole series.</span></span></label>
+      <label class="opt"><input type="radio" name="f3" value="xcode-cloud"><span><span class="oh">Xcode Cloud</span><span class="od">Apple's own, signing handled for you, TestFlight built in. A second CI system to explain on video.</span></span></label>
+      <label class="opt"><input type="radio" name="f3" value="local"><span><span class="oh">Build locally for now</span><span class="od">Fastest to start and honest about it, but it leaves a hole in the baseline the series exists to demonstrate.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="f4" data-label="F4 client networking">
+    <button class="cbtn">comment</button>
+    <div class="q">F4 — Networking and state</div>
+    <div class="why">T4 chose polling every 2 seconds, so the client owns a small state machine per render.</div>
+    <div data-radio="f4">
+      <label class="opt"><input type="radio" name="f4" value="urlsession"><span><span class="oh">URLSession + async/await, hand-written</span><span class="od">No dependencies, and the API is small enough that a client is a few hundred lines.</span></span></label>
+      <label class="opt"><input type="radio" name="f4" value="generated"><span><span class="oh">Generate the client from an OpenAPI spec</span><span class="od">FastAPI emits OpenAPI for free, so the contract in this document becomes compiled code on both sides. Fits stage 4 exactly.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="f5" data-label="F5 client's share of the baseline">
+    <button class="cbtn">comment</button>
+    <div class="q">F5 — What of the baseline does the client carry?</div>
+    <div class="why">C2 put the baseline in the backend, but an app cannot have zero. Health checks and Docker do not apply; tests and crash reporting do.</div>
+    <div data-check="f5">
+      <label class="opt"><input type="checkbox" name="f5" value="unit"><span><span class="oh">Unit tests on the render state machine</span><span class="od">The polling and retry logic is where client bugs will live.</span></span></label>
+      <label class="opt"><input type="checkbox" name="f5" value="snapshot"><span><span class="oh">Snapshot tests on the outline overlay</span><span class="od">Catches the mask drawing in the wrong place, which is invisible to every other test.</span></span></label>
+      <label class="opt"><input type="checkbox" name="f5" value="crash"><span><span class="oh">Crash and error reporting</span><span class="od">The client half of "error tracking" in the baseline.</span></span></label>
+      <label class="opt"><input type="checkbox" name="f5" value="analytics"><span><span class="oh">Client-side funnel events</span><span class="od">Signup to first render is a dashboard metric and the backend cannot see where people drop out before uploading.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section id="s-models" data-anchor="models" data-label="Model choices" data-group="The build" data-title="Model choices">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">14</span>Which models, and why</h2>
+  <p class="sub">Researched September 2026. Prices and licences move fast — re-check before signing anything.</p>
+
+  <h3>First: Claude cannot do this</h3>
+  <p>Claude has no image generation. It reads images, it does not make them. So the choice is between Google, OpenAI, and self-hosted open models.</p>
+
+  <h3>The question that eliminates most of them</h3>
+  <p>We do not need "image editing". We need <strong>a model that accepts a mask and leaves the masked pixels alone</strong>. That is a much narrower requirement, and it rules out the most fashionable option immediately.</p>
+  <table class="t">
+    <tr><th>Model</th><th>Mask support</th><th>Cost / licence</th><th>Verdict</th></tr>
+    <tr><td><strong>Gemini "Nano Banana"</strong> (2 / Pro)</td><td><strong>No mask parameter at all.</strong> Editing is conversational — you describe the region in words.</td><td>~$0.034–0.13 per image</td><td><strong>Disqualified.</strong> "Please don't move the walls" is precisely what every competitor already does.</td></tr>
+    <tr><td><strong>Google Imagen</strong> (Vertex AI)</td><td>Yes — real mask-based inpainting, insert and remove</td><td>Per image, Google Cloud</td><td>Viable hosted option, and the one people overlook because Nano Banana gets the attention.</td></tr>
+    <tr><td><strong>OpenAI gpt-image-1.5 / 2</strong></td><td>Mask accepted, but documented as "followed loosely" — a soft mask over a whole-image recreation</td><td>Per image</td><td>Usable only with our own enforcement (below). 1.5 is better at preservation than 1.</td></tr>
+    <tr><td><strong>FLUX.1 Fill [dev]</strong></td><td>Best-in-class binary mask inpainting</td><td><strong>Non-commercial licence</strong></td><td><strong>Blocked.</strong> Excellent model, unusable in a product you intend to charge for.</td></tr>
+    <tr><td><strong>Stable Diffusion 3.5</strong></td><td>Yes — inpainting plus depth ControlNet</td><td>Free for commercial use under $1M revenue. Self-hosted, ~24 GB VRAM.</td><td>The self-hosting answer, if you self-host.</td></tr>
+  </table>
+
+  <div class="plain"><b>The trap:</b> "AI image editing" and "mask-respecting inpainting" sound like the same feature and are not. Nano Banana is the best-marketed model in this space and cannot do the one thing this product is built on.</div>
+
+  <h3>The chosen architecture — round 7</h3>
+  <p>One vendor, no GPU, no self-hosted models. OpenAI does both jobs:</p>
+  <ol>
+    <li><strong>Identify</strong> — a vision call returns the objects and surfaces it can see, with outlines.</li>
+    <li><strong>Confirm</strong> — we draw those outlines on the photo and the user says whether they are right.</li>
+    <li><strong>Choose</strong> — the user taps what stays. That becomes <code>keep_items</code>.</li>
+    <li><strong>Generate</strong> — an image edit call with the mask, the kept items, and the style.</li>
+  </ol>
+  <div class="plain"><b>The good part, and it is genuinely good:</b> step 2 makes the user the validator. Detection no longer has to be right on its own — it has to be <em>checkable</em>. That is a better answer to R2 than anything proposed earlier, and it partly repairs C3 and C4, because a human catches the bad mask before a render is ever paid for.</div>
+  <div class="risk"><b>What it does not fix.</b> A vision model returns approximate regions, not pixel-accurate edges. That is fine for a sofa and not fine for a wall: an outline that is off by twenty pixels lets the generator repaint a strip of real wall. And with T11 set to trust the model's mask, nothing downstream catches that — OpenAI's documentation describes its mask as "followed loosely", a soft mask over a whole-image recreation.
+  <p style="margin:8px 0 0">Net effect: the promise in R1 rests on a vendor behaviour documented as approximate. The mitigation currently in place is the user's own eyes at step 2, plus the fidelity metric reporting the damage afterwards.</p></div>
+
+  <div class="d open" data-anchor="t12" data-label="T12 outline precision">
+    <button class="cbtn">comment</button>
+    <div class="q">T12 — How do we get edges accurate enough for walls?</div>
+    <div class="why">Boxes work for furniture. Architecture needs pixels. This is the gap left by round 7.</div>
+    <div data-radio="t12">
+      <label class="opt"><input type="radio" name="t12" value="vision-only"><span><span class="oh">Vision outlines only</span><span class="od">Simplest, one vendor, ship soonest. Wall edges will be approximate and some renders will bleed.</span></span></label>
+      <label class="opt"><input type="radio" name="t12" value="hybrid"><span><span class="oh">Vision for objects, segmentation for structure</span><span class="od">OpenAI names the furniture; a free ADE20K model draws pixel-exact walls, floor and windows. Two systems, but each doing what it is good at.</span></span></label>
+      <label class="opt"><input type="radio" name="t12" value="user-drag"><span><span class="oh">Let the user drag the edges</span><span class="od">Confirm step becomes correctable. No extra model, and it turns the weakness into the trust moment.</span></span></label>
+    </div>
+  </div>
+
+  <h3>If we need real pixel accuracy later</h3>
+  <p class="sub">Not required by the round 7 architecture. Here if T12 goes hybrid.</p>
+  <table class="t">
+    <tr><th>Job</th><th>Model</th><th>Licence</th><th>Note</th></tr>
+    <tr><td>Depth</td><td><strong>Depth Anything V2 — Small</strong></td><td>Apache-2.0 — commercial use fine</td><td>25M parameters, runs cheaply. Not needed if T12 stays vision-only.</td></tr>
+    <tr><td>Depth</td><td>Depth Anything V2 Base / Large / Giant</td><td><strong>CC-BY-NC-4.0 — commercial use prohibited</strong></td><td>A trap. The good ones are the ones you cannot use.</td></tr>
+    <tr><td>Labels</td><td><strong>Mask2Former trained on ADE20K</strong></td><td>Open source</td><td>ADE20K's 150 classes include wall, floor, ceiling, window and door — exactly our protected list.</td></tr>
+    <tr><td>Boundaries</td><td>SAM 2</td><td>Apache-2.0 — commercial fine</td><td>Superb edges, but <strong>no semantic labels</strong> — it finds shapes without knowing which is a wall. Optional refinement, not a replacement.</td></tr>
+  </table>
+  <div class="plain"><b>In plain words:</b> ADE20K segmentation says "these pixels are a wall". Depth Anything says "this wall is 3 metres away". SAM 2 can sharpen the edges. Only the first is strictly required.</div>
+
+  <div class="d open" data-anchor="t10" data-label="T10 generation model">
+    <button class="cbtn">comment</button>
+    <div class="q">T10 — Which generation model?</div>
+    <div class="why">All of these become safe once we enforce the mask ourselves. Without that step, only the bottom two are honest choices.</div>
+    <div data-radio="t10">
+      <label class="opt"><input type="radio" name="t10" value="openai"><span><span class="oh">OpenAI gpt-image-1.5</span><span class="od">Cheapest to start, one API key, no GPU. Soft masking, fixed by our compositing step.</span></span></label>
+      <label class="opt"><input type="radio" name="t10" value="imagen"><span><span class="oh">Google Imagen on Vertex</span><span class="od">Real mask-based inpainting from a hosted API. More setup than OpenAI, better mask behaviour.</span></span></label>
+      <label class="opt"><input type="radio" name="t10" value="sd35"><span><span class="oh">Self-hosted Stable Diffusion 3.5</span><span class="od">Free under $1M revenue, total control, depth ControlNet included. Needs a 24 GB GPU and matches your original T1 answer.</span></span></label>
+      <label class="opt"><input type="radio" name="t10" value="start-api"><span><span class="oh">Hosted now, keep the seam</span><span class="od">Start on an API, put one interface in front of it, move to self-hosted when the bill or the quality demands it.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t11" data-label="T11 enforce mask ourselves">
+    <button class="cbtn">comment</button>
+    <div class="q">T11 — Do we composite the protected pixels back ourselves?</div>
+    <div class="why">This is the single most consequential technical decision in the document.</div>
+    <div data-radio="t11">
+      <label class="opt"><input type="radio" name="t11" value="yes"><span><span class="oh">Yes — always paste the original back</span><span class="od">Structure preservation becomes guaranteed rather than hoped for, and any model becomes usable. Costs a feathering step to hide seams.</span></span></label>
+      <label class="opt"><input type="radio" name="t11" value="trust"><span><span class="oh">No — trust the model's mask</span><span class="od">Simpler, more natural-looking blends, and it puts the product's only promise in a vendor's hands.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section id="s-data" data-anchor="data" data-label="Data model" data-group="The build" data-title="Data model">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">15</span>What we store</h2>
+  <div class="plain"><b>In plain words:</b> a user owns rooms, a room holds photos, a render is one attempt at restyling that room.</div>
+  <div class="mm"><pre class="mermaid">
+erDiagram
+  USER ||--o{ ROOM : owns
+  USER ||--o{ CREDIT_LEDGER : has
+  ROOM ||--o{ PHOTO : contains
+  ROOM ||--o{ RENDER : has
+  RENDER ||--|| STRUCTURE_MAP : uses
+  USER { uuid id string email string password_hash timestamp created_at }
+  ROOM { uuid id uuid user_id string label timestamp created_at }
+  PHOTO { uuid id uuid room_id string storage_key int width int height timestamp expires_at }
+  STRUCTURE_MAP { uuid id uuid room_id string mask_key float confidence json labels }
+  RENDER { uuid id uuid room_id string status string style json keep_items string result_key float fidelity_score bool low_confidence string error_code }
+  CREDIT_LEDGER { uuid id uuid user_id int delta string reason timestamp created_at }
+  </pre></div>
+  <p>Credits are an append-only ledger rather than a number on the user row. A number drifts and cannot be explained; a ledger can be recounted and audited. Since D14 spends credit per room rather than per image, a refund is just another row.</p>
+
+  <div class="d open" data-anchor="t2" data-label="T2 database">
+    <button class="cbtn">comment</button>
+    <div class="q">T2 — Database</div>
+    <div data-radio="t2">
+      <label class="opt"><input type="radio" name="t2" value="postgres"><span><span class="oh">PostgreSQL</span><span class="od">Boring and correct. 10,000 users is nothing to it. Runs in Docker locally per TR6.</span></span></label>
+      <label class="opt"><input type="radio" name="t2" value="sqlite"><span><span class="oh">SQLite</span><span class="od">One file, no server. Fine at this size, awkward once a worker writes concurrently.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section id="s-api" data-anchor="api" data-label="API contract" data-group="The build" data-title="API contract">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">16</span>The contract</h2>
+  <p class="sub">What the app and the server agree on. Both halves build against this.</p>
+  <div class="mm"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> queued
+  queued --> detecting : worker picks up
+  detecting --> failed : structure model down
+  detecting --> low_confidence : below threshold
+  detecting --> generating : structure locked
+  low_confidence --> generating : continue with warning (C3)
+  generating --> done
+  generating --> failed : image model error
+  failed --> queued : retry, max 2
+  done --> [*]
+  failed --> [*] : credit refunded
+  </pre></div>
+  <p>A failed render refunds its credit. Nobody forgives being charged for our outage, and it is the cheapest goodwill on offer.</p>
+
+  <details class="ref" open>
+    <summary>Every endpoint</summary>
+    <table class="t">
+      <tr><th>Method + path</th><th>Body</th><th>Returns</th><th>Auth</th><th>Limit</th></tr>
+      <tr><td><code>POST /v1/auth/apple</code></td><td>Apple identity token</td><td>user + tokens</td><td>no</td><td>10/hr per IP</td></tr>
+      <tr><td><code>POST /v1/auth/refresh</code></td><td>refresh token</td><td>access token</td><td>no</td><td>60/hr</td></tr>
+      <tr><td><code>GET /v1/me</code></td><td>—</td><td>user, credits left</td><td>yes</td><td>60/min</td></tr>
+      <tr><td><code>POST /v1/rooms</code></td><td>label</td><td>room</td><td>yes</td><td>30/hr</td></tr>
+      <tr><td><code>POST /v1/rooms/{id}/photos</code></td><td>image (multipart)</td><td>photo</td><td>yes</td><td>20/hr</td></tr>
+      <tr><td><code>POST /v1/rooms/{id}/renders</code></td><td>style, prompt, keep_items, idempotency_key</td><td>render, queued</td><td>yes</td><td>credits</td></tr>
+      <tr><td><code>GET /v1/renders/{id}</code></td><td>—</td><td>status, fidelity, low_confidence</td><td>yes</td><td>120/min</td></tr>
+      <tr><td><code>DELETE /v1/rooms/{id}</code></td><td>—</td><td>204, photos deleted</td><td>yes</td><td>30/hr</td></tr>
+      <tr><td><code>GET /health</code></td><td>—</td><td>ok / degraded / down</td><td>no</td><td>none</td></tr>
+      <tr><td><code>GET /metrics</code></td><td>—</td><td>Prometheus text</td><td>internal</td><td>none</td></tr>
+    </table>
+    <div class="plain"><b>idempotency_key:</b> a unique ID the app invents and sends with a render request. If the phone loses signal and retries, the server recognises the key and returns the render it already started, instead of charging a second credit.</div>
+    <pre class="code">POST /v1/rooms/{id}/renders
+{
+  "style": "warm-minimal",
+  "prompt": "lighter walls, keep it cosy",
+  "keep_items": ["photo_1:sofa", "photo_1:bookshelf"],
+  "idempotency_key": "b3f1e2..."
+}
+
+202 Accepted
+{ "render_id": "r_8fd21", "status": "queued", "credits_left": 2 }
+
+GET /v1/renders/r_8fd21
+{
+  "render_id": "r_8fd21",
+  "status": "done",
+  "low_confidence": false,
+  "fidelity_score": 0.94,
+  "before_url": "...", "after_url": "...", "mask_url": "..."
+}</pre>
+  </details>
+
+  <details class="ref" open>
+    <summary>Every error</summary>
+    <table class="t">
+      <tr><th>Code</th><th>HTTP</th><th>Cause</th><th>What the user sees</th></tr>
+      <tr><td><code>apple_token_invalid</code></td><td>401</td><td>Apple identity token failed verification</td><td>"Sign in didn't work, try again"</td></tr>
+      <tr><td><code>token_expired</code></td><td>401</td><td>Access token aged out</td><td>Nothing — the app refreshes silently</td></tr>
+      <tr><td><code>no_credits</code></td><td>402</td><td>Free rooms used up</td><td>"You have used your free room"</td></tr>
+      <tr><td><code>rate_limited</code></td><td>429</td><td>Too many requests</td><td>"Slow down for a moment"</td></tr>
+      <tr><td><code>photo_too_large</code></td><td>413</td><td>Over 12 MB</td><td>"That photo is too big"</td></tr>
+      <tr><td><code>no_photos</code></td><td>400</td><td>No photo uploaded</td><td>"Add a photo of this room"</td></tr>
+      <tr><td><code>structure_unavailable</code></td><td>503</td><td>Structure model down</td><td>"We can't check your room right now" — no render, no charge</td></tr>
+      <tr><td><code>render_failed</code></td><td>500</td><td>Image model failed after retries</td><td>"That didn't work. Your credit is back."</td></tr>
+    </table>
+  </details>
+
+  <h3>Signing in</h3>
+  <div class="mm"><pre class="mermaid">
+sequenceDiagram
+  participant A as iOS app
+  participant S as API
+  A->>A: Sign in with Apple
+  A->>S: POST /v1/auth/apple (identity token)
+  S->>S: verify token against Apple keys
+  S-->>A: access token (15 min) + refresh token (30 days)
+  Note over A: access in memory<br/>refresh in Keychain
+  A->>S: POST /v1/rooms
+  S-->>A: 401 token_expired
+  A->>S: POST /v1/auth/refresh
+  S-->>A: new access token
+  A->>S: retry original request
+  </pre></div>
+
+  <div class="d open" data-anchor="t5" data-label="T5 auth build vs buy">
+    <button class="cbtn">comment</button>
+    <div class="q">T5 — Build auth or buy it?</div>
+    <div class="why">CLAUDE.md demands real authentication. It does not say who writes it.</div>
+    <div data-radio="t5">
+      <label class="opt"><input type="radio" name="t5" value="build"><span><span class="oh">Build it — argon2 and our own tokens</span><span class="od">More teaching material than any other decision here, and no vendor in the login path. You also own the security mistakes.</span></span></label>
+      <label class="opt"><input type="radio" name="t5" value="buy"><span><span class="oh">Sign in with Apple</span><span class="od">Round 5. Free, one tap, no password to store, no vendor bill. Apple returns a relay email, which is fine since we send no mail. Required by Apple if we ever add other social logins.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t4" data-label="T4 job updates">
+    <button class="cbtn">comment</button>
+    <div class="q">T4 — How does the app learn a render finished?</div>
+    <div class="why">TR1 allows up to 60 seconds. Something has to cover that wait.</div>
+    <div data-radio="t4">
+      <label class="opt"><input type="radio" name="t4" value="poll"><span><span class="oh">Ask every 2 seconds</span><span class="od">Simple, works everywhere, slightly wasteful — and the waste is visible on the dashboard, which is good teaching.</span></span></label>
+      <label class="opt"><input type="radio" name="t4" value="ws"><span><span class="oh">Websocket push</span><span class="od">Instant. Another long-lived connection to keep alive and monitor.</span></span></label>
+      <label class="opt"><input type="radio" name="t4" value="apns"><span><span class="oh">Push notification</span><span class="od">Lets people leave the app. Needs Apple push certificates in CI.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t6" data-label="T6 backend language">
+    <button class="cbtn">comment</button>
+    <div class="q">T6 — Backend language</div>
+    <div class="why">The worker runs models, so Python is in the system somewhere regardless.</div>
+    <div data-radio="t6">
+      <label class="opt"><input type="radio" name="t6" value="fastapi"><span><span class="oh">Python + FastAPI</span><span class="od">One language across API and worker.</span></span></label>
+      <label class="opt"><input type="radio" name="t6" value="node"><span><span class="oh">Node + TypeScript</span><span class="od">Types shareable with a future web client. Two languages in one system.</span></span></label>
+      <label class="opt"><input type="radio" name="t6" value="go"><span><span class="oh">Go</span><span class="od">Smallest, fastest containers. Furthest from the model code.</span></span></label>
+    </div>
+  </div>
+
+  <div class="d open" data-anchor="t9" data-label="T9 queue">
+    <button class="cbtn">comment</button>
+    <div class="q">T9 — Job queue</div>
+    <div data-radio="t9">
+      <label class="opt"><input type="radio" name="t9" value="redis"><span><span class="oh">Redis and a worker process</span><span class="od">Standard, and easy to show failing and recovering on camera.</span></span></label>
+      <label class="opt"><input type="radio" name="t9" value="pgqueue"><span><span class="oh">A table in Postgres</span><span class="od">One less service to run. Genuinely fine at this scale.</span></span></label>
+    </div>
+  </div>
+</section>
+
+<section id="s-ops" data-anchor="ops" data-label="Operations" data-group="The build" data-title="Operations">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">17</span>Running it</h2>
+  <p class="sub">The series baseline from <code>CLAUDE.md</code>, made concrete.</p>
+
+  <h3>Health</h3>
+  <p><code>GET /health</code> answers with one of three states, and the difference matters: a deploy stops on <em>down</em>, someone gets paged on <em>degraded</em>, nothing happens on <em>ok</em>.</p>
+  <table class="t">
+    <tr><th>Check</th><th>Fails when</th><th>State</th></tr>
+    <tr><td>Database</td><td>Simple query fails or exceeds 1s</td><td>down</td></tr>
+    <tr><td>Photo storage</td><td>Cannot write a test object</td><td>down</td></tr>
+    <tr><td>Queue</td><td>Unreachable</td><td>down</td></tr>
+    <tr><td>Worker heartbeat</td><td>No worker seen for 60s</td><td>degraded</td></tr>
+    <tr><td>Queue depth</td><td>Over 100 waiting jobs</td><td>degraded</td></tr>
+  </table>
+  <div class="plain"><b>Why three states:</b> a health check that only says yes or no makes every problem look like an outage, and people stop trusting it.</div>
+
+  <h3>Dashboard</h3>
+  <table class="t">
+    <tr><th>Metric</th><th>Why it is there</th></tr>
+    <tr><td><strong>Structure fidelity — average and 5th percentile</strong></td><td>The promise, measured. The 5th percentile is the worst experience people actually get.</td></tr>
+    <tr><td><strong>Low-confidence render rate</strong></td><td>How often C3's accepted risk fires. This number decides whether accepting it was right.</td></tr>
+    <tr><td>Render duration p50 / p95</td><td>TR1</td></tr>
+    <tr><td>Queue depth, worker count</td><td>Whether we are keeping up</td></tr>
+    <tr><td>Failure rate by error code</td><td>What is actually breaking</td></tr>
+    <tr><td>Signup → first render conversion</td><td>What D13's account gate costs</td></tr>
+    <tr><td>Second-render rate</td><td>Whether the first result was worth trying again</td></tr>
+    <tr><td>Cost per render</td><td>TR2</td></tr>
+  </table>
+
+  <h3>Logging</h3>
+  <p>Structured JSON, one line per request, each carrying a request id that follows the work from API into worker and back.</p>
+  <p><strong>Always:</strong> request id, user id, route, status, duration, error code, render id, fidelity score, model version.<br>
+  <strong>Never:</strong> photos or photo URLs, passwords or tokens, email addresses, prompt text.</p>
+  <div class="plain"><b>Why prompt text is excluded:</b> people describe their homes and their lives in it. That does not belong in a log file you will one day paste into a chat window.</div>
+
+  <h3>When things break</h3>
+  <table class="t">
+    <tr><th>Failure</th><th>What happens</th></tr>
+    <tr><td>Image model errors</td><td>Retry twice with backoff, then fail and refund the credit</td></tr>
+    <tr><td>Structure model down</td><td>Refuse to render. Never fall back to unconstrained generation.</td></tr>
+    <tr><td>Worker dies mid-job</td><td>Job returns to queued once a 5-minute lease expires</td></tr>
+    <tr><td>Queue backed up</td><td>Health goes degraded; renders still accepted with an honest wait estimate</td></tr>
+    <tr><td>Storage full</td><td>Uploads rejected clearly; finished renders keep working</td></tr>
+    <tr><td>Database down</td><td>Health down, deploys blocked, 503 everywhere</td></tr>
+  </table>
+  <div class="risk"><b>The rule that matters:</b> when the structure model is unavailable we refuse to render. A render without a structure lock is not a degraded version of this product — it is a competitor's product.</div>
+
+  <h3>Getting code out</h3>
+  <div class="mm"><pre class="mermaid">
+flowchart LR
+  A["push branch"] --> B["lint + types"] --> C["unit tests"]
+  C --> D["integration tests<br/>real Postgres"] --> E{"green?"}
+  E -->|no| F["blocked"]
+  E -->|yes| G["build image"] --> H["staging"]
+  H --> I["smoke test<br/>one real render"] --> J{"fidelity ok?"}
+  J -->|no| K["auto rollback"]
+  J -->|yes| L["manual approve"] --> M["production"]
+  </pre></div>
+  <p>The smoke test runs one real render against staging and checks the fidelity score clears the threshold. A deploy that still produces images but has broken the structure lock would pass every unit test in the repository. This is the gate that catches it.</p>
+
+  <h3>Environments</h3>
+  <p><strong>Local</strong> — <code>docker compose up</code> brings up API, Postgres, storage, queue and worker. TR6. Everything works here first.<br>
+  <strong>Staging</strong> — same containers, real deploy path, small GPU.<br>
+  <strong>Production</strong> — same again, real credentials, real monitoring.</p>
+  <div class="plain"><b>Rule:</b> same compose file, same images everywhere. Environments differ by configuration only, never by code.</div>
+</section>
+
+<section id="s-build" data-anchor="build" data-label="Build order" data-group="The build" data-title="Build order">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">18</span>Build order</h2>
+  <p>The smallest thing that proves the idea, in sequence:</p>
+  <ol>
+    <li>Docker compose — API, Postgres, storage, queue. <code>/health</code> answers.</li>
+    <li>Signup, login, tokens. A real user exists.</li>
+    <li>Upload photos to a room. Bytes land in storage.</li>
+    <li><strong>Structure detection and the mask.</strong> The risky part, proven before anything sits on top of it.</li>
+    <li>One constrained render end to end, fidelity scored.</li>
+    <li>The verify screen with the slider.</li>
+    <li>Rate limits, metrics, dashboard, CI/CD.</li>
+  </ol>
+  <div class="plain"><b>Why step 4 comes early:</b> if the structure lock cannot be made to work, none of the rest matters. Build the thing that can kill the project while stopping is still cheap.</div>
+</section>
+
+<section id="s-open" data-anchor="open" data-label="Open decisions" data-group="The build" data-title="Open decisions">
+  <button class="cbtn">comment</button>
+  <h2><span class="num">19</span>Still open</h2>
+  <p class="sub">Everything unanswered, gathered. The panel on the right jumps to each.</p>
+  <div id="opensum"></div>
+  <details class="ref" style="margin-top:16px">
+    <summary>Already settled — 17 decisions from rounds 1-4</summary>
+    <p class="sub" style="margin-top:10px">These are written into the document above as settled facts rather than questions. Comment on the section if you want one reopened.</p>
+    <div id="settled"></div>
+  </details>
+</section>
+</main>
+
+<aside class="right">
+  <h2>Decisions</h2>
+  <p class="sub" style="margin:2px 0 0" id="dprog">—</p>
+  <div class="bar"><i id="dbar" style="width:0"></i></div>
+  <div class="dlist" id="dlist"></div>
+  <h2 style="margin-top:16px">Feedback queue</h2>
+  <p class="sub" style="margin:2px 0 0">Nothing is sent until you confirm.</p>
+  <div id="queue"></div>
+  <button class="primary" id="send">Confirm &amp; send</button>
+</aside>
+</div>
+
+<div id="pop">
+  <div class="pa" id="popanchor"></div>
+  <textarea id="poptext" placeholder="What is wrong, missing, or should change here?"></textarea>
+  <div class="row"><button id="popcancel">Cancel</button><button id="popadd" class="add">Add to queue</button></div>
+</div>
+<div id="toast"></div>
+
+<script src="vendor/mermaid.min.js"></script>
+<script>
+const S={decisions:{},comments:[],batches:[]}; let ROUND=1;
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),1700)};
+const post=(u,b)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify(b)}).then(r=>r.json());
+const D=k=>S.decisions[k];
+
+/* ---------- phone screens ---------- */
+const mask=()=>{const m=D('u2')||'fill';
+  const st=m==='outline'?'background:transparent':m==='dim'?'background:rgba(0,0,0,.34);border-color:transparent':'';
+  return `<div class="pmask">
+    <i style="left:4%;top:8%;width:30%;height:62%;${st}"></i>
+    <i style="left:52%;top:14%;width:26%;height:40%;${st}"></i>
+    <i style="left:0;bottom:0;width:100%;height:20%;${st}"></i></div>`};
+const SCREENS=[
+ {k:'signup',t:'Sign up',h:()=>`<div class="pnav">Welcome</div>
+   <div class="ph1">Your room, restyled</div>
+   <div class="psub">We never move your walls, windows or floor. Your first room is free.</div>
+   <div class="pbtn" style="background:#000"> Sign in with Apple</div>
+   <div class="pnote" style="margin-top:8px">No password to invent, no email to hand over.</div>
+   <div class="pnote">D13: account before the first render. Sign in with Apple keeps that friction to one tap.</div>`,
+  m:['Account first, per D13.','One free room granted at signup, written to the credit ledger.','This screen is where R4 is at risk — nobody has seen it work yet.']},
+ {k:'photos',t:'Add a photo',h:()=>`<div class="pnav">Living room</div>
+   <div class="ph1">Add a photo</div>
+   <div class="psub">Stand back and get the whole room in — every wall, window and the floor. What the photo misses, we cannot protect.</div>
+   <div class="pslot" style="height:150px;border-style:solid;background:linear-gradient(140deg,#cfd6d2,#e8e4dd);border:0"></div>
+   ${D('u1')==='silent'?'':'<div class="pchips"><span class="pchip">+ another angle (optional)</span></div>'}
+   <div class="pwarn" style="color:var(--muted);border-color:var(--line);background:var(--quote)">Tip: include all four corners if you can.</div>
+   <div class="pbtn">Continue</div>
+   <div class="pnote">Round 5: one photo required. U1 decides whether we nudge for more.</div>`,
+  m:['One photo required, and we do not ask for more (U1: silent).','<strong>Framing instruction is the mitigation</strong> — the photo must cover everything we are expected to protect.','A room with no photo returns <code>no_photos</code>.','Over 12 MB returns <code>photo_too_large</code>.','<strong>Cost:</strong> a single photo makes depth estimation materially harder. See C4.']},
+ {k:'structure',t:'Structure found',h:()=>`<div class="pnav">Step 2 of 4</div>
+   <div class="ph1">Is this right?</div>
+   <div class="psub">We outlined what we found. Tap anything we got wrong before we start.</div>
+   <div class="pimg">${mask()}</div>
+   <div class="pchips"><span class="pchip on">Wall edges</span><span class="pchip on">Openings</span><span class="pchip on">Floor plane</span><span class="pchip">Colour · free</span></div>
+   <div class="pbtn">Looks right</div><div class="pbtn ghost">Fix an outline</div>`,
+  m:['<strong>The screen no competitor has.</strong> R2 — and after round 7 it does more work than that.',
+     'The user is now the validator: detection has to be <em>checkable</em>, not perfect.','D10b set the scope: <strong>geometry only</strong>. Where things are is locked; what they look like is free.','U2 decides how the protected area is drawn.']},
+ {k:'lowconf',t:'Low confidence',h:()=>`<div class="pnav">Step 2 of 4</div>
+   <div class="ph1">We are not certain</div>
+   <div class="psub">These photos are hard to read. We can continue, but the result may not match your room.</div>
+   <div class="pimg">${mask()}</div>
+   <div class="pwarn">Confidence 0.42 — below our threshold</div>
+   <div class="pbtn">Continue anyway</div><div class="pbtn ghost">Add a clearer photo</div>`,
+  m:['This is C3, the accepted risk, on screen.','D11 chose to proceed with a warning rather than block.','It breaks R5 in spirit: we are unsure, we say so, and we continue anyway.','<strong>If C3 is ever revisited, this screen becomes the fix.</strong>']},
+ {k:'keep',t:'Keep furniture',h:()=>`<div class="pnav">Step 3 of 4</div>
+   <div class="ph1">Anything staying?</div>
+   <div class="psub">Tap what you brought with you. We will design around it.</div>
+   <div class="pimg"><div class="pmask">
+     <i style="left:8%;bottom:12%;width:44%;height:34%;border-style:solid"></i>
+     <i style="right:8%;bottom:14%;width:26%;height:44%;border-style:dashed;background:transparent"></i></div></div>
+   <div class="pchips"><span class="pchip on">Sofa · keeping</span><span class="pchip">Bookshelf</span></div>
+   <div class="pbtn">Continue</div>`,
+  m:['D4 and R6. Tapped items go into <code>keep_items</code> on the render request.','Matters because C1 defined the user as a new mover carrying old furniture.']},
+ {k:'style',t:'Pick a style',h:()=>D('u4')==='chips'
+   ? `<div class="pnav">Step 4 of 4</div><div class="ph1">Pick a direction</div>
+      <div class="pchips"><span class="pchip on">Warm minimal</span><span class="pchip">Mid-century</span><span class="pchip">Scandi</span><span class="pchip">Japandi</span><span class="pchip">Cottage</span></div>
+      <div class="pslot" style="height:52px">Anything else? (optional)</div>
+      <div class="pbtn">Render</div>`
+   : `<div class="pnav">Step 4 of 4</div><div class="ph1">Pick a direction</div>
+      <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:10px">
+        <div style="flex:none;width:96px"><div class="pimg" style="height:78px;margin-bottom:4px"></div><div style="font-size:11px;font-weight:600">Warm minimal</div></div>
+        <div style="flex:none;width:96px"><div class="pimg" style="height:78px;margin-bottom:4px"></div><div style="font-size:11px">Mid-century</div></div>
+        <div style="flex:none;width:96px"><div class="pimg" style="height:78px;margin-bottom:4px"></div><div style="font-size:11px">Scandi</div></div></div>
+      <div class="pslot" style="height:52px">Anything else? (optional)</div>
+      <div class="pbtn">Render</div>`,
+  m:['D5 chose presets plus optional words. U4 chose image cards.','<strong>Samples are stock images, not previews of your room</strong> (round 5). They cost nothing per user and add no wait.','Free text goes to the model but can never unlock the mask.','Costs one credit per room, three restyles included (D14).']},
+ {k:'render',t:'Rendering',h:()=>`<div class="pnav">Working</div>
+   <div class="ph1">Making it</div>
+   <div class="psub">Usually under a minute.</div>
+   <div class="pimg" style="display:flex;align-items:center;justify-content:center;color:#6b6b66;font-size:11px">generating…</div>
+   <div class="pchips"><span class="pchip on">Structure locked</span><span class="pchip">Painting</span></div>
+   <div class="pnote">TR1: under 60 seconds at p95. T4 decides whether this screen polls or is pushed to.</div>`,
+  m:['Queued job. Client learns of completion per T4.','If the image model dies here: two retries, then <code>render_failed</code> and the credit comes back.']},
+ {k:'verify',t:'Compare',h:()=>D('u3')==='stack'
+   ? `<div class="pnav">Done</div><div class="ph1">Same room</div>
+      <div style="font-size:10.5px;color:#6b6b66;margin-bottom:4px">Before</div>
+      <div class="pimg" style="height:96px"></div>
+      <div style="font-size:10.5px;color:#6b6b66;margin-bottom:4px">After</div>
+      <div class="pimg" style="height:96px"></div>
+      <div class="pchips"><span class="pchip on">Structure kept 94%</span></div>
+      <div class="pbtn">Save</div>`
+   : `<div class="pnav">Done</div><div class="ph1">Same room</div>
+      <div class="psub">Drag to check nothing moved.</div>
+      <div class="pimg" style="height:170px">
+        <div style="position:absolute;inset:0 50% 0 0;background:linear-gradient(140deg,#b9c2bd,#d6d2cb)"></div>
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:2px;background:#fff"></div>
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#fff"></div></div>
+      <div class="pchips"><span class="pchip on">Structure kept 94%</span><span class="pchip">Restyle again · 2 left</span></div>
+      <div class="pbtn">Save</div>`,
+  m:['<strong>Where the promise is proven.</strong> R2, D3 and U3.','The fidelity score is shown, not hidden — it is the number on the dashboard too.','Restyle returns to the style screen. That loop is where people decide they like this.']},
+];
+let CUR=0;
+function drawScreens(){
+  $('#screens').innerHTML=SCREENS.map((s,i)=>
+    `<button class="schip ${i===CUR?'on':''}" data-i="${i}">${i+1}. ${s.t}</button>`).join('');
+  $('#pbody').innerHTML=SCREENS[CUR].h();
+  $('#pmeta').innerHTML=`<h4>${SCREENS[CUR].t}</h4><ul>${SCREENS[CUR].m.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  document.querySelectorAll('.schip').forEach(b=>b.onclick=()=>{CUR=+b.dataset.i;drawScreens()});
+}
+
+const SETTLED={
+ d1:['Primary user','Just moved in'], c1:['User refinement','Brings furniture from the last place'],
+ d2:['Upload','2-3 photos of the same room'], d12:['Capture','Freeform upload'],
+ d3:['Proof','Before/after slider'], d4:['Existing furniture','User taps items to keep'],
+ d5:['Style input','Presets plus optional words'], d10:['Structure scope','Walls, windows, doors, ceiling, built-ins, flooring, fixtures'],
+ d11:['Low confidence','Proceed with a warning'], d6:['Free tier','3 free renders, no card'],
+ d14:['Credit unit','One room, 3 restyles'], d13:['Account','Before the first render'],
+ d7:['Platform','iOS native'], c2:['Baseline','iOS client, containerised backend'],
+ d9:['Success metric','Structure fidelity rate'], d8:['Exclusions','7 features out of v1'],
+ c3:['Fidelity chain','Accepted as-is']};
+function renderSettled(){
+  const rows=Object.entries(SETTLED).filter(([k])=>S.decisions[k]!==undefined);
+  $('#settled').innerHTML=rows.length?'<table class="t"><tr><th>ID</th><th>Decision</th><th>Answer</th></tr>'+
+    rows.map(([k,[q,a]])=>`<tr><td><strong>${k.toUpperCase()}</strong></td><td>${q}</td><td>${a}</td></tr>`).join('')
+    +'</table>':'<p>None recorded yet.</p>';
+}
+
+/* ---------- toc ---------- */
+function buildToc(){
+  let last='';
+  $('#toc').innerHTML=[...document.querySelectorAll('main section')].map(s=>{
+    let out='';
+    if(s.dataset.group!==last){out+=`<div class="grp">${s.dataset.group}</div>`;last=s.dataset.group}
+    return out+`<a href="#${s.id}" data-id="${s.id}">${s.dataset.title}</a>`}).join('');
+  const links=[...document.querySelectorAll('#toc a')];
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){
+      links.forEach(l=>l.classList.toggle('on',l.dataset.id===e.target.id)); }});
+  },{rootMargin:'-84px 0px -70% 0px'});
+  document.querySelectorAll('main section').forEach(s=>io.observe(s));
+}
+
+/* ---------- decisions ---------- */
+function groups(){return [...document.querySelectorAll('[data-radio],[data-check]')]}
+function renderDecisions(){
+  const gs=groups(); let done=0;
+  $('#dlist').innerHTML=gs.map(g=>{
+    const id=g.dataset.radio||g.dataset.check, blk=g.closest('.d');
+    const ch=[...g.querySelectorAll('input:checked')];
+    if(ch.length) done++;
+    const val=ch.map(i=>i.closest('label').querySelector('.oh').textContent).join(', ');
+    return `<div class="dr ${ch.length?'done':'todo'}" data-goto="${blk.dataset.anchor}">
+      <span class="dot"></span><span class="dn">${id.toUpperCase()}</span>
+      <span class="dv">${esc(val||'not decided')}</span></div>`}).join('');
+  $('#dprog').textContent=`${done} of ${gs.length} decided`;
+  $('#dbar').style.width=(done/gs.length*100)+'%';
+  const settled=Object.keys(SETTLED).filter(k=>S.decisions[k]!==undefined).length;
+  $('#dcount').textContent=`${settled} settled · ${done}/${gs.length} open decided · `+
+    `${S.comments.filter(c=>c.status==='queued').length} queued`;
+  document.querySelectorAll('.dr').forEach(r=>r.onclick=()=>{
+    const el=document.querySelector(`[data-anchor="${r.dataset.goto}"]`);
+    if(!el)return; el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash')});
+  const open=gs.filter(g=>!g.querySelector('input:checked'));
+  $('#opensum').innerHTML = open.length
+    ? '<ul>'+open.map(g=>{const b=g.closest('.d');
+        return `<li><strong>${(g.dataset.radio||g.dataset.check).toUpperCase()}</strong> — ${esc(b.querySelector('.q').textContent.split('—').slice(1).join('—').trim())}</li>`}).join('')+'</ul>'
+    : '<p>Nothing open. Every decision in this document is answered.</p>';
+}
+function renderQueue(){
+  const q=S.comments.filter(c=>c.status==='queued');
+  $('#send').textContent=`Confirm & send round ${ROUND}`+(q.length?` — ${q.length} comment${q.length===1?'':'s'}`:'');
+  $('#queue').innerHTML=q.length?q.map(c=>
+    `<div class="qi"><button class="qx" data-id="${c.id}">×</button>
+     <div class="qa">${esc(c.anchorLabel)}</div>${esc(c.text)}</div>`).join('')
+    :'<div class="empty">No comments.<br>Hover any block and hit <em>comment</em>.</div>';
+  document.querySelectorAll('.qx').forEach(b=>b.onclick=async()=>{
+    const r=await post('/api/comment/delete',{id:b.dataset.id});
+    S.comments=r.comments; renderQueue(); markAnchors(); renderDecisions()});
+}
+function markAnchors(){
+  document.querySelectorAll('[data-anchor]').forEach(el=>{
+    const has=S.comments.some(c=>c.anchor===el.dataset.anchor&&c.status==='queued');
+    const b=el.querySelector(':scope > .cbtn');
+    if(b){b.classList.toggle('has',has); b.textContent=has?'commented':'comment'}});
+}
+
+/* ---------- comments ---------- */
+let target=null;
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.cbtn');
+  if(!btn){ if(!e.target.closest('#pop')) $('#pop').style.display='none'; return }
+  const el=btn.closest('[data-anchor]');
+  target={anchor:el.dataset.anchor,label:el.dataset.label,
+          text:(el.querySelector('h2,.q')||{}).textContent||''};
+  const p=$('#pop'),r=btn.getBoundingClientRect();
+  $('#popanchor').textContent=target.label; $('#poptext').value='';
+  p.style.display='block';
+  p.style.top=(window.scrollY+r.bottom+8)+'px';
+  p.style.left=Math.max(12,Math.min(r.right-328+window.scrollX,document.body.clientWidth-340))+'px';
+  $('#poptext').focus();
+});
+$('#popcancel').onclick=()=>$('#pop').style.display='none';
+$('#popadd').onclick=async()=>{
+  const t=$('#poptext').value.trim(); if(!t||!target)return;
+  const r=await post('/api/comment',{id:'c'+Date.now(),anchor:target.anchor,
+    anchorLabel:target.label,anchorText:target.text,text:t});
+  S.comments=r.comments; $('#pop').style.display='none';
+  renderQueue(); markAnchors(); renderDecisions(); toast('Queued — not sent yet')};
+$('#send').onclick=async()=>{
+  const r=await post('/api/send',{});
+  S.comments.forEach(c=>{if(c.status==='queued')c.status='sent'});
+  ROUND+=1; $('#round').textContent=`Round ${ROUND}`;
+  renderQueue(); markAnchors(); renderDecisions();
+  toast(`Round ${ROUND-1} sent — ${r.sent} comment${r.sent===1?'':'s'} + decisions`)};
+
+document.addEventListener('change',async e=>{
+  const i=e.target;
+  if(i.type==='radio'){S.decisions[i.name]=i.value; await post('/api/decision',{id:i.name,value:i.value})}
+  else if(i.type==='checkbox'){
+    const v=[...document.querySelectorAll(`input[name="${i.name}"]:checked`)].map(x=>x.value);
+    S.decisions[i.name]=v; await post('/api/decision',{id:i.name,value:v})}
+  else return;
+  document.querySelectorAll('label.opt').forEach(l=>l.classList.toggle('sel',l.querySelector('input').checked));
+  renderDecisions(); drawScreens(); toast('Saved')});
+
+/* ---------- boot ---------- */
+const dark=matchMedia('(prefers-color-scheme: dark)').matches;
+mermaid.initialize({startOnLoad:false,theme:dark?'dark':'neutral',securityLevel:'loose',
+  themeVariables:{fontFamily:'-apple-system,sans-serif',fontSize:'13px'},flowchart:{curve:'basis'}});
+
+fetch('/api/state').then(r=>r.json()).then(async st=>{
+  S.decisions=st.decisions||{}; S.comments=st.comments||[]; S.batches=st.batches||[];
+  ROUND=S.batches.length+1; $('#round').textContent=`Round ${ROUND}`;
+  for(const [k,v] of Object.entries(S.decisions))
+    (Array.isArray(v)?v:[v]).forEach(val=>{
+      const i=document.querySelector(`input[name="${k}"][value="${val}"]`); if(i)i.checked=true});
+  document.querySelectorAll('label.opt').forEach(l=>l.classList.toggle('sel',l.querySelector('input').checked));
+  post('/api/groups',{groups:groups().map(g=>g.dataset.radio||g.dataset.check)});
+  buildToc(); drawScreens(); renderQueue(); markAnchors(); renderDecisions(); renderSettled();
+  try{ await mermaid.run({nodes:[...document.querySelectorAll('pre.mermaid')]}) }
+  catch(e){ console.warn('mermaid',e) }
+});
+</script>
+</body>
+</html>
