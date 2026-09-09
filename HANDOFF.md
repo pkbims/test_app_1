@@ -21,6 +21,12 @@ Pipeline stages 1–4 are done. **The contract is frozen** — see `contract/ope
 generated from `backend/app/schemas.py` and `backend/app/main.py`. Nothing of the app
 itself is built yet; route bodies raise NotImplementedError on purpose.
 
+**Stage 5 (build) started 2026-09-09.** Two worker agents (Sonnet) in git worktrees:
+`backend` and `ios`. Briefs: `backend/AGENT.md`, `ios/AGENT.md`. Cross-cutting and
+contract questions go in `ORCH-QUESTIONS.md`. Backend started first; iOS follows once
+the backend has a running API. Orchestrator pushes and integrates; workers commit
+locally to their own branch only.
+
 | Artefact | Location |
 |---|---|
 | Research — 63 verbatim complaints, 45 people | `research/home-decorating.md` |
@@ -73,7 +79,9 @@ Full list with rationale and rejected options: `PRD.md` § "Decisions on record"
 ## Environment
 
 - **Xcode installed**, licence accepted. iOS work can start today.
-- **Docker NOT installed.** Backend can be written but not run. Homebrew not installed.
+- **Docker installed and running** (Desktop 4.90.0). `docker` + `docker compose` are
+  on PATH in a fresh login shell. Homebrew still not installed (not needed — Postgres
+  runs in Docker).
 - **OpenAI key** in `app_1/.env` as `OPENAI_API_KEY`. Gitignored. Never print it,
   never commit it, never paste it into chat.
 - Repos: `pkbims/test_app_1` (this) and `pkbims/building_apps` (pipeline + skills),
@@ -95,14 +103,15 @@ herdr worktree create --cwd ~/Documents/building_apps/app_1 --branch backend --l
 herdr agent start ios --kind claude --pane <pane-id>
 ```
 
-Give each a brief in `backend/AGENT.md` / `ios/AGENT.md` saying what it owns, what it
-must not touch, and what done looks like.
+Each brief is written: `backend/AGENT.md`, `ios/AGENT.md` — what it owns, what it must
+not touch, TDD, build order, and what done looks like.
 
 **The one rule that matters:** neither agent may change the contract. When one finds
 the contract wrong — and one will — it stops and asks. An agent that edits the
 contract unilaterally has silently forked the system.
 
-Start iOS first; Docker is still missing, so a backend agent cannot run anything yet.
+Docker now works, so this is no longer forced: backend starts first (schema + a
+running API), iOS ~30 min later against the live server.
 
 ## Working agreement with the user
 
