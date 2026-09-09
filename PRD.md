@@ -1,7 +1,7 @@
 # PRD — app_1
 
-Generated 2026-09-08 from `spec/index.html` and `spec/state.json`.
-9 review rounds · 35 decisions recorded · 24 decision points in the document.
+Generated 2026-09-09 from `spec/index.html` and `spec/state.json`.
+10 review rounds · 42 decisions recorded · 23 decision points in the document.
 
 > Generated file — do not edit by hand. Change the page or the decisions and re-run
 > `python3 spec/build_prd.py`. Evidence: `research/home-decorating.md`.
@@ -194,9 +194,11 @@ The loop that matters is **style → render → compare → style again**. D14 g
 
 ## 9. How we know it worked
 
-The headline metric is **geometric fidelity** — are the wall edges, window openings, door frames and ceiling line in the same places they were in the photo.
+The headline metric is **preservation rate** — of the architectural items the inventory found, how many are still present and in the same place in the result.
 
-> **Why geometric and not pixel similarity:** a pixel comparison punishes a repaint, so a successful restyle would score badly. Measuring geometry scores the promise and ignores the thing we are deliberately changing.
+> **How it is measured:** a vision call compares the two images against the inventory list and answers, item by item, present or not. Not a pixel comparison — the spike showed output is never aligned with input, so arithmetic is impossible. It is a judgement, made by a model, on a list we already have.
+
+> **Why not pixel similarity:** it would punish a successful repaint, and it cannot run at all on a reframed image.
 
 It is the right metric because it measures the promise directly rather than a proxy for it. If fidelity is high and nobody comes back, the idea was wrong. If fidelity is low, the execution is wrong. Most metrics cannot tell you which.
 
@@ -207,8 +209,16 @@ It is the right metric because it measures the promise directly rather than a pr
 > [!WARNING]
 > **The fidelity chain (C3).** D10 makes the widest promise available — walls, windows, doors, ceiling, built-ins, flooring and light fixtures. D12 supplies the weakest input, freeform photos. D11 renders anyway when confidence is low. Taken together this breaks **R5**. The failure is concrete: bad photos in, uncertain detection, a render ships with a small warning, and someone receives a room with a window that is not theirs — the exact complaint this product exists to fix, now with a disclaimer attached.Accepted deliberately in round 4 as the fastest route to shipping. The mitigation is that fidelity is the headline metric, so the cost lands on the dashboard instead of hiding. Revisit once there is real data.
 
+> **Updated 2026-09-09 after the spike.** Three of the risks below were bets on whether an approximate mask would hold up. There is no mask any more, so they resolve differently than expected — two shrink, one is disproven outright.
+
 > [!WARNING]
-> **C4 — one photo made the fidelity chain worse.** Round 5 dropped the 2-3 photo requirement, which is right for friction and wrong for accuracy. Depth estimation from a single photo is materially weaker than from several angles, because there is no parallax to work with. So the chain now reads: the widest promise (D10 — walls, windows, doors, ceiling, built-ins, flooring, fixtures), the weakest possible input (one freeform photo), and permission to ship anyway when unsure (D11). Every lever is now at its loosest setting, and **R1, R2 and R5 all depend on getting this right**.This is not an argument against one photo. It is an argument that one of the other two levers should move to pay for it.
+> **T11 — disproven, not accepted.** The plan was to trust the model's mask. Testing showed the mask does not preserve anything: the region marked for protection was deleted, and measured pixel change inside it was *higher* than outside. Compositing the original back is equally unavailable, since output is never aligned with input. The mask is gone from the architecture entirely.
+
+> [!WARNING]
+> **C3 and C4 — substantially reduced.** Both were about a wide promise resting on weak input and a permissive failure path. With architecture named explicitly in the prompt, a single photo proved sufficient on a genuinely hard room. The residual risk is no longer "will the mask hold" but "will the inventory list everything" — which is what T14 addresses, and which the user can see and correct.
+
+> [!WARNING]
+> **New — the camera moves.** Output framing shifts slightly from input; the crop tightens. Everything stays correct relative to everything else. Consequences: no wipe-slider comparison (U3's stacked layout already avoids this), and preservation must be judged by a vision call rather than computed. Not fixable by prompt; it follows from the API's fixed output sizes.
 
 **C4 — Which lever moves to pay for the single photo?**
 
@@ -219,6 +229,15 @@ It is the right metric because it measures the promise directly rather than a pr
 
 > [!WARNING]
 > **T11 — the mask is not enforced.** T10 chose OpenAI, whose mask is documented as "followed loosely" over a whole-image recreation. T11 chose to trust it rather than paste the original pixels back afterwards. The product's central promise therefore has no mechanism behind it beyond the vendor's best effort and the user's confirmation at the outline step. Decided in round 7 with the limitation known. Compositing remains available later at roughly twenty lines of code, and would convert the promise from hoped-for to guaranteed without changing any other decision.
+
+> [!WARNING]
+> **T14 — a wrong inventory is accepted.** The inventory is now the only thing protecting the room; there is no mask behind it. Anything it fails to list is silently unprotected, and the user is not asked to add what is missing. It listed all 13 items correctly on our test photo. Chosen in round 10 for speed. The cheap fix later is one line on the confirm screen — "anything we missed?" — which would turn that screen into a real check.
+
+> [!WARNING]
+> **F3 — no CI/CD for the client.** The app is built locally. The series baseline in CLAUDE.md requires CI/CD, so this is a deliberate hole in the thing the series exists to demonstrate. The backend keeps its full pipeline; only the iOS half is exempt. Revisit before any release that is not to your own device.
+
+> [!WARNING]
+> **F5 — unit tests only on the client.** Snapshot tests were declined. Those are the ones that catch the outline overlay being drawn in the wrong place on the confirm screen — a failure no unit test can see, on the screen the product depends on.
 
 > [!WARNING]
 > **Account before first render (D13).** Sits against **R4**, though round 5 softened it considerably: Sign in with Apple is one tap with no password and no email handed over. The friction is now small enough that this is close to retired as a risk.
@@ -291,18 +310,20 @@ sequenceDiagram
   A-->>U: done, before/after
 ```
 
-### The structure lock
+### How we keep the room
 
-*This is the product. If this is wrong, nothing else matters.*
+*Validated by experiment on 2026-09-09. See "What the spike proved" below.*
 
-Competitors hand the whole photo to an image model and ask for a redesign. The model redraws everything, walls included, because nothing stopped it. We insert four steps before generation:
+Competitors hand the whole photo to an image model and ask for a redesign. The model redraws everything, walls included, because nothing told it what was in the room. We do two calls instead of one:
 
-1. **Depth** — how far away every pixel is, which gives the shape of the room.
-2. **Segmentation** — label every pixel: wall, window, door, floor, ceiling, light, furniture.
-3. **Protected mask** — the geometry covered by D10b becomes locked: edges and openings, not whole painted surfaces.
-4. **Fidelity score** — compare structure in the output against the input. That number is the success metric.
+1. **Inventory** — a vision call lists everything in the photo: fixed architecture (fireplace, mantel, alcove, ceiling step, flooring, switches, walls) and moveable objects (lamp, TV, cabinet, decor). Each gets a letter and two texts: a short name for the user, and a precise positional description for the image model.
+2. **Confirm** — the user sees the letters on their photo and taps whatever they want removed. Everything else stays by default.
+3. **Generate** — one image call whose prompt names every architectural item verbatim under "must remain exactly where they are", the kept objects under "keep, in the same positions", and the tapped ones under "remove entirely".
 
-> **Why this beats them:** they ask a model nicely to keep your room. We make it unable to change it.
+> **Why it works:** the model does not fail from unwillingness, it fails from not knowing what is in the picture. Naming *"deep rectangular wall alcove centred above and to the right of the fireplace"* is enough. Naming nothing is not.
+
+> [!WARNING]
+> **What it does not fix.** The camera framing still shifts slightly between input and output. Everything stays in the right place relative to everything else, but the crop tightens. No prompt wording has fixed this, and it is a property of the API's fixed output sizes.
 
 **D10b — Reopening D10: what does "structure" protect?**
 
@@ -312,9 +333,9 @@ Competitors hand the whole photo to an image model and ask for a redesign. The m
   · Geometry plus built-ins — As above, but fireplaces, cabinetry and radiators keep their form too. Their surfaces can still change.
   · Keep D10 as it is — Everything architectural stays exactly as photographed. Safest promise, and the restyle is furniture-only.
 
-**T7 — How do we find the structure?**
+**T7 — How do we find the structure? superseded**
 
-*Accuracy here caps the whole product. TR3 requires a confidence number out of it.*
+*Answered by the spike instead: structure is found by the vision inventory call, not by depth and segmentation models. Kept for the record; the options below are no longer live.*
 
 **→** **Depth model + segmentation model** — Best accuracy, two models to run, slowest and priciest per render.
   · Segmentation only — One model. Good on walls and windows, weak on flooring — which D10 promised.
@@ -359,22 +380,18 @@ Competitors hand the whole photo to an image model and ask for a redesign. The m
 
 *C2 committed to an iOS client. This decides in what.*
 
-  · Swift + SwiftUI — Native, no bridge, best camera and image performance. Canvas and gestures are first class, which matters for the outline screen. iOS only — a web version later means writing it twice.
+**→** **Swift + SwiftUI** — Native, no bridge, best camera and image performance. Canvas and gestures are first class, which matters for the outline screen. iOS only — a web version later means writing it twice.
   · Swift + UIKit — More control over custom drawing and touch handling, more code for everything else. Only worth it if SwiftUI's canvas proves insufficient.
   · React Native — One codebase for a future web or Android version, and TypeScript types shared with the backend. Image editing and gesture work is where React Native is weakest, and that is our hardest screen.
   · Flutter — Excellent custom drawing, one codebase. A third language in the project, and Dart on top of Python and Swift.
-
-> **Not yet decided.**
 
 **F2 — How does the outline screen work?**
 
 *T12 chose vision outlines only, which are approximate. Whether the user can fix them is a client decision, and it is the difference between R2 being real and being a claim.*
 
   · Show only — confirm or reject — Simplest. If the outlines are wrong the only option is a different photo.
-  · Tap regions on and off — The user removes wrong outlines and marks what to delete. No dragging, most of the value.
+**→** **Tap regions on and off** — The user removes wrong outlines and marks what to delete. No dragging, most of the value.
   · Drag the vertices — Full correction. The strongest answer to T12's accuracy gap, and by far the most client work.
-
-> **Not yet decided.**
 
 **F3 — How does the app get built and shipped?**
 
@@ -382,29 +399,23 @@ Competitors hand the whole photo to an image model and ask for a redesign. The m
 
   · GitHub Actions on a macOS runner — Same CI as the backend, one place to look. macOS minutes cost roughly ten times Linux, and certificate handling is the fiddliest part of the whole series.
   · Xcode Cloud — Apple's own, signing handled for you, TestFlight built in. A second CI system to explain on video.
-  · Build locally for now — Fastest to start and honest about it, but it leaves a hole in the baseline the series exists to demonstrate.
-
-> **Not yet decided.**
+**→** **Build locally for now** — Fastest to start and honest about it, but it leaves a hole in the baseline the series exists to demonstrate.
 
 **F4 — Networking and state**
 
 *T4 chose polling every 2 seconds, so the client owns a small state machine per render.*
 
-  · URLSession + async/await, hand-written — No dependencies, and the API is small enough that a client is a few hundred lines.
+**→** **URLSession + async/await, hand-written** — No dependencies, and the API is small enough that a client is a few hundred lines.
   · Generate the client from an OpenAPI spec — FastAPI emits OpenAPI for free, so the contract in this document becomes compiled code on both sides. Fits stage 4 exactly.
-
-> **Not yet decided.**
 
 **F5 — What of the baseline does the client carry?**
 
 *C2 put the baseline in the backend, but an app cannot have zero. Health checks and Docker do not apply; tests and crash reporting do.*
 
-  · Unit tests on the render state machine — The polling and retry logic is where client bugs will live.
+**→** **Unit tests on the render state machine** — The polling and retry logic is where client bugs will live.
   · Snapshot tests on the outline overlay — Catches the mask drawing in the wrong place, which is invisible to every other test.
   · Crash and error reporting — The client half of "error tracking" in the baseline.
   · Client-side funnel events — Signup to first render is a dashboard metric and the backend cannot see where people drop out before uploading.
-
-> **Not yet decided.**
 
 ## 14. Which models, and why
 
@@ -428,56 +439,37 @@ We do not need "image editing". We need **a model that accepts a mask and leaves
 
 > **The trap:** "AI image editing" and "mask-respecting inpainting" sound like the same feature and are not. Nano Banana is the best-marketed model in this space and cannot do the one thing this product is built on.
 
-### The chosen architecture — round 7
+### What the spike proved
 
-One vendor, no GPU, no self-hosted models. OpenAI does both jobs:
+*Five image edits and one vision call on a real living room photo. About 12 cents.*
 
-1. **Identify** — a vision call returns the objects and surfaces it can see, with outlines.
-2. **Confirm** — we draw those outlines on the photo and the user says whether they are right.
-3. **Choose** — the user taps what stays. That becomes `keep_items`.
-4. **Generate** — an image edit call with the mask, the kept items, and the style.
-
-> **The good part, and it is genuinely good:** step 2 makes the user the validator. Detection no longer has to be right on its own — it has to be *checkable*. That is a better answer to R2 than anything proposed earlier, and it partly repairs C3 and C4, because a human catches the bad mask before a render is ever paid for.
+| Experiment | Result |
+| --- | --- |
+| Prompt only, architecture named by hand | **Worked.** Fireplace, mantel, alcove, ceiling step, flooring, thermostat all preserved. Restyle was good. |
+| Same, with the photo padded to the API's aspect ratio | Worse. Camera pushed in, alcove proportions drifted, furniture invented. |
+| Prompt plus a mask protecting the fireplace | **Catastrophic.** The masked region was deleted — fireplace replaced with a plain wall. Measured: the protected area changed *more* than the editable one, 78% of pixels against 52%. |
+| Two-stage: vision inventory, then generate from it | **Worked, and removals worked.** Architecture preserved, the two items marked for removal gone, nothing else touched. |
 
 > [!WARNING]
-> **What it does not fix.** A vision model returns approximate regions, not pixel-accurate edges. That is fine for a sofa and not fine for a wall: an outline that is off by twenty pixels lets the generator repaint a strip of real wall. And with T11 set to trust the model's mask, nothing downstream catches that — OpenAI's documentation describes its mask as "followed loosely", a soft mask over a whole-image recreation. Net effect: the promise in R1 rests on a vendor behaviour documented as approximate. The mitigation currently in place is the user's own eyes at step 2, plus the fidelity metric reporting the damage afterwards.
+> **Masking is not a mechanism here.** OpenAI's edit endpoint regenerates the whole scene rather than painting into the original. The mask influences and does not enforce, and on our test it actively marked the protected region for replacement. Compositing the original pixels back is also ruled out, because the output is never aligned with the input.
 
-**T12 — How do we get edges accurate enough for walls?**
+> **What replaced it:** the vision call produces *words*, not a stencil. That is the whole change, and it makes the system simpler — two API calls, one list, no image manipulation.
 
-*Boxes work for furniture. Architecture needs pixels. This is the gap left by round 7.*
+**T13 — How much does the inventory list?**
 
-**→** **Vision outlines only** — Simplest, one vendor, ship soonest. Wall edges will be approximate and some renders will bleed.
-  · Vision for objects, segmentation for structure — OpenAI names the furniture; a free ADE20K model draws pixel-exact walls, floor and windows. Two systems, but each doing what it is good at.
-  · Let the user drag the edges — Confirm step becomes correctable. No extra model, and it turns the weakness into the trust moment.
+*Our test returned 13 items for one room. Every extra item is another thing to name in the prompt and another chip on the confirm screen.*
 
-### If we need real pixel accuracy later
+  · Everything it can see — Most faithful preservation, busiest screen. 13 chips on a phone is a lot.
+**→** **All architecture, only large objects** — Architecture is the promise so it is always listed; small decor is restyled freely without asking.
+  · All architecture, plus anything removable — The user can only act on removable things, so only show those. Architecture stays in the prompt but off the screen.
 
-*Not required by the round 7 architecture. Here if T12 goes hybrid.*
+**T14 — What if the inventory is wrong?**
 
-| Job | Model | Licence | Note |
-| --- | --- | --- | --- |
-| Depth | **Depth Anything V2 — Small** | Apache-2.0 — commercial use fine | 25M parameters, runs cheaply. Not needed if T12 stays vision-only. |
-| Depth | Depth Anything V2 Base / Large / Giant | **CC-BY-NC-4.0 — commercial use prohibited** | A trap. The good ones are the ones you cannot use. |
-| Labels | **Mask2Former trained on ADE20K** | Open source | ADE20K's 150 classes include wall, floor, ceiling, window and door — exactly our protected list. |
-| Boundaries | SAM 2 | Apache-2.0 — commercial fine | Superb edges, but **no semantic labels** — it finds shapes without knowing which is a wall. Optional refinement, not a replacement. |
+*It listed all 13 correctly on our photo. It will not always. A missed architectural feature is one the prompt never protects.*
 
-> **In plain words:** ADE20K segmentation says "these pixels are a wall". Depth Anything says "this wall is 3 metres away". SAM 2 can sharpen the edges. Only the first is strictly required.
-
-**T10 — Which generation model?**
-
-*All of these become safe once we enforce the mask ourselves. Without that step, only the bottom two are honest choices.*
-
-**→** **OpenAI gpt-image-1.5** — Cheapest to start, one API key, no GPU. Soft masking, fixed by our compositing step.
-  · Google Imagen on Vertex — Real mask-based inpainting from a hosted API. More setup than OpenAI, better mask behaviour.
-  · Self-hosted Stable Diffusion 3.5 — Free under $1M revenue, total control, depth ControlNet included. Needs a 24 GB GPU and matches your original T1 answer.
-  · Hosted now, keep the seam — Start on an API, put one interface in front of it, move to self-hosted when the bill or the quality demands it.
-
-**T11 — Do we composite the protected pixels back ourselves?**
-
-*This is the single most consequential technical decision in the document.*
-
-  · Yes — always paste the original back — Structure preservation becomes guaranteed rather than hoped for, and any model becomes usable. Costs a feathering step to hide seams.
-**→** **No — trust the model's mask** — Simpler, more natural-looking blends, and it puts the product's only promise in a vendor's hands.
+**→** **Accept it** — Ship what the model saw. Cheapest, and a missed feature is silently unprotected.
+  · Let the user add what's missing — "Something we missed?" — they type or tap it. Turns the confirm screen into a real check.
+  · Run the inventory twice and merge — Catches misses automatically, costs a second vision call, and still misses what both runs miss.
 
 ## 15. What we store
 

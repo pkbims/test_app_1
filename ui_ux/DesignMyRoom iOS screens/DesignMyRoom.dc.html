@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#EDEAE3;-webkit-font-smoothing:antialiased}
+a{color:#16150F;text-decoration:underline;text-underline-offset:2px}
+a:hover{color:#6E6A5F}
+@keyframes sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes pulseDot{0%,100%{opacity:.25}50%{opacity:1}}
+::-webkit-scrollbar{width:0;height:0}
+</style></helmet>
+
+<div style="font-family:-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif;color:#16150F;padding:44px 40px 80px;max-width:1560px;margin:0 auto">
+
+  <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid #D8D4CA;padding-bottom:26px">
+    <div style="max-width:620px">
+      <div style="font:500 10.5px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;color:#8A857A">DESIGNMYROOM · IOS · WORKING TITLE</div>
+      <h1 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:52px;line-height:1.02;margin:14px 0 10px;letter-spacing:-.01em">It&rsquo;s still your room.</h1>
+      <p style="margin:0;font-size:14.5px;line-height:1.55;color:#57534A;text-wrap:pretty">Eight screens plus six edge states, clickable in the frame. The four decisions the PRD leaves open (U2, F2, U3, U4) are switchable above the phone and compared side by side at the bottom.</p>
+    </div>
+    <div style="display:flex;gap:34px;font:500 10.5px/1.7 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;color:#8A857A">
+      <div><div style="color:#16150F;font-size:22px;font-family:'Instrument Serif',Times,serif;letter-spacing:0">14</div>SCREENS</div>
+      <div><div style="color:#16150F;font-size:22px;font-family:'Instrument Serif',Times,serif;letter-spacing:0">4</div>OPEN DECISIONS</div>
+      <div><div style="color:#16150F;font-size:22px;font-family:'Instrument Serif',Times,serif;letter-spacing:0">1</div>PHOTO REQUIRED</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:#D8D4CA;border:1px solid #D8D4CA;margin:26px 0 34px">
+    <div style="background:#F6F4EF;padding:18px 20px 20px">
+      <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#8A857A;margin-bottom:9px">TAKEN AS SETTLED</div>
+      <p style="margin:0;font-size:13px;line-height:1.5;color:#57534A">Geometry-only lock (D10b), one photo and no nagging for more (U1 silent), account first via Apple (D13), one free room and three restyles (D14), tap regions on/off (F2), fidelity shown not hidden.</p>
+    </div>
+    <div style="background:#F6F4EF;padding:18px 20px 20px">
+      <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#8A857A;margin-bottom:9px">THE AESTHETIC I PICKED</div>
+      <p style="margin:0;font-size:13px;line-height:1.5;color:#57534A">Editorial and quiet: warm paper, one ink, Instrument Serif for the sentences that carry the promise, system sans for anything you tap, monospace for anything the machine is asserting. Colour appears only in the overlays &mdash; so colour <em>means</em> &ldquo;protected&rdquo;.</p>
+    </div>
+    <div style="background:#F6F4EF;padding:18px 20px 20px">
+      <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#8A857A;margin-bottom:9px">THE ALTERNATIVE, IF YOU WANT IT</div>
+      <p style="margin:0;font-size:13px;line-height:1.5;color:#57534A">A surveyor&rsquo;s aesthetic &mdash; mono-first, measurements visible, outlines drawn like a survey rather than a design app. It makes the promise feel audited instead of tasteful. Say the word and I&rsquo;ll build it beside this.</p>
+    </div>
+    <div style="background:#F6F4EF;padding:18px 20px 20px">
+      <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#8A857A;margin-bottom:9px">PLACEHOLDERS</div>
+      <p style="margin:0;font-size:13px;line-height:1.5;color:#57534A">No photography yet, so every room is a labelled plate with the detected geometry drawn on it at true position. Drop real photos in and the overlays sit on top unchanged.</p>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">
+
+    <div style="flex:1 1 300px;min-width:280px;position:sticky;top:20px">
+      <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#8A857A;margin-bottom:11px">SCREEN</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:26px">
+        <sc-for list="{{ screens }}" as="s" hint-placeholder-count="14">
+          <button onClick="{{ s.go }}" style="{{ s.css }}">{{ s.label }}</button>
+        </sc-for>
+      </div>
+      <sc-for list="{{ decisions }}" as="d" hint-placeholder-count="4">
+        <div style="margin-bottom:22px">
+          <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#8A857A;margin-bottom:4px">{{ d.id }} &nbsp;{{ d.q }}</div>
+          <div style="font-size:12px;line-height:1.45;color:#8A857A;margin-bottom:8px">{{ d.note }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ d.options }}" as="o" hint-placeholder-count="3">
+              <button onClick="{{ o.pick }}" style="{{ o.css }}">{{ o.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:14px">
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="402px" height="874px" hint-size="402px,874px">
+
+        <div style="height:100%;box-sizing:border-box;background:#F6F4EF;display:flex;flex-direction:column;padding:64px 22px 34px;font-family:-apple-system,'Helvetica Neue',Helvetica,sans-serif;color:#16150F;overflow:hidden">
+
+          <sc-if value="{{ s_signin }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;display:flex;flex-direction:column">
+              <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:#8A857A;margin-top:14px">DESIGNMYROOM</div>
+              <h2 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:44px;line-height:1.03;margin:20px 0 14px;letter-spacing:-.01em">Restyle your room,<br>not somebody else&rsquo;s.</h2>
+              <p style="margin:0;font-size:16px;line-height:1.5;color:#57534A;text-wrap:pretty">We find your walls, windows, doors and floor first, and lock them. Colour, finish and furniture change. The room does not.</p>
+              <div style="margin:26px 0 0;position:relative;border-radius:16px;overflow:hidden;border:1px solid #E0DCD2">
+                <div style="position:relative;background:#DCD8CF;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.055) 0 5px,rgba(22,21,15,0) 5px 11px)">
+                  <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto">
+                    <sc-for list="{{ surfacesBefore }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.86"></polygon></sc-for>
+                    <sc-for list="{{ heroRegions }}" as="r" hint-placeholder-count="6"><polygon points="{{ r.points }}" fill="{{ r.fill }}" stroke="{{ r.stroke }}" stroke-width="2" stroke-linejoin="round"></polygon></sc-for>
+                  </svg>
+                </div>
+                <div style="position:absolute;left:10px;bottom:9px;font:500 9px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:5px 7px;border-radius:4px">STRUCTURE LOCKED &middot; 6 EDGES</div>
+              </div>
+              <div style="flex:1"></div>
+              <button onClick="{{ goPhoto }}" style="width:100%;height:54px;border:0;border-radius:15px;background:#16150F;color:#F6F4EF;font:600 17px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="opacity:.88">Sign in with Apple</button>
+              <p style="margin:14px 0 0;text-align:center;font-size:12.5px;line-height:1.5;color:#8A857A">One free room, three restyles, no card.<br>We never move your walls.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s_photo }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+              <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:#8A857A">STEP 1 OF 4</div>
+              <h2 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:36px;line-height:1.06;margin:12px 0 10px">One photo of the room.</h2>
+              <p style="margin:0 0 20px;font-size:15px;line-height:1.5;color:#57534A">That&rsquo;s all we ask for. What the photo misses, we can&rsquo;t protect &mdash; so make it a wide one.</p>
+              <div style="border:1px dashed #C9C4B7;border-radius:16px;padding:26px 20px;text-align:center;background:#FBFAF7;cursor:pointer" onClick="{{ goConfirm }}" style-hover="background:#FFFFFF;border-color:#8A857A">
+                <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.12em;color:#8A857A">TAP TO CHOOSE A PHOTO</div>
+                <div style="font-family:'Instrument Serif',Times,serif;font-size:26px;margin-top:10px">Living room</div>
+              </div>
+              <div style="margin-top:22px;display:flex;flex-direction:column;gap:0">
+                <sc-for list="{{ framing }}" as="f" hint-placeholder-count="3">
+                  <div style="display:flex;gap:12px;padding:13px 0;border-top:1px solid #E4E0D6">
+                    <div style="font:500 10px/1.6 ui-monospace,Menlo,monospace;color:#8A857A;flex:0 0 16px">{{ f.n }}</div>
+                    <div style="font-size:14px;line-height:1.45;color:#16150F">{{ f.t }}<span style="color:#8A857A"> {{ f.s }}</span></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="flex:1"></div>
+              <button onClick="{{ goConfirm }}" style="width:100%;height:54px;border:0;border-radius:15px;background:#16150F;color:#F6F4EF;font:600 17px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="opacity:.88">Take a photo</button>
+              <button onClick="{{ goConfirm }}" style="width:100%;height:48px;margin-top:8px;border:0;border-radius:15px;background:transparent;color:#16150F;font:500 15px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="background:#EDEAE3">Choose from library</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s_detect }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+              <div style="display:flex;align-items:center;gap:9px">
+                <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:#8A857A">STEP 2 OF 4</div>
+                <div style="height:1px;flex:1;background:#E4E0D6"></div>
+                <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:{{ confColor }}">{{ confLabel }}</div>
+              </div>
+              <h2 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:34px;line-height:1.06;margin:12px 0 8px">{{ detectTitle }}</h2>
+              <p style="margin:0 0 16px;font-size:14.5px;line-height:1.5;color:#57534A;text-wrap:pretty">{{ detectBody }}</p>
+
+              <div style="position:relative;border-radius:16px;overflow:hidden;border:1px solid #E0DCD2;background:#DCD8CF;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.055) 0 5px,rgba(22,21,15,0) 5px 11px)">
+                <svg viewBox="0 0 400 300" ref="{{ svgRef }}" onPointerMove="{{ onDragMove }}" onPointerUp="{{ onDragEnd }}" onPointerLeave="{{ onDragEnd }}" style="display:block;width:100%;height:auto;touch-action:none">
+                  <mask id="dimMain">
+                    <rect x="0" y="0" width="400" height="300" fill="#fff"></rect>
+                    <sc-for list="{{ protectedPolys }}" as="p" hint-placeholder-count="5"><polygon points="{{ p.points }}" fill="#000"></polygon></sc-for>
+                  </mask>
+                  <sc-for list="{{ surfacesBefore }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.86"></polygon></sc-for>
+                  <sc-if value="{{ isDim }}" hint-placeholder-val="{{ false }}">
+                    <rect x="0" y="0" width="400" height="300" fill="#14130F" opacity="0.62" mask="url(#dimMain)"></rect>
+                  </sc-if>
+                  <sc-for list="{{ regions }}" as="r" hint-placeholder-count="8">
+                    <polygon points="{{ r.points }}" fill="{{ r.fill }}" stroke="{{ r.stroke }}" stroke-width="{{ r.sw }}" stroke-dasharray="{{ r.dash }}" stroke-linejoin="round" onClick="{{ r.tap }}" style="cursor:pointer"></polygon>
+                  </sc-for>
+                  <sc-for list="{{ regionLabels }}" as="l" hint-placeholder-count="6">
+                    <text x="{{ l.x }}" y="{{ l.y }}" fill="{{ l.color }}" stroke="#14130F" stroke-width="3" paint-order="stroke" font-size="10" font-family="ui-monospace,Menlo,monospace" letter-spacing="0.6" text-anchor="middle">{{ l.t }}</text>
+                  </sc-for>
+                  <sc-for list="{{ handles }}" as="h" hint-placeholder-count="0">
+                    <circle cx="{{ h.x }}" cy="{{ h.y }}" r="6" fill="#F6F4EF" stroke="{{ h.color }}" stroke-width="2.5" onPointerDown="{{ h.grab }}" style="cursor:grab"></circle>
+                  </sc-for>
+                </svg>
+                <div style="position:absolute;left:10px;bottom:9px;display:flex;gap:6px">
+                  <div style="font:500 9px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:5px 7px;border-radius:4px">{{ plateBadge }}</div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:14px;margin:12px 0 2px;font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#8A857A">
+                <div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#00A97A;display:inline-block"></span>STRUCTURE</div>
+                <div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#D9871A;display:inline-block"></span>OBJECTS</div>
+                <sc-if value="{{ s_lowconf }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#C0442C;display:inline-block"></span>UNSURE</div>
+                </sc-if>
+              </div>
+
+              <div style="margin-top:10px;overflow-y:auto;min-height:0;flex:1">
+                <div style="font-size:12.5px;color:#8A857A;margin-bottom:8px">{{ chipsHint }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  <sc-for list="{{ chips }}" as="c" hint-placeholder-count="8">
+                    <button onClick="{{ c.tap }}" style="{{ c.css }}">{{ c.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="padding-top:12px">
+                <button onClick="{{ primaryTap }}" style="width:100%;height:54px;border:0;border-radius:15px;background:{{ primaryBg }};color:#F6F4EF;font:600 17px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="opacity:.88">{{ primaryLabel }}</button>
+                <button onClick="{{ secondaryTap }}" style="width:100%;height:44px;margin-top:6px;border:0;background:transparent;color:#57534A;font:500 14px/1 -apple-system,Helvetica,sans-serif;cursor:pointer;border-radius:12px" style-hover="background:#EDEAE3">{{ secondaryLabel }}</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s_style }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+              <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:#8A857A">STEP 4 OF 4</div>
+              <h2 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:34px;line-height:1.06;margin:12px 0 8px">Which direction?</h2>
+              <p style="margin:0 0 16px;font-size:14.5px;line-height:1.5;color:#57534A">Samples are other people&rsquo;s rooms &mdash; yours keeps its own shape.</p>
+              <div style="overflow-y:auto;min-height:0;flex:1;margin:0 -4px;padding:0 4px">
+                <sc-if value="{{ isCards }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <sc-for list="{{ styleCards }}" as="c" hint-placeholder-count="6">
+                      <div onClick="{{ c.pick }}" style="{{ c.css }}">
+                        <div style="height:104px;background:{{ c.tone }};background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.06) 0 5px,rgba(22,21,15,0) 5px 11px);position:relative">
+                          <div style="position:absolute;left:8px;bottom:7px;font:500 8.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:rgba(22,21,15,.55)">SAMPLE</div>
+                        </div>
+                        <div style="padding:10px 11px 12px">
+                          <div style="font-family:'Instrument Serif',Times,serif;font-size:19px;line-height:1.1">{{ c.name }}</div>
+                          <div style="font-size:11.5px;line-height:1.35;color:#8A857A;margin-top:3px">{{ c.desc }}</div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ isChips }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <sc-for list="{{ styleCards }}" as="c" hint-placeholder-count="6">
+                      <button onClick="{{ c.pick }}" style="{{ c.chipCss }}">{{ c.name }}</button>
+                    </sc-for>
+                  </div>
+                  <p style="margin:16px 0 0;font-size:12.5px;line-height:1.5;color:#8A857A">No sample images. Faster to scan, harder to trust &mdash; you are choosing a word, not a look.</p>
+                </sc-if>
+                <sc-if value="{{ hasStyle }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:16px;border-top:1px solid #E4E0D6;padding-top:14px">
+                    <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.12em;color:#8A857A;margin-bottom:8px">ADD WORDS &middot; OPTIONAL</div>
+                    <input value="{{ prompt }}" onChange="{{ onPrompt }}" placeholder="lighter walls, keep it cosy" style="width:100%;box-sizing:border-box;height:48px;border:1px solid #E0DCD2;border-radius:13px;background:#FBFAF7;padding:0 14px;font:400 15px/1 -apple-system,Helvetica,sans-serif;color:#16150F;outline:none">
+                    <p style="margin:9px 0 0;font-size:12px;line-height:1.45;color:#8A857A">Words steer colour, finish and furniture. They can&rsquo;t unlock your walls.</p>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="padding-top:12px">
+                <button onClick="{{ goRender }}" style="width:100%;height:54px;border:0;border-radius:15px;background:{{ styleBtnBg }};color:#F6F4EF;font:600 17px/1 -apple-system,Helvetica,sans-serif;cursor:{{ styleBtnCursor }}" style-hover="opacity:.88">{{ styleBtnLabel }}</button>
+                <p style="margin:10px 0 0;text-align:center;font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#8A857A">1 CREDIT &middot; 3 RESTYLES INCLUDED</p>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s_rendering }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+              <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:#8A857A">RENDERING</div>
+              <h2 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:34px;line-height:1.06;margin:12px 0 8px">Your walls are already locked.</h2>
+              <p style="margin:0 0 20px;font-size:14.5px;line-height:1.5;color:#57534A">The mask was built before generation started. Nothing that happens now can move an edge.</p>
+              <div style="position:relative;border-radius:16px;overflow:hidden;border:1px solid #E0DCD2;background:#DCD8CF;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.055) 0 5px,rgba(22,21,15,0) 5px 11px)">
+                <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto">
+                  <sc-for list="{{ surfacesBefore }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.86"></polygon></sc-for>
+                  <sc-for list="{{ heroRegions }}" as="r" hint-placeholder-count="6"><polygon points="{{ r.points }}" fill="none" stroke="{{ r.stroke }}" stroke-width="2" stroke-linejoin="round"></polygon></sc-for>
+                </svg>
+                <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
+                  <div style="position:absolute;top:0;bottom:0;width:45%;background:linear-gradient(90deg,rgba(246,244,239,0) 0%,rgba(246,244,239,.42) 50%,rgba(246,244,239,0) 100%);animation:sweep 2.1s linear infinite"></div>
+                </div>
+                <div style="position:absolute;left:10px;bottom:9px;font:500 9px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:5px 7px;border-radius:4px">MASK HELD &middot; 6 EDGES</div>
+              </div>
+              <div style="margin-top:22px">
+                <sc-for list="{{ steps }}" as="st" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid #E4E0D6">
+                    <span style="{{ st.dot }}"></span>
+                    <span style="font-size:14px;color:{{ st.color }}">{{ st.t }}</span>
+                    <span style="flex:1"></span>
+                    <span style="font:500 10px/1 ui-monospace,Menlo,monospace;color:#8A857A">{{ st.meta }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="flex:1"></div>
+              <div style="height:3px;background:#E4E0D6;border-radius:2px;overflow:hidden"><div style="height:100%;background:#16150F;width:{{ pct }}"></div></div>
+              <div style="display:flex;justify-content:space-between;margin-top:9px;font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#8A857A"><span>{{ elapsed }}</span><span>USUALLY UNDER A MINUTE</span></div>
+              <button onClick="{{ goCompare }}" style="width:100%;height:44px;margin-top:14px;border:0;background:transparent;color:#57534A;font:500 14px/1 -apple-system,Helvetica,sans-serif;cursor:pointer;border-radius:12px" style-hover="background:#EDEAE3">Skip the wait (demo)</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s_compare }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+              <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:#8A857A">{{ compareEyebrow }}</div>
+              <h2 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:32px;line-height:1.06;margin:10px 0 14px">Same room. New everything else.</h2>
+
+              <div style="overflow-y:auto;min-height:0;flex:1;margin:0 -4px;padding:0 4px">
+                <sc-if value="{{ isStack }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid #E0DCD2;background:#DCD8CF;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.055) 0 5px,rgba(22,21,15,0) 5px 11px)">
+                      <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto">
+                        <sc-for list="{{ surfacesBefore }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.86"></polygon></sc-for>
+                      </svg>
+                      <div style="position:absolute;left:9px;top:9px;font:500 9px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:5px 7px;border-radius:4px">BEFORE</div>
+                    </div>
+                    <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid #E0DCD2;background:#EFE7DA;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.045) 0 5px,rgba(22,21,15,0) 5px 11px)">
+                      <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto">
+                        <sc-for list="{{ surfacesAfter }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.9"></polygon></sc-for>
+                      </svg>
+                      <div style="position:absolute;left:9px;top:9px;font:500 9px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:5px 7px;border-radius:4px">AFTER &middot; {{ styleName }}</div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ isSlider }}" hint-placeholder-val="{{ false }}">
+                  <div ref="{{ cmpRef }}" onPointerDown="{{ onCmpDown }}" onPointerMove="{{ onCmpMove }}" onPointerUp="{{ onCmpUp }}" style="position:relative;border-radius:14px;overflow:hidden;border:1px solid #E0DCD2;touch-action:none;cursor:ew-resize">
+                    <div style="background:#EFE7DA;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.045) 0 5px,rgba(22,21,15,0) 5px 11px)">
+                      <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto">
+                        <sc-for list="{{ surfacesAfter }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.9"></polygon></sc-for>
+                      </svg>
+                    </div>
+                    <div style="position:absolute;inset:0;overflow:hidden;clip-path:inset(0 {{ cmpRight }} 0 0);background:#DCD8CF;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.055) 0 5px,rgba(22,21,15,0) 5px 11px)">
+                      <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto">
+                        <sc-for list="{{ surfacesBefore }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.86"></polygon></sc-for>
+                      </svg>
+                    </div>
+                    <div style="position:absolute;top:0;bottom:0;left:{{ cmpLeft }};width:2px;background:#F6F4EF;box-shadow:0 0 0 1px rgba(22,21,15,.25)"></div>
+                    <div style="position:absolute;top:50%;left:{{ cmpLeft }};transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:#F6F4EF;box-shadow:0 2px 10px rgba(22,21,15,.28);display:flex;align-items:center;justify-content:center;font:500 10px/1 ui-monospace,Menlo,monospace;color:#16150F">&#8596;</div>
+                    <div style="position:absolute;left:9px;top:9px;font:500 9px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:5px 7px;border-radius:4px">BEFORE</div>
+                    <div style="position:absolute;right:9px;top:9px;font:500 9px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:5px 7px;border-radius:4px">AFTER</div>
+                  </div>
+                </sc-if>
+
+                <div style="margin-top:16px;border:1px solid #E0DCD2;border-radius:14px;background:#FBFAF7;padding:16px 16px 15px">
+                  <div style="display:flex;align-items:baseline;gap:10px">
+                    <div style="font-family:'Instrument Serif',Times,serif;font-size:40px;line-height:1">94%</div>
+                    <div style="font:500 10px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#8A857A">STRUCTURE<br>KEPT</div>
+                  </div>
+                  <p style="margin:10px 0 0;font-size:13.5px;line-height:1.5;color:#57534A">Every wall, window and door came back within a few pixels of your photo. The floor plane shifted slightly on the right.</p>
+                  <div style="display:flex;gap:8px;margin-top:12px">
+                    <sc-for list="{{ kept }}" as="k" hint-placeholder-count="4">
+                      <div style="flex:1;border-top:1px solid #E4E0D6;padding-top:7px"><div style="font:500 9px/1.3 ui-monospace,Menlo,monospace;color:#8A857A">{{ k.l }}</div><div style="font-size:13px;margin-top:3px;color:{{ k.c }}">{{ k.v }}</div></div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="margin-top:14px;display:flex;gap:8px">
+                  <button onClick="{{ goStyle }}" style="flex:1;height:48px;border:1px solid #16150F;border-radius:14px;background:transparent;color:#16150F;font:600 14.5px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="background:#16150F;color:#F6F4EF">Restyle &middot; 2 left</button>
+                  <button onClick="{{ goHome }}" style="flex:1;height:48px;border:0;border-radius:14px;background:#16150F;color:#F6F4EF;font:600 14.5px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="opacity:.88">Save this one</button>
+                </div>
+                <div style="height:8px"></div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s_home }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <h2 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:36px;line-height:1;margin:8px 0 0">Rooms</h2>
+                <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#8A857A">0 FREE ROOMS LEFT</div>
+              </div>
+              <div style="margin-top:20px;border:1px solid #E0DCD2;border-radius:16px;overflow:hidden;background:#FBFAF7">
+                <div style="background:#EFE7DA;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.045) 0 5px,rgba(22,21,15,0) 5px 11px)">
+                  <svg viewBox="0 0 400 220" style="display:block;width:100%;height:auto">
+                    <sc-for list="{{ surfacesAfter }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.9"></polygon></sc-for>
+                  </svg>
+                </div>
+                <div style="padding:14px 15px 16px;display:flex;justify-content:space-between;align-items:flex-end">
+                  <div>
+                    <div style="font-family:'Instrument Serif',Times,serif;font-size:22px;line-height:1.1">Living room</div>
+                    <div style="font-size:12.5px;color:#8A857A;margin-top:3px">Warm Minimal &middot; 94% structure kept</div>
+                  </div>
+                  <div style="font:500 10px/1 ui-monospace,Menlo,monospace;color:#8A857A">2 RESTYLES LEFT</div>
+                </div>
+              </div>
+              <div style="flex:1"></div>
+              <button onClick="{{ goNoCredits }}" style="width:100%;height:54px;border:0;border-radius:15px;background:#16150F;color:#F6F4EF;font:600 17px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="opacity:.88">Add another room</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s_message }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+              <div style="flex:1"></div>
+              <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:{{ msg.code_color }}">{{ msg.code }}</div>
+              <h2 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:36px;line-height:1.05;margin:14px 0 12px">{{ msg.title }}</h2>
+              <p style="margin:0;font-size:15px;line-height:1.55;color:#57534A;text-wrap:pretty">{{ msg.body }}</p>
+              <sc-if value="{{ msg.hasMeta }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:18px;border-top:1px solid #E4E0D6;border-bottom:1px solid #E4E0D6;padding:13px 0;font:500 11px/1.6 ui-monospace,Menlo,monospace;color:#8A857A">{{ msg.meta }}</div>
+              </sc-if>
+              <div style="flex:1"></div>
+              <button onClick="{{ msg.primaryTap }}" style="width:100%;height:54px;border:0;border-radius:15px;background:#16150F;color:#F6F4EF;font:600 17px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="opacity:.88">{{ msg.primary }}</button>
+              <button onClick="{{ msg.secondaryTap }}" style="width:100%;height:46px;margin-top:8px;border:0;border-radius:14px;background:transparent;color:#57534A;font:500 15px/1 -apple-system,Helvetica,sans-serif;cursor:pointer" style-hover="background:#EDEAE3">{{ msg.secondary }}</button>
+            </div>
+          </sc-if>
+
+        </div>
+      </x-import>
+      <div style="font:500 10px/1.6 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#8A857A;text-align:center;max-width:402px">{{ frameNote }}</div>
+    </div>
+
+    <div style="flex:1 1 320px;min-width:300px">
+      <div style="font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#8A857A;margin-bottom:11px">WHY THIS SCREEN LOOKS LIKE THIS</div>
+      <div style="border:1px solid #D8D4CA;background:#F6F4EF;padding:20px">
+        <div style="font-family:'Instrument Serif',Times,serif;font-size:24px;line-height:1.15;margin-bottom:10px">{{ noteTitle }}</div>
+        <p style="margin:0;font-size:13.5px;line-height:1.55;color:#57534A;text-wrap:pretty">{{ noteBody }}</p>
+        <div style="margin-top:14px;padding-top:13px;border-top:1px solid #E4E0D6;font:500 10.5px/1.7 ui-monospace,Menlo,monospace;color:#8A857A">{{ noteRefs }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:56px;border-top:1px solid #D8D4CA;padding-top:26px">
+    <h3 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:32px;margin:0 0 6px">U2 &mdash; which reads fastest</h3>
+    <p style="margin:0 0 22px;font-size:14px;line-height:1.55;color:#57534A;max-width:660px">Same detection, three treatments, at the size it appears on the phone. Outline keeps the room legible; tint is unmistakable but eats the photo; dimming inverts the claim &mdash; it shows you what we are about to touch, which is arguably the more honest sentence.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:20px">
+      <sc-for list="{{ crops }}" as="c" hint-placeholder-count="3">
+        <div style="flex:0 1 340px">
+          <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid #D8D4CA;background:#DCD8CF;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.055) 0 5px,rgba(22,21,15,0) 5px 11px)">
+            <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto">
+              <mask id="{{ c.maskId }}">
+                <rect x="0" y="0" width="400" height="300" fill="#fff"></rect>
+                <sc-for list="{{ c.holes }}" as="p" hint-placeholder-count="0"><polygon points="{{ p.points }}" fill="#000"></polygon></sc-for>
+              </mask>
+              <sc-for list="{{ surfacesBefore }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.86"></polygon></sc-for>
+              <sc-if value="{{ c.dim }}" hint-placeholder-val="{{ false }}">
+                <rect x="0" y="0" width="400" height="300" fill="#14130F" opacity="0.62" mask="{{ c.maskUrl }}"></rect>
+              </sc-if>
+              <sc-for list="{{ c.regions }}" as="r" hint-placeholder-count="8">
+                <polygon points="{{ r.points }}" fill="{{ r.fill }}" stroke="{{ r.stroke }}" stroke-width="{{ r.sw }}" stroke-linejoin="round"></polygon>
+              </sc-for>
+            </svg>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:10px">
+            <button onClick="{{ c.use }}" style="font:500 9.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;padding:5px 8px;border-radius:5px;border:1px solid #16150F;background:transparent;color:#16150F;cursor:pointer" style-hover="background:#16150F;color:#F6F4EF">{{ c.tag }}</button>
+            <div style="font-size:13px;color:#57534A">{{ c.caption }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <h3 style="font-family:'Instrument Serif',Times,serif;font-weight:400;font-size:32px;margin:48px 0 6px">U3 &mdash; stacked or dragged</h3>
+    <p style="margin:0 0 22px;font-size:14px;line-height:1.55;color:#57534A;max-width:660px">Stacked proves it without asking anything of the user and survives a screenshot. The slider is more persuasive in the moment and puts the two images at the same size &mdash; but a screenshot of it only shows half a proof. Switch F2/U3 above to try both in the frame.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:20px">
+      <div style="flex:0 1 340px">
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="position:relative;border-radius:12px;overflow:hidden;border:1px solid #D8D4CA;background:#DCD8CF;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.055) 0 5px,rgba(22,21,15,0) 5px 11px)">
+            <svg viewBox="0 0 400 210" style="display:block;width:100%;height:auto"><sc-for list="{{ surfacesBefore }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.86"></polygon></sc-for></svg>
+            <div style="position:absolute;left:8px;top:8px;font:500 8.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:4px 6px;border-radius:4px">BEFORE</div>
+          </div>
+          <div style="position:relative;border-radius:12px;overflow:hidden;border:1px solid #D8D4CA;background:#EFE7DA;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.045) 0 5px,rgba(22,21,15,0) 5px 11px)">
+            <svg viewBox="0 0 400 210" style="display:block;width:100%;height:auto"><sc-for list="{{ surfacesAfter }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.9"></polygon></sc-for></svg>
+            <div style="position:absolute;left:8px;top:8px;font:500 8.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#F6F4EF;background:rgba(22,21,15,.72);padding:4px 6px;border-radius:4px">AFTER</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-top:10px">
+          <button onClick="{{ useStack }}" style="font:500 9.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;padding:5px 8px;border-radius:5px;border:1px solid #16150F;background:transparent;color:#16150F;cursor:pointer" style-hover="background:#16150F;color:#F6F4EF">STACKED</button>
+          <div style="font-size:13px;color:#57534A">Both true at once. No interaction to discover.</div>
+        </div>
+      </div>
+      <div style="flex:0 1 340px">
+        <div style="position:relative;border-radius:12px;overflow:hidden;border:1px solid #D8D4CA;background:#EFE7DA;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.045) 0 5px,rgba(22,21,15,0) 5px 11px)">
+          <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto"><sc-for list="{{ surfacesAfter }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.9"></polygon></sc-for></svg>
+          <div style="position:absolute;inset:0;clip-path:inset(0 52% 0 0);background:#DCD8CF;background-image:repeating-linear-gradient(135deg,rgba(22,21,15,.055) 0 5px,rgba(22,21,15,0) 5px 11px)">
+            <svg viewBox="0 0 400 300" style="display:block;width:100%;height:auto"><sc-for list="{{ surfacesBefore }}" as="f" hint-placeholder-count="5"><polygon points="{{ f.points }}" fill="{{ f.fill }}" fill-opacity="0.86"></polygon></sc-for></svg>
+          </div>
+          <div style="position:absolute;top:0;bottom:0;left:48%;width:2px;background:#F6F4EF;box-shadow:0 0 0 1px rgba(22,21,15,.25)"></div>
+          <div style="position:absolute;top:50%;left:48%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:#F6F4EF;box-shadow:0 2px 10px rgba(22,21,15,.28)"></div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-top:10px">
+          <button onClick="{{ useSlider }}" style="font:500 9.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;padding:5px 8px;border-radius:5px;border:1px solid #16150F;background:transparent;color:#16150F;cursor:pointer" style-hover="background:#16150F;color:#F6F4EF">SLIDER</button>
+          <div style="font-size:13px;color:#57534A">Full size, dramatic. Half a proof in a screenshot.</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin:44px 0 0;font-size:13.5px;line-height:1.6;color:#8A857A;max-width:700px">Try next: &ldquo;keep the dim treatment but tint the openings only&rdquo; &middot; &ldquo;build the surveyor aesthetic beside this&rdquo; &middot; &ldquo;show the drag-vertex version as the v1 confirm screen&rdquo;.</p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;u2Default&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;outline&quot;,&quot;tint&quot;,&quot;dim&quot;],&quot;default&quot;:&quot;outline&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Open decisions&quot;},&quot;f2Default&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;tap&quot;,&quot;drag&quot;],&quot;default&quot;:&quot;tap&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Open decisions&quot;},&quot;u3Default&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;stack&quot;,&quot;slider&quot;],&quot;default&quot;:&quot;stack&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Open decisions&quot;},&quot;u4Default&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cards&quot;,&quot;chips&quot;],&quot;default&quot;:&quot;cards&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Open decisions&quot;}}">
+const STRUCT = '#00A97A', OBJ = '#D9871A', UNSURE = '#C0442C';
+const G0 = {
+  leftWall: [[20,30],[95,60],[95,208],[20,262]],
+  backWall: [[95,60],[320,72],[320,215],[95,208]],
+  rightWall: [[320,72],[390,38],[390,270],[320,215]],
+  floor: [[20,262],[95,208],[320,215],[390,270],[390,300],[20,300]],
+  ceiling: [[20,30],[95,60],[320,72],[390,38],[390,0],[20,0]],
+  window: [[130,88],[215,93],[215,170],[130,166]],
+  door: [[338,96],[374,86],[374,236],[338,222]],
+  sofa: [[108,176],[240,183],[246,236],[103,229]],
+  tv: [[252,120],[310,124],[310,164],[252,160]],
+  rug: [[100,242],[300,248],[332,292],[68,286]],
+  table: [[170,226],[256,230],[259,253],[167,249]],
+  lamp: [[62,120],[78,121],[79,214],[63,212]]
+};
+const DEFS = [
+  { id:'leftWall', kind:'struct', label:'WALL', lp:[57,150] },
+  { id:'backWall', kind:'struct', label:'WALL', lp:[207,138] },
+  { id:'rightWall', kind:'struct', label:'WALL', lp:[355,160] },
+  { id:'ceiling', kind:'struct', label:'CEILING LINE', lp:[207,26] },
+  { id:'floor', kind:'struct', label:'FLOOR', lp:[207,278] },
+  { id:'window', kind:'struct', label:'WINDOW', lp:[172,130], unsure:true },
+  { id:'door', kind:'struct', label:'DOOR', lp:[356,166], unsure:true },
+  { id:'sofa', kind:'obj', label:'SOFA', lp:[174,208] },
+  { id:'tv', kind:'obj', label:'TV', lp:[281,145] },
+  { id:'rug', kind:'obj', label:'RUG', lp:[200,270], unsure:true },
+  { id:'table', kind:'obj', label:'TABLE', lp:[213,242] },
+  { id:'lamp', kind:'obj', label:'LAMP', lp:[70,110] }
+];
+const SURF_B = [
+  ['ceiling','#CFCBC1'], ['leftWall','#C4C0B6'], ['backWall','#CDC9BF'], ['rightWall','#BBB7AD'],
+  ['floor','#A9A29A'], ['window','#E7E7E2'], ['door','#B0ABA1'],
+  ['rug','#9C968D'], ['sofa','#8E8880'], ['table','#7E7973'], ['tv','#4A4744'], ['lamp','#98928A']
+];
+const SURF_A = [
+  ['ceiling','#F1EAE0'], ['leftWall','#E7DCCC'], ['backWall','#EDE3D6'], ['rightWall','#DCD0BE'],
+  ['floor','#C8A87F'], ['window','#F7F4EC'], ['door','#D6C9B5'],
+  ['rug','#B79B7C'], ['sofa','#7C7F72'], ['table','#8A6E52'], ['tv','#3C3A36'], ['lamp','#C9B79A']
+];
+const STYLES = [
+  ['Warm Minimal','Lime plaster, oak, linen','#E6DDCE'],
+  ['Quiet Modern','Grey-green, black steel','#D8DCD4'],
+  ['Slow Coastal','Chalk, rope, pale ash','#E2E4E1'],
+  ['Studio Neutral','Putty, ply, wool','#DFD9CF'],
+  ['Old World','Deep ochre, walnut','#DCCBB2'],
+  ['Soft Utility','Clay, canvas, iron','#D6CEC4']
+];
+const SCREENS = [
+  ['signin','Sign in'], ['photo','Add photo'], ['confirm','Confirm outlines'], ['lowconf','Low confidence'],
+  ['remove','Mark to remove'], ['style','Pick a style'], ['rendering','Rendering'], ['compare','Compare'],
+  ['home','Rooms'], ['noCredits','Free room used'], ['renderFailed','Render failed'],
+  ['structureDown','Detector down'], ['photoTooLarge','Photo too big'], ['retake','Retake']
+];
+const NOTES = {
+  signin: ['The promise, before the sign-in button', 'The sentence carrying the wedge is set in the serif at 44px and the proof sits directly under it \u2014 an outlined room, before an account exists. Apple sign-in is one tap, so the screen can afford to spend its height on the claim rather than a form.', 'D13 account first \u00b7 D14 one free room \u00b7 R4'],
+  photo: ['Framing is the only mitigation we have', 'One photo is the weakest input in the system (C4), so the instruction is not fine print \u2014 it is three numbered lines with the consequence stated plainly. We never ask for a second photo (U1 silent).', 'U1 silent \u00b7 C4 \u00b7 no_photos / photo_too_large'],
+  confirm: ['The screen that earns the trust', 'Outlines sit on the photo at true position, labels in mono so they read as machine assertions rather than design. Everything is on by default; tapping a region or its chip turns it off. The confidence figure is stated, not hidden.', 'U2 outline \u00b7 F2 tap \u00b7 R2 \u00b7 T12'],
+  lowconf: ['Honest, and still moving', 'Same layout, three changes: uncertain regions go dashed rust, the count is named out loud, and the primary action flips to retaking the photo while continuing stays available. No warning triangle, no alarm colour on the whole screen.', 'D11 warn \u00b7 C3 accepted \u00b7 R5'],
+  remove: ['Default is that everything stays', 'The keep list is the opposite of a chore: nothing is required. Marked items get a rust outline and a struck chip, and the counter reads keeps first, because keeping is the promise.', 'D4 mark-keep \u00b7 R6 \u00b7 keep_items'],
+  style: ['Sample photos, not previews', 'Image cards are more persuasive than words and cost nothing per user because the samples are stock (round 5). Free text appears only after a style is chosen, so the model always gets a base direction, and the copy says out loud what words cannot do.', 'D5 \u00b7 U4 cards \u00b7 free text \u2192 prompt'],
+  rendering: ['A wait that proves something', 'Up to 60 seconds of nothing is where doubt grows, so the wait shows the mask already held over the photo and names the steps that finished. The structure lock is past tense here \u2014 it happened before generation started.', 'TR1 60s p95 \u00b7 T4 poll 2s'],
+  compare: ['The number is the product', 'Fidelity is shown as a figure and one sentence of plain language, including where it slipped \u2014 a score that is always perfect stops being evidence. Two restyles remain, and the restyle button returns to the style screen, which is the loop that sells this.', 'U3 stack \u00b7 D3 \u00b7 fidelity_score'],
+  home: ['After the free room', 'One room, one result, two restyles left, and the credit state stated in mono rather than sold. Adding a second room is where the paywall lands.', 'D14 \u00b7 credit ledger'],
+  noCredits: ['The paywall, unembellished', 'No countdown, no discount theatre. The number of restyles left on the existing room is more useful here than a pitch.', 'no_credits 402'],
+  renderFailed: ['Refund stated before apology', 'The credit is back in the first line, because that is the only thing the user cares about at this moment.', 'render_failed 500 \u00b7 refund row'],
+  structureDown: ['We refuse rather than degrade', 'A render without a structure lock is a competitor\u2019s product. This screen exists so that failure never silently becomes one.', 'structure_unavailable 503'],
+  photoTooLarge: ['A trivial error, treated as trivial', 'Size stated, fix offered, no drama. The reduced version is the default action.', 'photo_too_large 413 \u00b7 12 MB'],
+  retake: ['Retake without losing the thread', 'Retaking is presented as a normal move, not a failure, and it says what a better photo buys.', 'D11 \u00b7 U1 silent']
+};
+
+class Component extends DCLogic {
+  state = {
+    screen: 'signin',
+    u2: this.props.u2Default ?? 'outline', f2: this.props.f2Default ?? 'tap',
+    u3: this.props.u3Default ?? 'stack', u4: this.props.u4Default ?? 'cards',
+    off: {}, remove: {}, style: null, prompt: '', tick: 0, sel: null, geom: G0, cmp: 48
+  };
+  constructor(p) {
+    super(p);
+    this.svgRef = React.createRef();
+    this.cmpRef = React.createRef();
+    this.drag = null;
+    this.cmpDrag = false;
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  go = (screen) => {
+    clearInterval(this.timer);
+    this.setState({ screen, sel: null });
+    if (screen === 'rendering') {
+      this.setState({ tick: 0 });
+      this.timer = setInterval(() => {
+        const t = this.state.tick + 1;
+        if (t > 26) { clearInterval(this.timer); this.setState({ screen: 'compare' }); }
+        else this.setState({ tick: t });
+      }, 260);
+    }
+  };
+  pts(id) { return (this.state.geom[id] || []).map(p => p[0] + ',' + p[1]).join(' '); }
+  toggle = (id) => this.setState(s => ({ off: { ...s.off, [id]: !s.off[id] }, sel: id }));
+  toggleRemove = (id) => this.setState(s => ({ remove: { ...s.remove, [id]: !s.remove[id] } }));
+  grab = (id, i) => (e) => { e.stopPropagation(); this.drag = { id, i }; this.setState({ sel: id }); };
+  onDragMove = (e) => {
+    if (!this.drag || !this.svgRef.current) return;
+    const r = this.svgRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(400, (e.clientX - r.left) / r.width * 400));
+    const y = Math.max(0, Math.min(300, (e.clientY - r.top) / r.height * 300));
+    const { id, i } = this.drag;
+    this.setState(s => {
+      const pts = s.geom[id].map((p, k) => k === i ? [Math.round(x), Math.round(y)] : p);
+      return { geom: { ...s.geom, [id]: pts } };
+    });
+  };
+  onDragEnd = () => { this.drag = null; };
+  cmpFrom = (e) => {
+    const el = this.cmpRef.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    this.setState({ cmp: Math.max(2, Math.min(98, (e.clientX - r.left) / r.width * 100)) });
+  };
+  onCmpDown = (e) => { this.cmpDrag = true; this.cmpFrom(e); };
+  onCmpMove = (e) => { if (this.cmpDrag) this.cmpFrom(e); };
+  onCmpUp = () => { this.cmpDrag = false; };
+
+  chipCss(active, color, struck) {
+    return 'font:500 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;padding:8px 10px;border-radius:8px;cursor:pointer;'
+      + 'border:1px solid ' + (active ? color : '#DCD8CE') + ';'
+      + 'background:' + (active ? color + '1F' : 'transparent') + ';'
+      + 'color:' + (active ? '#16150F' : '#A5A096') + ';'
+      + (struck ? 'text-decoration:line-through;' : '');
+  }
+  regionsFor(mode, screen) {
+    const u2 = mode || this.state.u2;
+    return DEFS.filter(d => !this.state.off[d.id]).map(d => {
+      const removed = screen === 'remove' && this.state.remove[d.id];
+      const unsure = screen === 'lowconf' && d.unsure;
+      const color = removed ? UNSURE : unsure ? UNSURE : d.kind === 'struct' ? STRUCT : OBJ;
+      const focus = d.kind === 'struct' || screen !== 'remove';
+      const fill = u2 === 'tint' && d.kind === 'struct' ? color + '38'
+        : removed ? UNSURE + '33' : 'none';
+      return {
+        id: d.id, points: this.pts(d.id), fill,
+        stroke: (u2 === 'dim' && !focus) ? color + '99' : color,
+        sw: d.kind === 'struct' ? 2.2 : 1.6,
+        dash: unsure ? '6 4' : removed ? '4 3' : '0',
+        tap: screen === 'remove' ? () => this.toggleRemove(d.id) : () => this.toggle(d.id)
+      };
+    });
+  }
+  renderVals() {
+    const st = this.state, sc = st.screen;
+    const isMsg = ['noCredits','renderFailed','structureDown','photoTooLarge','retake'].includes(sc);
+    const detect = ['confirm','lowconf','remove'].includes(sc);
+    const styleName = st.style != null ? STYLES[st.style][0] : 'Warm Minimal';
+    const note = NOTES[sc] || NOTES.signin;
+
+    const surf = (arr) => arr.map(([id, fill]) => ({ points: this.pts(id), fill }));
+    const heroRegions = DEFS.filter(d => d.kind === 'struct').map(d => ({ points: this.pts(d.id), fill: 'none', stroke: STRUCT }));
+    const regions = this.regionsFor(null, sc);
+    const regionLabels = st.u2 === 'tint' ? [] : DEFS.filter(d => !st.off[d.id] && (sc !== 'remove' || d.kind === 'obj')).map(d => ({
+      x: d.lp[0], y: d.lp[1], t: sc === 'remove' && st.remove[d.id] ? 'REMOVE \u00b7 ' + d.label : d.label,
+      color: sc === 'lowconf' && d.unsure ? UNSURE : sc === 'remove' && st.remove[d.id] ? UNSURE : d.kind === 'struct' ? STRUCT : OBJ
+    }));
+    const handles = (st.f2 === 'drag' && sc !== 'remove' && st.sel)
+      ? (st.geom[st.sel] || []).map((p, i) => ({ x: p[0], y: p[1], color: STRUCT, grab: this.grab(st.sel, i) }))
+      : [];
+
+    const chips = (sc === 'remove'
+      ? DEFS.filter(d => d.kind === 'obj').map(d => ({
+          label: d.label + (st.remove[d.id] ? ' \u00b7 OUT' : ''),
+          css: this.chipCss(!st.remove[d.id], st.remove[d.id] ? UNSURE : OBJ, !!st.remove[d.id]),
+          tap: () => this.toggleRemove(d.id) }))
+      : DEFS.map(d => ({
+          label: d.label + (sc === 'lowconf' && d.unsure ? ' ?' : ''),
+          css: this.chipCss(!st.off[d.id], sc === 'lowconf' && d.unsure ? UNSURE : d.kind === 'struct' ? STRUCT : OBJ, false),
+          tap: () => this.toggle(d.id) }))
+    );
+    const removedCount = Object.values(st.remove).filter(Boolean).length;
+    const offCount = Object.values(st.off).filter(Boolean).length;
+
+    const detectCopy = {
+      confirm: {
+        title: 'Is this your room?', body: 'We found twelve things. Tap anything we got wrong \u2014 it stops being protected, and stops being drawn.',
+        confLabel: 'CONFIDENCE 0.91', confColor: '#00A97A',
+        chipsHint: st.f2 === 'drag' ? 'Tap a region, then drag its corners to correct the edge.' : (offCount ? offCount + ' dismissed. Tap to bring one back.' : 'Tap to dismiss anything that isn\u2019t there.'),
+        primary: 'Yes, that\u2019s my room', primaryBg: '#16150F', primaryTap: () => this.go('remove'),
+        secondary: 'Something\u2019s wrong \u2014 retake the photo', secondaryTap: () => this.go('retake'),
+        badge: 'DETECTED \u00b7 7 STRUCTURE \u00b7 5 OBJECTS'
+      },
+      lowconf: {
+        title: 'We\u2019re not sure about three of these.', body: 'The window, door and rug came back uncertain \u2014 the photo is a little tight on the right. We can carry on, but those edges are the ones most likely to move.',
+        confLabel: 'CONFIDENCE 0.54 \u00b7 LOW', confColor: UNSURE,
+        chipsHint: 'Dashed means unsure. Tap to dismiss, or retake for a wider shot.',
+        primary: 'Retake the photo', primaryBg: '#16150F', primaryTap: () => this.go('retake'),
+        secondary: 'Continue anyway \u2014 I\u2019ll check the result', secondaryTap: () => this.go('remove'),
+        badge: '3 UNCERTAIN REGIONS'
+      },
+      remove: {
+        title: 'Anything you\u2019d rather not keep?', body: 'Everything stays unless you tap it. Your sofa and bookshelf came with you \u2014 they can stay exactly where they are.',
+        confLabel: (5 - removedCount) + ' KEPT \u00b7 ' + removedCount + ' OUT', confColor: '#8A857A',
+        chipsHint: 'Tap an object to leave it out of the restyle.',
+        primary: 'Continue', primaryBg: '#16150F', primaryTap: () => this.go('style'),
+        secondary: 'Back to the outlines', secondaryTap: () => this.go('confirm'),
+        badge: removedCount ? removedCount + ' MARKED FOR REMOVAL' : 'EVERYTHING STAYS'
+      }
+    }[detect ? sc : 'confirm'];
+
+    const MSGS = {
+      noCredits: { code: 'NO_CREDITS \u00b7 402', code_color: '#8A857A', title: 'You\u2019ve used your free room.', body: 'One room, three restyles, done. Unlock more rooms for \u00a35 each, or keep going on the living room \u2014 you have two restyles left there.', hasMeta: true, meta: '1 ROOM USED \u00b7 1 RESTYLE USED \u00b7 2 RESTYLES LEFT', primary: 'Unlock another room', secondary: 'Back to my room', primaryTap: () => this.go('home'), secondaryTap: () => this.go('home') },
+      renderFailed: { code: 'RENDER_FAILED \u00b7 500', code_color: UNSURE, title: 'Your credit is back.', body: 'The image model failed twice, so we stopped and refunded you. Your room, outlines and the objects you marked are all still here \u2014 nothing needs doing again.', hasMeta: true, meta: 'CREDIT REFUNDED \u00b7 STRUCTURE MAP KEPT', primary: 'Try that style again', secondary: 'Pick a different style', primaryTap: () => this.go('rendering'), secondaryTap: () => this.go('style') },
+      structureDown: { code: 'STRUCTURE_UNAVAILABLE \u00b7 503', code_color: UNSURE, title: 'We can\u2019t check your room right now.', body: 'The part of the system that finds your walls is down, and we won\u2019t restyle without it. A render with no structure lock is somebody else\u2019s room. Nothing has been charged.', hasMeta: true, meta: 'NO RENDER \u00b7 NO CHARGE \u00b7 TRY AGAIN SHORTLY', primary: 'Try again', secondary: 'Notify me when it\u2019s back', primaryTap: () => this.go('confirm'), secondaryTap: () => this.go('home') },
+      photoTooLarge: { code: 'PHOTO_TOO_LARGE \u00b7 413', code_color: '#8A857A', title: 'That photo is too big.', body: 'It\u2019s 18 MB and we take up to 12. We can send a smaller copy \u2014 it makes no difference to how well we find your walls.', hasMeta: true, meta: '18.4 MB \u2192 8.1 MB \u00b7 4032\u00d73024 KEPT', primary: 'Send a smaller copy', secondary: 'Choose a different photo', primaryTap: () => this.go('confirm'), secondaryTap: () => this.go('photo') },
+      retake: { code: 'RETAKE', code_color: '#8A857A', title: 'Stand back and try again.', body: 'A wider shot gives us the corners, and the corners are what let us hold your walls in place. Your first photo is discarded, and this doesn\u2019t cost a credit.', hasMeta: true, meta: 'NO CREDIT SPENT \u00b7 GET FLOOR AND CEILING IN FRAME', primary: 'Open the camera', secondary: 'Use the photo I already took', primaryTap: () => this.go('confirm'), secondaryTap: () => this.go('lowconf') }
+    };
+
+    const steps = [
+      ['Photo received', 'sent', 0], ['Objects and surfaces identified', '12 found', 4],
+      ['Structure locked', '6 edges', 9], ['Painting everything else', styleName.toLowerCase(), 15]
+    ].map(([t, meta, at]) => {
+      const done = st.tick > at + 4, active = st.tick >= at && !done;
+      return {
+        t, meta: done ? meta : active ? 'working' : 'queued',
+        color: done ? '#16150F' : active ? '#16150F' : '#A5A096',
+        dot: 'width:8px;height:8px;border-radius:50%;display:inline-block;background:' + (done ? '#00A97A' : active ? '#16150F' : '#D8D4CA') + ';' + (active ? 'animation:pulseDot 1.1s ease-in-out infinite;' : '')
+      };
+    });
+
+    const crops = [
+      { key: 'outline', tag: 'OUTLINE ONLY', caption: 'You still see your room.', dim: false, maskId: 'cropA', maskUrl: 'url(#cropA)' },
+      { key: 'tint', tag: 'TINTED FILL', caption: 'Unmistakable, and it covers the photo.', dim: false, maskId: 'cropB', maskUrl: 'url(#cropB)' },
+      { key: 'dim', tag: 'DIM WHAT CHANGES', caption: 'Inverted: the bright part is what we touch.', dim: true, maskId: 'cropC', maskUrl: 'url(#cropC)' }
+    ].map(c => ({
+      ...c, holes: c.dim ? DEFS.filter(d => d.kind === 'struct').map(d => ({ points: this.pts(d.id) })) : [],
+      regions: this.regionsFor(c.key, 'confirm').map(r => ({ ...r, tap: null })),
+      use: () => this.setState({ u2: c.key, screen: 'confirm' })
+    }));
+
+    const seg = (on) => 'font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid '
+      + (on ? '#16150F' : '#D8D4CA') + ';background:' + (on ? '#16150F' : 'transparent') + ';color:' + (on ? '#F6F4EF' : '#57534A') + ';';
+
+    return {
+      screens: SCREENS.map(([id, label]) => ({ label, go: () => this.go(id), css: seg(sc === id) })),
+      decisions: [
+        { id: 'U2', q: 'How locked areas are drawn', note: 'PRD picked outline only.', options: [['outline','Outline'],['tint','Tinted fill'],['dim','Dim what changes']].map(([k,l]) => ({ label: l, pick: () => this.setState({ u2: k }), css: seg(st.u2 === k) })) },
+        { id: 'F2', q: 'What the user can fix', note: 'Open in the PRD. You chose tap for v1.', options: [['tap','Tap regions on/off'],['drag','Drag vertices']].map(([k,l]) => ({ label: l, pick: () => this.setState({ f2: k, sel: k === 'drag' ? 'backWall' : null }), css: seg(st.f2 === k) })) },
+        { id: 'U3', q: 'How before/after is shown', note: 'PRD picked stacked.', options: [['stack','Stacked'],['slider','Slider']].map(([k,l]) => ({ label: l, pick: () => this.setState({ u3: k }), css: seg(st.u3 === k) })) },
+        { id: 'U4', q: 'How styles are chosen', note: 'PRD picked image cards.', options: [['cards','Image cards'],['chips','Text chips']].map(([k,l]) => ({ label: l, pick: () => this.setState({ u4: k }), css: seg(st.u4 === k) })) }
+      ],
+      s_signin: sc === 'signin', s_photo: sc === 'photo', s_detect: detect, s_lowconf: sc === 'lowconf',
+      s_style: sc === 'style', s_rendering: sc === 'rendering', s_compare: sc === 'compare', s_home: sc === 'home', s_message: isMsg,
+      surfacesBefore: surf(SURF_B), surfacesAfter: surf(SURF_A), heroRegions,
+      regions, regionLabels, handles, chips, svgRef: this.svgRef, cmpRef: this.cmpRef,
+      onDragMove: this.onDragMove, onDragEnd: this.onDragEnd,
+      protectedPolys: DEFS.filter(d => d.kind === 'struct' && !st.off[d.id]).map(d => ({ points: this.pts(d.id) })),
+      isDim: st.u2 === 'dim',
+      detectTitle: detectCopy.title, detectBody: detectCopy.body, confLabel: detectCopy.confLabel, confColor: detectCopy.confColor,
+      chipsHint: detectCopy.chipsHint, plateBadge: detectCopy.badge,
+      primaryLabel: detectCopy.primary, primaryBg: detectCopy.primaryBg, primaryTap: detectCopy.primaryTap,
+      secondaryLabel: detectCopy.secondary, secondaryTap: detectCopy.secondaryTap,
+      framing: [
+        { n: '01', t: 'Stand with your back to the far wall.', s: 'Corners are what let us hold the geometry.' },
+        { n: '02', t: 'Get floor and ceiling both in frame.', s: 'The ceiling line is half the proof.' },
+        { n: '03', t: 'Daylight if you have it, no flash.', s: 'Shadows read as edges.' }
+      ],
+      isCards: st.u4 === 'cards', isChips: st.u4 === 'chips', hasStyle: st.style != null, prompt: st.prompt,
+      onPrompt: (e) => this.setState({ prompt: e.target.value }),
+      styleCards: STYLES.map(([name, desc, tone], i) => ({
+        name, desc, tone, pick: () => this.setState({ style: i }),
+        css: 'border-radius:14px;overflow:hidden;cursor:pointer;background:#FBFAF7;border:' + (st.style === i ? '2px solid #16150F' : '1px solid #E0DCD2') + ';',
+        chipCss: this.chipCss(st.style === i, '#16150F', false) + 'font-size:13px;font-family:-apple-system,Helvetica,sans-serif;letter-spacing:0;padding:11px 14px;'
+      })),
+      styleBtnBg: st.style == null ? '#B6B1A6' : '#16150F',
+      styleBtnCursor: st.style == null ? 'not-allowed' : 'pointer',
+      styleBtnLabel: st.style == null ? 'Choose a direction' : 'Restyle my room',
+      goRender: () => { if (st.style != null) this.go('rendering'); },
+      pct: Math.min(100, Math.round(st.tick / 26 * 100)) + '%',
+      elapsed: '0:' + String(Math.min(60, Math.round(st.tick * 2.1))).padStart(2, '0') + ' ELAPSED',
+      steps,
+      isStack: st.u3 === 'stack', isSlider: st.u3 === 'slider',
+      cmpLeft: st.cmp + '%', cmpRight: (100 - st.cmp) + '%',
+      onCmpDown: this.onCmpDown, onCmpMove: this.onCmpMove, onCmpUp: this.onCmpUp,
+      compareEyebrow: 'RESTYLE 1 OF 3 \u00b7 ' + styleName.toUpperCase(), styleName,
+      kept: [
+        { l: 'WALLS', v: 'held', c: '#00A97A' }, { l: 'OPENINGS', v: '2 / 2', c: '#00A97A' },
+        { l: 'CEILING', v: 'held', c: '#00A97A' }, { l: 'FLOOR', v: '\u00b13 px', c: '#D9871A' }
+      ],
+      msg: MSGS[sc] || MSGS.retake,
+      goPhoto: () => this.go('photo'), goConfirm: () => this.go('confirm'), goStyle: () => this.go('style'),
+      goCompare: () => this.go('compare'), goHome: () => this.go('home'), goNoCredits: () => this.go('noCredits'),
+      crops, useStack: () => this.setState({ u3: 'stack', screen: 'compare' }), useSlider: () => this.setState({ u3: 'slider', screen: 'compare' }),
+      noteTitle: note[0], noteBody: note[1], noteRefs: note[2],
+      frameNote: 'IPHONE 16 PRO \u00b7 402\u00d7874 \u00b7 ' + (SCREENS.find(x => x[0] === sc) || ['','',''])[1].toUpperCase()
+    };
+  }
+}
+</script>
+</body>
+</html>

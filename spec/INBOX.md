@@ -1,15 +1,22 @@
 # Spec review inbox
 
-Round 9 sent 2026-09-08 16:28
+Round 10 sent 2026-09-09 19:27
 
-## Changed since round 8 (1)
+## Changed since round 9 (8)
 
-- **t10** — hosted-edit  _(was: openai)_
+- **t10** — openai  _(was: hosted-edit)_
+- **f1** — swiftui  _(was: unanswered)_
+- **f2** — toggle  _(was: unanswered)_
+- **f3** — local  _(was: unanswered)_
+- **f4** — urlsession  _(was: unanswered)_
+- **f5** — unit  _(was: unanswered)_
+- **t13** — arch-plus-big  _(was: unanswered)_
+- **t14** — accept  _(was: unanswered)_
 
 ## Comments to address (0)
 
 _None._
-## Decisions as of round 9
+## Decisions as of round 10
 
 - **d1** — new-mover
 - **d2** — multi-photo
@@ -42,7 +49,14 @@ _None._
 - **t9** — pgqueue
 - **u1** — silent
 - **c4** — accept
-- **t10** — hosted-edit
+- **t10** — openai
 - **t11** — trust
 - **d10b** — geometry
 - **t12** — vision-only
+- **f1** — swiftui
+- **f2** — toggle
+- **f3** — local
+- **f4** — urlsession
+- **f5** — unit
+- **t13** — arch-plus-big
+- **t14** — accept

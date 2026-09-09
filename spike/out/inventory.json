@@ -1,0 +1,80 @@
+[
+  {
+    "id": "A",
+    "kind": "architecture",
+    "name": "fireplace",
+    "description": "Light wood framed fireplace with square grey tile facing, positioned on the left side of the image under a white wall."
+  },
+  {
+    "id": "B",
+    "kind": "architecture",
+    "name": "mantel",
+    "description": "Light wood mantel running horizontally above the fireplace, holds decor objects."
+  },
+  {
+    "id": "C",
+    "kind": "architecture",
+    "name": "recessed wall alcove",
+    "description": "Deep rectangular wall alcove centered above and to the right of the fireplace, extends from ceiling to mantel height, painted the same color as surrounding walls."
+  },
+  {
+    "id": "D",
+    "kind": "architecture",
+    "name": "ceiling bulkhead",
+    "description": "Horizontal ceiling drop/bulkhead along the top middle of the image, creating a step down above the TV and lamp."
+  },
+  {
+    "id": "E",
+    "kind": "architecture",
+    "name": "flooring",
+    "description": "Medium-dark brown, wood-style plank flooring covering the entire visible floor area."
+  },
+  {
+    "id": "F",
+    "kind": "architecture",
+    "name": "wall switch",
+    "description": "White light switch located on the wall below the alcove, to the left of the floor lamp."
+  },
+  {
+    "id": "G",
+    "kind": "architecture",
+    "name": "wall",
+    "description": "White painted walls forming the background of the image, spanning from left edge to right edge."
+  },
+  {
+    "id": "H",
+    "kind": "object",
+    "name": "decor on mantel",
+    "description": "Set of five decor items on the mantel: a wooden plaque with engraved tree and writing, white round wall clock, small rectangular decor, glass dish, and a square wedding photo frame in the left alcove."
+  },
+  {
+    "id": "I",
+    "kind": "object",
+    "name": "floor lamp",
+    "description": "Tall wooden tripod floor lamp with woven shade, positioned at center right, in front of the alcove, casting a warm light on the wall."
+  },
+  {
+    "id": "J",
+    "kind": "object",
+    "name": "TV stand",
+    "description": "Light wood TV stand with rattan panel doors and open middle shelf, beneath the TV against the right wall."
+  },
+  {
+    "id": "K",
+    "kind": "object",
+    "name": "TV",
+    "description": "Large flat-screen TV sitting on top of the TV stand, slightly right of the center of the image."
+  },
+  {
+    "id": "L",
+    "kind": "object",
+    "name": "candles and decor on TV stand",
+    "description": "Multiple small candles and framed photos arranged on the top and inner shelf of the TV stand."
+  },
+  {
+    "id": "M",
+    "kind": "object",
+    "name": "laundry hamper",
+    "description": "Tall white fabric laundry hamper with handles, sitting on the floor to the right of the TV stand."
+  }
+]

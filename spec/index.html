@@ -359,8 +359,9 @@ flowchart TD
 <section id="s-success" data-anchor="success" data-label="Success criteria" data-group="The experience" data-title="Success criteria">
   <button class="cbtn">comment</button>
   <h2><span class="num">9</span>How we know it worked</h2>
-  <p>The headline metric is <strong>geometric fidelity</strong> — are the wall edges, window openings, door frames and ceiling line in the same places they were in the photo.</p>
-  <div class="plain"><b>Why geometric and not pixel similarity:</b> a pixel comparison punishes a repaint, so a successful restyle would score badly. Measuring geometry scores the promise and ignores the thing we are deliberately changing.</div>
+  <p>The headline metric is <strong>preservation rate</strong> — of the architectural items the inventory found, how many are still present and in the same place in the result.</p>
+  <div class="plain"><b>How it is measured:</b> a vision call compares the two images against the inventory list and answers, item by item, present or not. Not a pixel comparison — the spike showed output is never aligned with input, so arithmetic is impossible. It is a judgement, made by a model, on a list we already have.</div>
+  <div class="plain"><b>Why not pixel similarity:</b> it would punish a successful repaint, and it cannot run at all on a reframed image.</div>
   <p>It is the right metric because it measures the promise directly rather than a proxy for it. If fidelity is high and nobody comes back, the idea was wrong. If fidelity is low, the execution is wrong. Most metrics cannot tell you which.</p>
   <div class="plain"><b>Watch the 5th percentile, not the average.</b> An average of 0.94 hides the one render in twenty that came back as somebody else's room — and that render is the one that gets screenshotted into a review.</div>
 </section>
@@ -372,9 +373,14 @@ flowchart TD
   <p style="margin:8px 0 0">The failure is concrete: bad photos in, uncertain detection, a render ships with a small warning, and someone receives a room with a window that is not theirs — the exact complaint this product exists to fix, now with a disclaimer attached.</p>
   <p style="margin:8px 0 0">Accepted deliberately in round 4 as the fastest route to shipping. The mitigation is that fidelity is the headline metric, so the cost lands on the dashboard instead of hiding. Revisit once there is real data.</p></div>
 
-  <div class="risk"><b>C4 — one photo made the fidelity chain worse.</b> Round 5 dropped the 2-3 photo requirement, which is right for friction and wrong for accuracy. Depth estimation from a single photo is materially weaker than from several angles, because there is no parallax to work with.
-  <p style="margin:8px 0 0">So the chain now reads: the widest promise (D10 — walls, windows, doors, ceiling, built-ins, flooring, fixtures), the weakest possible input (one freeform photo), and permission to ship anyway when unsure (D11). Every lever is now at its loosest setting, and <strong>R1, R2 and R5 all depend on getting this right</strong>.</p>
-  <p style="margin:8px 0 0">This is not an argument against one photo. It is an argument that one of the other two levers should move to pay for it.</p></div>
+  <div class="plain"><b>Updated 2026-09-09 after the spike.</b> Three of the risks below were bets on whether an approximate mask would hold up. There is no mask any more, so they resolve differently than expected — two shrink, one is disproven outright.</div>
+
+  <div class="risk"><b>T11 — disproven, not accepted.</b> The plan was to trust the model's mask. Testing showed the mask does not preserve anything: the region marked for protection was deleted, and measured pixel change inside it was <em>higher</em> than outside. Compositing the original back is equally unavailable, since output is never aligned with input. The mask is gone from the architecture entirely.</div>
+
+  <div class="risk"><b>C3 and C4 — substantially reduced.</b> Both were about a wide promise resting on weak input and a permissive failure path. With architecture named explicitly in the prompt, a single photo proved sufficient on a genuinely hard room. The residual risk is no longer "will the mask hold" but "will the inventory list everything" — which is what T14 addresses, and which the user can see and correct.</div>
+
+  <div class="risk"><b>New — the camera moves.</b> Output framing shifts slightly from input; the crop tightens. Everything stays correct relative to everything else. Consequences: no wipe-slider comparison (U3's stacked layout already avoids this), and preservation must be judged by a vision call rather than computed. Not fixable by prompt; it follows from the API's fixed output sizes.</div>
+
   <div class="d open" data-anchor="c4" data-label="C4 pay for the single photo">
     <button class="cbtn">comment</button>
     <div class="q">C4 — Which lever moves to pay for the single photo?</div>
@@ -387,6 +393,12 @@ flowchart TD
   </div>
   <div class="risk"><b>T11 — the mask is not enforced.</b> T10 chose OpenAI, whose mask is documented as "followed loosely" over a whole-image recreation. T11 chose to trust it rather than paste the original pixels back afterwards. The product's central promise therefore has no mechanism behind it beyond the vendor's best effort and the user's confirmation at the outline step.
   <p style="margin:8px 0 0">Decided in round 7 with the limitation known. Compositing remains available later at roughly twenty lines of code, and would convert the promise from hoped-for to guaranteed without changing any other decision.</p></div>
+  <div class="risk"><b>T14 — a wrong inventory is accepted.</b> The inventory is now the only thing protecting the room; there is no mask behind it. Anything it fails to list is silently unprotected, and the user is not asked to add what is missing. It listed all 13 items correctly on our test photo. Chosen in round 10 for speed. The cheap fix later is one line on the confirm screen — "anything we missed?" — which would turn that screen into a real check.</div>
+
+  <div class="risk"><b>F3 — no CI/CD for the client.</b> The app is built locally. The series baseline in CLAUDE.md requires CI/CD, so this is a deliberate hole in the thing the series exists to demonstrate. The backend keeps its full pipeline; only the iOS half is exempt. Revisit before any release that is not to your own device.</div>
+
+  <div class="risk"><b>F5 — unit tests only on the client.</b> Snapshot tests were declined. Those are the ones that catch the outline overlay being drawn in the wrong place on the confirm screen — a failure no unit test can see, on the screen the product depends on.</div>
+
   <div class="risk"><b>Account before first render (D13).</b> Sits against <strong>R4</strong>, though round 5 softened it considerably: Sign in with Apple is one tap with no password and no email handed over. The friction is now small enough that this is close to retired as a risk.</div>
 </section>
 
@@ -454,18 +466,30 @@ sequenceDiagram
   A-->>U: done, before/after
   </pre></div>
 
-  <h3>The structure lock</h3>
-  <p class="sub">This is the product. If this is wrong, nothing else matters.</p>
-  <p>Competitors hand the whole photo to an image model and ask for a redesign. The model redraws everything, walls included, because nothing stopped it. We insert four steps before generation:</p>
+  <h3>How we keep the room</h3>
+  <p class="sub">Validated by experiment on 2026-09-09. See "What the spike proved" below.</p>
+  <p>Competitors hand the whole photo to an image model and ask for a redesign. The model
+  redraws everything, walls included, because nothing told it what was in the room. We do
+  two calls instead of one:</p>
   <ol>
-    <li><strong>Depth</strong> — how far away every pixel is, which gives the shape of the room.</li>
-    <li><strong>Segmentation</strong> — label every pixel: wall, window, door, floor, ceiling, light, furniture.</li>
-    <li><strong>Protected mask</strong> — the geometry covered by D10b becomes locked: edges and openings, not whole painted surfaces.</li>
-    <li><strong>Fidelity score</strong> — compare structure in the output against the input. That number is the success metric.</li>
+    <li><strong>Inventory</strong> — a vision call lists everything in the photo: fixed
+    architecture (fireplace, mantel, alcove, ceiling step, flooring, switches, walls) and
+    moveable objects (lamp, TV, cabinet, decor). Each gets a letter and two texts: a short
+    name for the user, and a precise positional description for the image model.</li>
+    <li><strong>Confirm</strong> — the user sees the letters on their photo and taps
+    whatever they want removed. Everything else stays by default.</li>
+    <li><strong>Generate</strong> — one image call whose prompt names every architectural
+    item verbatim under "must remain exactly where they are", the kept objects under
+    "keep, in the same positions", and the tapped ones under "remove entirely".</li>
   </ol>
-  <div class="plain"><b>Why this beats them:</b> they ask a model nicely to keep your room. We make it unable to change it.</div>
+  <div class="plain"><b>Why it works:</b> the model does not fail from unwillingness, it
+  fails from not knowing what is in the picture. Naming <em>"deep rectangular wall alcove
+  centred above and to the right of the fireplace"</em> is enough. Naming nothing is not.</div>
+  <div class="risk"><b>What it does not fix.</b> The camera framing still shifts slightly
+  between input and output. Everything stays in the right place relative to everything
+  else, but the crop tightens. No prompt wording has fixed this, and it is a property of
+  the API's fixed output sizes.</div>
 
-  
   <div class="d open" data-anchor="d10b" data-label="D10b geometry vs surface">
     <button class="cbtn">comment</button>
     <div class="q">D10b — Reopening D10: what does "structure" protect?</div>
@@ -479,8 +503,8 @@ sequenceDiagram
 
   <div class="d open" data-anchor="t7" data-label="T7 structure detection">
     <button class="cbtn">comment</button>
-    <div class="q">T7 — How do we find the structure?</div>
-    <div class="why">Accuracy here caps the whole product. TR3 requires a confidence number out of it.</div>
+    <div class="q">T7 — How do we find the structure? <span class="tag" style="background:var(--warnsoft);color:var(--warn)">superseded</span></div>
+    <div class="why">Answered by the spike instead: structure is found by the vision inventory call, not by depth and segmentation models. Kept for the record; the options below are no longer live.</div>
     <div data-radio="t7">
       <label class="opt"><input type="radio" name="t7" value="depth-seg"><span><span class="oh">Depth model + segmentation model</span><span class="od">Best accuracy, two models to run, slowest and priciest per render.</span></span></label>
       <label class="opt"><input type="radio" name="t7" value="seg-only"><span><span class="oh">Segmentation only</span><span class="od">One model. Good on walls and windows, weak on flooring — which D10 promised.</span></span></label>
@@ -618,59 +642,43 @@ sequenceDiagram
 
   <div class="plain"><b>The trap:</b> "AI image editing" and "mask-respecting inpainting" sound like the same feature and are not. Nano Banana is the best-marketed model in this space and cannot do the one thing this product is built on.</div>
 
-  <h3>The chosen architecture — round 7</h3>
-  <p>One vendor, no GPU, no self-hosted models. OpenAI does both jobs:</p>
-  <ol>
-    <li><strong>Identify</strong> — a vision call returns the objects and surfaces it can see, with outlines.</li>
-    <li><strong>Confirm</strong> — we draw those outlines on the photo and the user says whether they are right.</li>
-    <li><strong>Choose</strong> — the user taps what stays. That becomes <code>keep_items</code>.</li>
-    <li><strong>Generate</strong> — an image edit call with the mask, the kept items, and the style.</li>
-  </ol>
-  <div class="plain"><b>The good part, and it is genuinely good:</b> step 2 makes the user the validator. Detection no longer has to be right on its own — it has to be <em>checkable</em>. That is a better answer to R2 than anything proposed earlier, and it partly repairs C3 and C4, because a human catches the bad mask before a render is ever paid for.</div>
-  <div class="risk"><b>What it does not fix.</b> A vision model returns approximate regions, not pixel-accurate edges. That is fine for a sofa and not fine for a wall: an outline that is off by twenty pixels lets the generator repaint a strip of real wall. And with T11 set to trust the model's mask, nothing downstream catches that — OpenAI's documentation describes its mask as "followed loosely", a soft mask over a whole-image recreation.
-  <p style="margin:8px 0 0">Net effect: the promise in R1 rests on a vendor behaviour documented as approximate. The mitigation currently in place is the user's own eyes at step 2, plus the fidelity metric reporting the damage afterwards.</p></div>
-
-  <div class="d open" data-anchor="t12" data-label="T12 outline precision">
-    <button class="cbtn">comment</button>
-    <div class="q">T12 — How do we get edges accurate enough for walls?</div>
-    <div class="why">Boxes work for furniture. Architecture needs pixels. This is the gap left by round 7.</div>
-    <div data-radio="t12">
-      <label class="opt"><input type="radio" name="t12" value="vision-only"><span><span class="oh">Vision outlines only</span><span class="od">Simplest, one vendor, ship soonest. Wall edges will be approximate and some renders will bleed.</span></span></label>
-      <label class="opt"><input type="radio" name="t12" value="hybrid"><span><span class="oh">Vision for objects, segmentation for structure</span><span class="od">OpenAI names the furniture; a free ADE20K model draws pixel-exact walls, floor and windows. Two systems, but each doing what it is good at.</span></span></label>
-      <label class="opt"><input type="radio" name="t12" value="user-drag"><span><span class="oh">Let the user drag the edges</span><span class="od">Confirm step becomes correctable. No extra model, and it turns the weakness into the trust moment.</span></span></label>
-    </div>
-  </div>
-
-  <h3>If we need real pixel accuracy later</h3>
-  <p class="sub">Not required by the round 7 architecture. Here if T12 goes hybrid.</p>
+  <h3>What the spike proved</h3>
+  <p class="sub">Five image edits and one vision call on a real living room photo. About 12 cents.</p>
   <table class="t">
-    <tr><th>Job</th><th>Model</th><th>Licence</th><th>Note</th></tr>
-    <tr><td>Depth</td><td><strong>Depth Anything V2 — Small</strong></td><td>Apache-2.0 — commercial use fine</td><td>25M parameters, runs cheaply. Not needed if T12 stays vision-only.</td></tr>
-    <tr><td>Depth</td><td>Depth Anything V2 Base / Large / Giant</td><td><strong>CC-BY-NC-4.0 — commercial use prohibited</strong></td><td>A trap. The good ones are the ones you cannot use.</td></tr>
-    <tr><td>Labels</td><td><strong>Mask2Former trained on ADE20K</strong></td><td>Open source</td><td>ADE20K's 150 classes include wall, floor, ceiling, window and door — exactly our protected list.</td></tr>
-    <tr><td>Boundaries</td><td>SAM 2</td><td>Apache-2.0 — commercial fine</td><td>Superb edges, but <strong>no semantic labels</strong> — it finds shapes without knowing which is a wall. Optional refinement, not a replacement.</td></tr>
+    <tr><th>Experiment</th><th>Result</th></tr>
+    <tr><td>Prompt only, architecture named by hand</td><td><strong>Worked.</strong> Fireplace, mantel, alcove, ceiling step, flooring, thermostat all preserved. Restyle was good.</td></tr>
+    <tr><td>Same, with the photo padded to the API's aspect ratio</td><td>Worse. Camera pushed in, alcove proportions drifted, furniture invented.</td></tr>
+    <tr><td>Prompt plus a mask protecting the fireplace</td><td><strong>Catastrophic.</strong> The masked region was deleted — fireplace replaced with a plain wall. Measured: the protected area changed <em>more</em> than the editable one, 78% of pixels against 52%.</td></tr>
+    <tr><td>Two-stage: vision inventory, then generate from it</td><td><strong>Worked, and removals worked.</strong> Architecture preserved, the two items marked for removal gone, nothing else touched.</td></tr>
   </table>
-  <div class="plain"><b>In plain words:</b> ADE20K segmentation says "these pixels are a wall". Depth Anything says "this wall is 3 metres away". SAM 2 can sharpen the edges. Only the first is strictly required.</div>
+  <div class="risk"><b>Masking is not a mechanism here.</b> OpenAI's edit endpoint regenerates
+  the whole scene rather than painting into the original. The mask influences and does not
+  enforce, and on our test it actively marked the protected region for replacement.
+  Compositing the original pixels back is also ruled out, because the output is never
+  aligned with the input.</div>
+  <div class="plain"><b>What replaced it:</b> the vision call produces <em>words</em>, not a
+  stencil. That is the whole change, and it makes the system simpler — two API calls, one
+  list, no image manipulation.</div>
 
-  <div class="d open" data-anchor="t10" data-label="T10 generation model">
+  <div class="d open" data-anchor="t13" data-label="T13 inventory scope">
     <button class="cbtn">comment</button>
-    <div class="q">T10 — Which generation model?</div>
-    <div class="why">All of these become safe once we enforce the mask ourselves. Without that step, only the bottom two are honest choices.</div>
-    <div data-radio="t10">
-      <label class="opt"><input type="radio" name="t10" value="openai"><span><span class="oh">OpenAI gpt-image-1.5</span><span class="od">Cheapest to start, one API key, no GPU. Soft masking, fixed by our compositing step.</span></span></label>
-      <label class="opt"><input type="radio" name="t10" value="imagen"><span><span class="oh">Google Imagen on Vertex</span><span class="od">Real mask-based inpainting from a hosted API. More setup than OpenAI, better mask behaviour.</span></span></label>
-      <label class="opt"><input type="radio" name="t10" value="sd35"><span><span class="oh">Self-hosted Stable Diffusion 3.5</span><span class="od">Free under $1M revenue, total control, depth ControlNet included. Needs a 24 GB GPU and matches your original T1 answer.</span></span></label>
-      <label class="opt"><input type="radio" name="t10" value="start-api"><span><span class="oh">Hosted now, keep the seam</span><span class="od">Start on an API, put one interface in front of it, move to self-hosted when the bill or the quality demands it.</span></span></label>
+    <div class="q">T13 — How much does the inventory list?</div>
+    <div class="why">Our test returned 13 items for one room. Every extra item is another thing to name in the prompt and another chip on the confirm screen.</div>
+    <div data-radio="t13">
+      <label class="opt"><input type="radio" name="t13" value="all"><span><span class="oh">Everything it can see</span><span class="od">Most faithful preservation, busiest screen. 13 chips on a phone is a lot.</span></span></label>
+      <label class="opt"><input type="radio" name="t13" value="arch-plus-big"><span><span class="oh">All architecture, only large objects</span><span class="od">Architecture is the promise so it is always listed; small decor is restyled freely without asking.</span></span></label>
+      <label class="opt"><input type="radio" name="t13" value="removable"><span><span class="oh">All architecture, plus anything removable</span><span class="od">The user can only act on removable things, so only show those. Architecture stays in the prompt but off the screen.</span></span></label>
     </div>
   </div>
 
-  <div class="d open" data-anchor="t11" data-label="T11 enforce mask ourselves">
+  <div class="d open" data-anchor="t14" data-label="T14 wrong inventory">
     <button class="cbtn">comment</button>
-    <div class="q">T11 — Do we composite the protected pixels back ourselves?</div>
-    <div class="why">This is the single most consequential technical decision in the document.</div>
-    <div data-radio="t11">
-      <label class="opt"><input type="radio" name="t11" value="yes"><span><span class="oh">Yes — always paste the original back</span><span class="od">Structure preservation becomes guaranteed rather than hoped for, and any model becomes usable. Costs a feathering step to hide seams.</span></span></label>
-      <label class="opt"><input type="radio" name="t11" value="trust"><span><span class="oh">No — trust the model's mask</span><span class="od">Simpler, more natural-looking blends, and it puts the product's only promise in a vendor's hands.</span></span></label>
+    <div class="q">T14 — What if the inventory is wrong?</div>
+    <div class="why">It listed all 13 correctly on our photo. It will not always. A missed architectural feature is one the prompt never protects.</div>
+    <div data-radio="t14">
+      <label class="opt"><input type="radio" name="t14" value="accept"><span><span class="oh">Accept it</span><span class="od">Ship what the model saw. Cheapest, and a missed feature is silently unprotected.</span></span></label>
+      <label class="opt"><input type="radio" name="t14" value="add"><span><span class="oh">Let the user add what's missing</span><span class="od">"Something we missed?" — they type or tap it. Turns the confirm screen into a real check.</span></span></label>
+      <label class="opt"><input type="radio" name="t14" value="twice"><span><span class="oh">Run the inventory twice and merge</span><span class="od">Catches misses automatically, costs a second vision call, and still misses what both runs miss.</span></span></label>
     </div>
   </div>
 </section>
@@ -1067,7 +1075,9 @@ const SETTLED={
  d14:['Credit unit','One room, 3 restyles'], d13:['Account','Before the first render'],
  d7:['Platform','iOS native'], c2:['Baseline','iOS client, containerised backend'],
  d9:['Success metric','Structure fidelity rate'], d8:['Exclusions','7 features out of v1'],
- c3:['Fidelity chain','Accepted as-is']};
+ c3:['Fidelity chain','Accepted as-is'],
+ t11:['Mask enforcement','SUPERSEDED — masking disproven by the spike'],
+ t12:['Outline precision','SUPERSEDED — no outlines; the inventory is words']};
 function renderSettled(){
   const rows=Object.entries(SETTLED).filter(([k])=>S.decisions[k]!==undefined);
   $('#settled').innerHTML=rows.length?'<table class="t"><tr><th>ID</th><th>Decision</th><th>Answer</th></tr>'+
