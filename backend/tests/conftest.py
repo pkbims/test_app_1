@@ -43,13 +43,13 @@ def run_worker(pg_url, tmp_path):
     from app.vision import FakeVision
     from worker.runner import run_one
 
-    def _tick(*, editor=None, vision=None, catch_up=True, worker="test-worker"):
+    def _tick(*, editor=None, vision=None, storage=None, catch_up=True, worker="test-worker"):
         with psycopg.connect(pg_url, autocommit=True) as conn:
             if catch_up:
                 conn.execute("UPDATE jobs SET run_after = now() WHERE status = 'queued'")
             return run_one(
                 conn,
-                LocalDiskStorage(tmp_path),
+                storage or LocalDiskStorage(tmp_path),
                 vision or FakeVision(),
                 editor or FakeImageEditor(),
                 worker,

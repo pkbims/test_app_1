@@ -12,6 +12,7 @@ from __future__ import annotations
 import html
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -47,10 +48,34 @@ def _render() -> str:
         state = "unreachable"
         rows = f"<tr><td colspan=3>{html.escape(h_body)}</td></tr>"
 
-    metrics = (
-        f"<pre>{html.escape(m_body)}</pre>"
+    m = _parse_metrics(m_body) if m_status == 200 else {}
+    scored = m.get("app1_preservation_scored_renders", 0.0)
+    inv_att = m.get("app1_inventory_attempts_total", 0.0)
+    inv_fail = m.get("app1_inventory_failures_total", 0.0)
+    cards = "".join(
+        _card(label, value)
+        for label, value in [
+            (
+                "preservation rate — mean",
+                _pct(m.get("app1_preservation_rate_mean")) if scored else "—",
+            ),
+            (
+                "preservation rate — p5 (worst)",
+                _pct(m.get("app1_preservation_rate_p5")) if scored else "—",
+            ),
+            ("inventory failure rate", _ratio(inv_fail, inv_att)),
+            ("render duration p95", _secs(m.get('app1_render_duration_seconds{quantile="0.95"}'))),
+            ("queue depth", _int(m.get("app1_queue_depth"))),
+            ("workers active", _int(m.get("app1_workers_active"))),
+            ("renders done", _int(m.get('app1_renders_total{status="done"}'))),
+            ("renders failed", _int(m.get('app1_renders_total{status="failed"}'))),
+            ("est. OpenAI cost", f"${m.get('app1_render_cost_usd_estimate_total', 0.0):.2f}"),
+        ]
+    )
+    raw = (
+        f"<details><summary>raw /metrics</summary><pre>{html.escape(m_body)}</pre></details>"
         if m_status == 200
-        else f"<p class='muted'>/metrics not available yet (HTTP {m_status})</p>"
+        else f"<p class='muted'>/metrics unavailable (HTTP {m_status})</p>"
     )
 
     return f"""<!doctype html>
@@ -60,24 +85,72 @@ def _render() -> str:
 <style>
   body {{ font: 14px system-ui, sans-serif; margin: 2rem; max-width: 60rem; }}
   h1 {{ font-size: 1.2rem; }}
+  h2 {{ font-size: 1rem; margin-top: 2rem; }}
   table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
   td, th {{ border: 1px solid #ccc; padding: .4rem .6rem; text-align: left; }}
   .state {{ font-weight: 700; }}
   .s-ok {{ color: #137333; }}
   .s-degraded {{ color: #b06000; }}
-  .s-down {{ color: #c5221f; }}
+  .s-down, .s-unreachable {{ color: #c5221f; }}
   .muted {{ color: #666; }}
+  .cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }}
+  .card {{ border: 1px solid #ddd; border-radius: 6px; padding: .75rem; }}
+  .card .v {{ font-size: 1.5rem; font-weight: 700; }}
+  .card .l {{ color: #666; font-size: .8rem; }}
   pre {{ background: #f6f6f6; padding: 1rem; overflow-x: auto; }}
 </style>
 <h1>app_1 — <span class="state s-{html.escape(state)}">{html.escape(state)}</span></h1>
 <p class="muted">source: {html.escape(API_BASE)} · refreshes every 5s</p>
+
+<h2>Is the promise holding?</h2>
+<div class="cards">{cards}</div>
+
+<h2>Health checks</h2>
 <table>
   <tr><th>check</th><th>state</th><th>detail</th></tr>
   {rows}
 </table>
-<h2 style="font-size:1rem">/metrics</h2>
-{metrics}
+
+{raw}
 """
+
+
+_METRIC_LINE = re.compile(r"^(app1_[a-z0-9_]+(?:\{[^}]*\})?)\s+([0-9eE.+-]+|NaN)$", re.MULTILINE)
+
+
+def _parse_metrics(text: str) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for name, value in _METRIC_LINE.findall(text):
+        if value == "NaN":
+            continue
+        try:
+            out[name] = float(value)
+        except ValueError:
+            pass
+    return out
+
+
+def _card(label: str, value: str) -> str:
+    return (
+        f"<div class='card'><div class='v'>{html.escape(value)}</div>"
+        f"<div class='l'>{html.escape(label)}</div></div>"
+    )
+
+
+def _pct(v: float | None) -> str:
+    return "—" if v is None or v != v else f"{v * 100:.0f}%"
+
+
+def _ratio(num: float, denom: float) -> str:
+    return "—" if not denom else f"{num / denom * 100:.0f}%"
+
+
+def _secs(v: float | None) -> str:
+    return "—" if v is None or v != v else f"{v:.1f}s"
+
+
+def _int(v: float | None) -> str:
+    return "0" if v is None else f"{int(v)}"
 
 
 class Handler(BaseHTTPRequestHandler):

@@ -25,6 +25,7 @@ class Settings:
     # external services
     openai_api_key: str = ""
     apple_client_id: str = ""
+    sentry_dsn: str = ""
     # "openai" (real gpt-4.1 / gpt-image-2) or "fake" (deterministic, for local
     # compose without a key and for integration tests)
     vision_backend: str = "openai"
@@ -55,6 +56,7 @@ def load() -> Settings:
         log_level=os.environ.get("LOG_LEVEL", "info"),
         openai_api_key=os.environ.get("OPENAI_API_KEY", ""),
         apple_client_id=os.environ.get("APPLE_CLIENT_ID", ""),
+        sentry_dsn=os.environ.get("SENTRY_DSN", ""),
         vision_backend=os.environ.get("VISION_BACKEND", "openai"),
         public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000"),
         file_url_secret=os.environ.get("FILE_URL_SECRET", "") or jwt_secret,

@@ -18,6 +18,8 @@ from app.migrate import apply_all
 from app.runtime import make_image_editor, make_vision
 from app.settings import load
 from app.storage import LocalDiskStorage
+from app.tracking import capture
+from app.tracking import configure as configure_tracking
 
 from .heartbeat import record
 from .runner import run_one
@@ -31,6 +33,7 @@ _log = logging.getLogger("worker")
 def main() -> None:
     settings = load()
     configure(settings.log_level)
+    configure_tracking(settings.sentry_dsn, settings.app_env)
     pool = make_pool(settings)
     with pool.connection() as conn:
         apply_all(conn)
@@ -53,8 +56,9 @@ def main() -> None:
                 outcome = run_one(conn, storage, vision, editor, worker)
             if outcome is None:
                 time.sleep(IDLE_SLEEP_S)
-        except Exception:  # noqa: BLE001 — keep the loop alive
+        except Exception as exc:  # noqa: BLE001 — keep the loop alive
             _log.exception("worker loop error")
+            capture(exc)
             time.sleep(IDLE_SLEEP_S)
 
 

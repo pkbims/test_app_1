@@ -7,11 +7,17 @@ Route bodies raise `ApiError(ErrorCode.x, "message")`; a handler turns it into t
 
 from __future__ import annotations
 
+import logging
+
+import psycopg
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from psycopg_pool import PoolTimeout
 
 from . import context
 from .schemas import Error, ErrorCode
+
+_log = logging.getLogger("app1.error")
 
 _STATUS: dict[ErrorCode, int] = {
     ErrorCode.apple_token_invalid: 401,
@@ -58,3 +64,20 @@ def install(app: FastAPI) -> None:
         if ctx is not None:
             ctx.error_code = exc.code.value
         return exc.to_response()
+
+    @app.exception_handler(psycopg.OperationalError)
+    @app.exception_handler(PoolTimeout)
+    async def _handle_db_down(_: Request, exc: Exception) -> JSONResponse:
+        # DB down / pool exhausted → 503 everywhere, not a 500 (PRD §17). There is
+        # no ErrorCode for this in the contract (see ORCH-QUESTIONS Q4), so the
+        # body is the plain {"detail": ...} envelope; clients treat any non-2xx
+        # they don't recognise as "try again".
+        ctx = context.current_or_none()
+        if ctx is not None:
+            ctx.error_code = "service_unavailable"
+        _log.warning("dependency unavailable: %s", exc)
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "The service is briefly unavailable. Please try again."},
+            headers={"Retry-After": "5"},
+        )

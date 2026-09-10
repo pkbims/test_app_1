@@ -12,7 +12,7 @@ from typing import List
 from fastapi import FastAPI, File, Path, Response, UploadFile, status
 from fastapi.responses import JSONResponse
 
-from . import context, errors, health as health_mod, logs, ratelimit, runtime
+from . import context, errors, health as health_mod, logs, ratelimit, runtime, tracking
 from . import metrics as metrics_mod
 from .auth import service as auth_service
 from .files_route import router as files_router
@@ -33,6 +33,7 @@ async def lifespan(_: FastAPI):
     # metrics collector — all before the first request.
     rt = runtime.start()
     logs.configure(rt.settings.log_level)
+    tracking.configure(rt.settings.sentry_dsn, rt.settings.app_env)
     metrics_mod.install(rt.pool)
     try:
         yield

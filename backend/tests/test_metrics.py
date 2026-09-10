@@ -1,4 +1,5 @@
 """/metrics — Prometheus text (build-order step 9)."""
+
 from __future__ import annotations
 
 import io
@@ -59,7 +60,7 @@ def test_a_completed_render_shows_up_in_metrics(api, run_worker):
     body = _scrape(api)
     assert 'app1_renders_total{status="done"} 1.0' in body
     assert "app1_preservation_rate_mean 1.0" in body
-    assert 'app1_preservation_scored_renders 1.0' in body
+    assert "app1_preservation_scored_renders 1.0" in body
 
 
 def test_rate_limit_rejections_are_counted(api):
