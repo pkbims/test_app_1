@@ -3,8 +3,10 @@ import XCTest
 
 /// Exercises the real running backend end-to-end (`docker compose up --build`,
 /// `VISION_BACKEND=fake`) instead of a mock — per the orchestrator's instruction,
-/// a stronger test than a stub wherever practical. Every test signs in as a fresh
-/// dev-token user (see `DevJWT`) so runs don't share credits or state.
+/// a stronger test than a stub wherever practical. `POST /v1/auth/apple` is
+/// rate-limited 10/hr per IP, so tests that don't spend a credit share one signed-in
+/// session (`sharedReadOnlyClient`); tests that create a render sign in fresh
+/// (`makeSignedInClient`) so each gets its own 1-free-credit user.
 ///
 /// Skips itself (not a failure) if the backend isn't reachable, so `swift test`
 /// still passes for anyone who hasn't run `docker compose up`.
@@ -38,6 +40,25 @@ final class RenderFlowIntegrationTests: XCTestCase {
         let devToken = DevJWT.signed(subject: "test-\(UUID().uuidString)", secret: Self.devSecret)
         _ = try await client.signInWithApple(identityToken: devToken)
         return (client, tokenStore)
+    }
+
+    /// `POST /v1/auth/apple` is rate-limited 10/hr per IP (PRD §16), shared with every
+    /// other test process hitting this same local backend. Tests that don't spend a
+    /// credit share one signed-in session (memoized via `Task`'s own run-once
+    /// semantics) instead of each signing in fresh; tests that create a render still
+    /// use `makeSignedInClient()` for a clean 1-free-credit user, since render
+    /// creation genuinely spends it (`backend/app/render/service.py`) — the PRD's
+    /// "three restyles included" framing isn't what's implemented.
+    private static let sharedSessionTask = Task<(APIClient, TokenStore), Error> {
+        let tokenStore = InMemoryTokenStore()
+        let client = APIClient(configuration: .init(baseURL: baseURL, tokenStore: tokenStore))
+        let devToken = DevJWT.signed(subject: "test-shared-\(UUID().uuidString)", secret: devSecret)
+        _ = try await client.signInWithApple(identityToken: devToken)
+        return (client, tokenStore)
+    }
+
+    private func sharedReadOnlyClient() async throws -> APIClient {
+        try await Self.sharedSessionTask.value.0
     }
 
     /// Finds a fixture under `inputs/` by walking up from this source file, rather
@@ -107,7 +128,7 @@ final class RenderFlowIntegrationTests: XCTestCase {
         // The full client-side path an iPhone photo actually takes: HEIC bytes from
         // the picker -> PhotoFormatConverter -> upload. Confirms the server accepts
         // what the converter produces, not just that ImageIO can decode it.
-        let (client, _) = try await makeSignedInClient()
+        let client = try await sharedReadOnlyClient()
         let room = try await client.createRoom(label: nil)
 
         let heicData = try fixture("IMG_1519.HEIC")
@@ -125,7 +146,7 @@ final class RenderFlowIntegrationTests: XCTestCase {
     }
 
     func testCreateInventoryWithoutAPhotoReturnsNoPhotos() async throws {
-        let (client, _) = try await makeSignedInClient()
+        let client = try await sharedReadOnlyClient()
         let room = try await client.createRoom(label: nil)
 
         do {
@@ -137,7 +158,7 @@ final class RenderFlowIntegrationTests: XCTestCase {
     }
 
     func testGetRenderWithUnknownIdReturnsNotFound() async throws {
-        let (client, _) = try await makeSignedInClient()
+        let client = try await sharedReadOnlyClient()
 
         do {
             _ = try await client.getRender(renderId: "not-a-real-render-id")
