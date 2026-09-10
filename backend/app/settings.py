@@ -16,6 +16,7 @@ class Settings:
     photo_dir: str
     jwt_secret: str
     app_env: str = "dev"
+    log_level: str = "info"
 
     # auth token lifetimes
     access_ttl_s: int = 15 * 60
@@ -51,6 +52,7 @@ def load() -> Settings:
         photo_dir=os.environ.get("PHOTO_DIR", "/data/photos"),
         jwt_secret=jwt_secret,
         app_env=app_env,
+        log_level=os.environ.get("LOG_LEVEL", "info"),
         openai_api_key=os.environ.get("OPENAI_API_KEY", ""),
         apple_client_id=os.environ.get("APPLE_CLIENT_ID", ""),
         vision_backend=os.environ.get("VISION_BACKEND", "openai"),

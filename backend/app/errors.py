@@ -10,6 +10,7 @@ from __future__ import annotations
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from . import context
 from .schemas import Error, ErrorCode
 
 _STATUS: dict[ErrorCode, int] = {
@@ -53,4 +54,7 @@ class ApiError(Exception):
 def install(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def _handle_api_error(_: Request, exc: ApiError) -> JSONResponse:
+        ctx = context.current_or_none()
+        if ctx is not None:
+            ctx.error_code = exc.code.value
         return exc.to_response()

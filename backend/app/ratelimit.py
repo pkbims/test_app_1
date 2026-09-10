@@ -22,6 +22,24 @@ from dataclasses import dataclass
 
 _SWEEP_EVERY = 1000
 
+_HOUR = 3600
+_MINUTE = 60
+
+# Every limited route in one place. `by` is what the key is scoped to.
+# The first five are the PRD §16 table verbatim; `inventory` and `render_list`
+# are ours (a vision call costs money; a list is cheap but unbounded).
+LIMITS: dict[str, tuple[int, int, str]] = {
+    "auth_apple": (10, _HOUR, "ip"),  # PRD §16
+    "auth_refresh": (60, _HOUR, "ip"),  # PRD §16
+    "me": (60, _MINUTE, "user"),  # PRD §16
+    "rooms": (30, _HOUR, "user"),  # PRD §16 (create + delete)
+    "photos": (20, _HOUR, "user"),  # PRD §16
+    "render_poll": (120, _MINUTE, "user"),  # PRD §16
+    "inventory": (20, _HOUR, "user"),
+    "render_create": (30, _HOUR, "user"),
+    "render_list": (60, _MINUTE, "user"),
+}
+
 
 @dataclass(frozen=True)
 class Decision:
@@ -35,13 +53,17 @@ class RateLimiter(ABC):
         """Count one request against `key`. Does not block."""
 
 
-def enforce(limiter: RateLimiter, key: str, limit: int, window_s: int) -> None:
-    """Count one request; raise `ApiError(rate_limited)` with `Retry-After` if over."""
-    decision = limiter.check(key, limit, window_s)
+def enforce(limiter: RateLimiter, rule: str, subject: str) -> None:
+    """Count one request against `rule` for `subject`; raise `ApiError(rate_limited)`
+    with a `Retry-After` header if the caller is over the limit."""
+    limit, window_s, _by = LIMITS[rule]
+    decision = limiter.check(f"{rule}:{subject}", limit, window_s)
     if not decision.allowed:
         from .errors import ApiError
+        from .metrics import RATE_LIMITED
         from .schemas import ErrorCode
 
+        RATE_LIMITED.labels(rule).inc()
         raise ApiError(
             ErrorCode.rate_limited,
             "You're going a little fast. Try again in a moment.",

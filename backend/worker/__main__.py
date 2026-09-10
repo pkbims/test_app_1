@@ -7,12 +7,13 @@ pipeline in `render_job.py`.
 
 from __future__ import annotations
 
+import logging
 import os
 import socket
-import sys
 import time
 
 from app.db import make_pool
+from app.logs import configure
 from app.migrate import apply_all
 from app.runtime import make_image_editor, make_vision
 from app.settings import load
@@ -24,9 +25,12 @@ from .runner import run_one
 HEARTBEAT_INTERVAL_S = 10
 IDLE_SLEEP_S = 2
 
+_log = logging.getLogger("worker")
+
 
 def main() -> None:
     settings = load()
+    configure(settings.log_level)
     pool = make_pool(settings)
     with pool.connection() as conn:
         apply_all(conn)
@@ -35,7 +39,7 @@ def main() -> None:
     vision = make_vision(settings)
     editor = make_image_editor(settings)
     worker = f"{socket.gethostname()}:{os.getpid()}"
-    print(f"worker {worker} up ({settings.vision_backend})", flush=True)
+    _log.info("worker up", extra={"worker": worker, "vision_backend": settings.vision_backend})
 
     last_beat = 0.0
     while True:
@@ -49,10 +53,8 @@ def main() -> None:
                 outcome = run_one(conn, storage, vision, editor, worker)
             if outcome is None:
                 time.sleep(IDLE_SLEEP_S)
-            else:
-                print(f"job -> {outcome}", flush=True)
-        except Exception as exc:  # noqa: BLE001 — keep the loop alive
-            print(f"worker loop error: {exc}", file=sys.stderr, flush=True)
+        except Exception:  # noqa: BLE001 — keep the loop alive
+            _log.exception("worker loop error")
             time.sleep(IDLE_SLEEP_S)
 
 

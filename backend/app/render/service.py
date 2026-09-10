@@ -47,7 +47,13 @@ class RenderUrls:
 
 
 def create_render(
-    conn, *, room_id: str, user_id: str, body: RenderCreate, urls: RenderUrls
+    conn,
+    *,
+    room_id: str,
+    user_id: str,
+    body: RenderCreate,
+    urls: RenderUrls,
+    request_id: str | None = None,
 ) -> Render:
     rid = parse_uuid(room_id, _ROOM_NOT_FOUND)
     with conn.transaction():
@@ -104,7 +110,10 @@ def create_render(
             "VALUES (%s, -1, 'render_spend', %s)",
             (user_id, render_id),
         )
-        conn.execute("INSERT INTO jobs (render_id, status) VALUES (%s, 'queued')", (render_id,))
+        conn.execute(
+            "INSERT INTO jobs (render_id, status, request_id) VALUES (%s, 'queued', %s)",
+            (render_id, request_id),
+        )
         row = conn.execute(_SELECT + "WHERE id = %s", (render_id,)).fetchone()
 
     return _to_render(row, credits_left=balance - 1, urls=urls)

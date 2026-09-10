@@ -20,6 +20,7 @@ class RequestContext:
     method: str
     path: str
     user_id: str | None = None
+    error_code: str | None = None  # set by the ApiError handler, read by the access log
 
 
 def set_current(ctx: RequestContext):
@@ -35,3 +36,7 @@ def current() -> RequestContext:
     if ctx is None:
         raise RuntimeError("no request context — is RequestMiddleware installed?")
     return ctx
+
+
+def current_or_none() -> RequestContext | None:
+    return _current.get()

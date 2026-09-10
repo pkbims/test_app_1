@@ -12,7 +12,8 @@ from typing import List
 from fastapi import FastAPI, File, Path, Response, UploadFile, status
 from fastapi.responses import JSONResponse
 
-from . import context, errors, health as health_mod, ratelimit, runtime
+from . import context, errors, health as health_mod, logs, ratelimit, runtime
+from . import metrics as metrics_mod
 from .auth import service as auth_service
 from .files_route import router as files_router
 from .inventory import service as inventory_service
@@ -28,8 +29,11 @@ from .schemas import (
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # Opens the pool and runs pending migrations before the first request.
-    runtime.start()
+    # Opens the pool, runs pending migrations, wires logging and the DB-backed
+    # metrics collector — all before the first request.
+    rt = runtime.start()
+    logs.configure(rt.settings.log_level)
+    metrics_mod.install(rt.pool)
     try:
         yield
     finally:
@@ -80,7 +84,7 @@ def auth_apple(body: AppleSignIn) -> Tokens:
     room on first sight. Rate limit 10/hr per IP."""
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"auth_apple:{ctx.client_ip}", 10, 3600)
+    ratelimit.enforce(rt.rate_limiter, "auth_apple", ctx.client_ip)
     with rt.pool.connection() as conn:
         issued = auth_service.authenticate(
             conn,
@@ -98,7 +102,7 @@ def auth_apple(body: AppleSignIn) -> Tokens:
 def auth_refresh(body: RefreshRequest) -> Tokens:
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"auth_refresh:{ctx.client_ip}", 60, 3600)
+    ratelimit.enforce(rt.rate_limiter, "auth_refresh", ctx.client_ip)
     with rt.pool.connection() as conn:
         return auth_service.refresh(
             conn,
@@ -114,7 +118,7 @@ def auth_refresh(body: RefreshRequest) -> Tokens:
 def me() -> Me:
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"me:{ctx.user_id}", 60, 60)
+    ratelimit.enforce(rt.rate_limiter, "me", ctx.user_id)
     with rt.pool.connection() as conn:
         return auth_service.current_user(conn, ctx.user_id)
 
@@ -125,7 +129,7 @@ def me() -> Me:
 def create_room(body: RoomCreate) -> Room:
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"rooms:{ctx.user_id}", 30, 3600)
+    ratelimit.enforce(rt.rate_limiter, "rooms", ctx.user_id)
     with rt.pool.connection() as conn:
         return rooms_service.create_room(conn, ctx.user_id, body.label)
 
@@ -140,7 +144,7 @@ def upload_photo(room_id: str = Path(...), file: UploadFile = File(...)) -> Phot
     is not JPEG or PNG with `photo_unsupported`."""
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"photos:{ctx.user_id}", 20, 3600)
+    ratelimit.enforce(rt.rate_limiter, "photos", ctx.user_id)
     if file.size is not None and file.size > rt.settings.max_photo_bytes:
         raise errors.ApiError(
             errors.ErrorCode.photo_too_large, "That photo is over 12 MB. Try a smaller one."
@@ -165,7 +169,7 @@ def upload_photo(room_id: str = Path(...), file: UploadFile = File(...)) -> Phot
 def delete_room(room_id: str = Path(...)) -> Response:
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"rooms:{ctx.user_id}", 30, 3600)
+    ratelimit.enforce(rt.rate_limiter, "rooms", ctx.user_id)
     with rt.pool.connection() as conn:
         rooms_service.delete_room(conn, rt.storage, room_id, ctx.user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -180,7 +184,7 @@ def create_inventory(room_id: str = Path(...)) -> Inventory:
     the generate step must preserve. Takes a few seconds; called once per room."""
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"inventory:{ctx.user_id}", 20, 3600)
+    ratelimit.enforce(rt.rate_limiter, "inventory", ctx.user_id)
     with rt.pool.connection() as conn:
         return inventory_service.create_inventory(
             conn, rt.storage, rt.vision, room_id, ctx.user_id
@@ -209,10 +213,11 @@ def create_render(body: RenderCreate, room_id: str = Path(...)) -> Render:
     `GET /v1/renders/{id}` every 2 seconds. A failed render refunds its credit."""
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"renders:{ctx.user_id}", 30, 3600)
+    ratelimit.enforce(rt.rate_limiter, "render_create", ctx.user_id)
     with rt.pool.connection() as conn:
         return render_service.create_render(
-            conn, room_id=room_id, user_id=ctx.user_id, body=body, urls=_render_urls()
+            conn, room_id=room_id, user_id=ctx.user_id, body=body, urls=_render_urls(),
+            request_id=ctx.request_id,
         )
 
 
@@ -221,7 +226,7 @@ def create_render(body: RenderCreate, room_id: str = Path(...)) -> Render:
 def get_render(render_id: str = Path(...)) -> Render:
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"render_poll:{ctx.user_id}", 120, 60)
+    ratelimit.enforce(rt.rate_limiter, "render_poll", ctx.user_id)
     with rt.pool.connection() as conn:
         return render_service.get_render(conn, render_id, ctx.user_id, urls=_render_urls())
 
@@ -231,7 +236,7 @@ def get_render(render_id: str = Path(...)) -> Render:
 def list_renders(room_id: str = Path(...)) -> List[Render]:
     rt = runtime.get()
     ctx = context.current()
-    ratelimit.enforce(rt.rate_limiter, f"render_list:{ctx.user_id}", 60, 60)
+    ratelimit.enforce(rt.rate_limiter, "render_list", ctx.user_id)
     with rt.pool.connection() as conn:
         return render_service.list_renders(conn, room_id, ctx.user_id, urls=_render_urls())
 
@@ -260,4 +265,5 @@ def health() -> Health:
 def metrics() -> Response:
     """Leads with preservation rate (mean and 5th percentile) and inventory failure
     rate — together they say whether the promise is holding."""
-    _todo()
+    body, content_type = metrics_mod.render()
+    return Response(content=body, media_type=content_type)

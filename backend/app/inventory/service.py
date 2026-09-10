@@ -12,6 +12,7 @@ from psycopg.types.json import Json
 
 from ..errors import ApiError
 from ..ids import parse_uuid
+from ..metrics import INVENTORY_ATTEMPTS, INVENTORY_FAILURES
 from ..schemas import ErrorCode, Inventory, InventoryItem
 from ..vision import Vision, VisionError
 
@@ -35,11 +36,14 @@ def create_inventory(conn, storage, vision: Vision, room_id: str, user_id: str) 
         raise ApiError(ErrorCode.no_photos, "Add a photo of this room first.")
 
     image_bytes = storage.get(f"photos/{storage_key}")
+    INVENTORY_ATTEMPTS.inc()
     try:
         raw_items = vision.inventory(image_bytes, content_type)
     except VisionError as exc:
+        INVENTORY_FAILURES.inc()
         raise ApiError(ErrorCode.inventory_failed, _VISION_FAILED) from exc
     if not raw_items:
+        INVENTORY_FAILURES.inc()
         raise ApiError(ErrorCode.inventory_failed, _VISION_FAILED)
 
     items = [

@@ -9,6 +9,8 @@ Failure handling (PRD §17):
 
 from __future__ import annotations
 
+import logging
+
 from psycopg.types.json import Json
 
 from app.imagegen import ImageEditError, ImageEditor
@@ -21,9 +23,21 @@ from .leasing import Lease, mark_done, mark_failed, reschedule
 MAX_ATTEMPTS = 3
 _BACKOFF_SECONDS = {1: 5, 2: 15}
 
+_log = logging.getLogger("worker.render")
+
 
 def run(conn, storage, vision: Vision, editor: ImageEditor, lease: Lease) -> str:
     """Process the leased job. Returns one of: done, failed, retry, skipped."""
+    render_id = lease.render_id
+    log = logging.LoggerAdapter(
+        _log, {"request_id": lease.request_id, "render_id": render_id, "attempt": lease.attempts}
+    )
+    outcome = _run(conn, storage, vision, editor, lease, log)
+    log.info("render %s", outcome)
+    return outcome
+
+
+def _run(conn, storage, vision: Vision, editor: ImageEditor, lease: Lease, log) -> str:
     render_id = lease.render_id
     row = conn.execute(
         """
@@ -69,8 +83,10 @@ def run(conn, storage, vision: Vision, editor: ImageEditor, lease: Lease) -> str
         after = editor.edit(image_bytes, content_type, prompt)
     except ImageEditError as exc:
         if lease.attempts >= MAX_ATTEMPTS:
+            log.error("image edit failed, giving up: %s", exc)
             _fail_render(conn, render_id, lease.job_id, str(exc))
             return "failed"
+        log.warning("image edit failed, will retry: %s", exc)
         reschedule(conn, lease.job_id, _BACKOFF_SECONDS.get(lease.attempts, 30), str(exc))
         return "retry"
 
@@ -81,8 +97,9 @@ def run(conn, storage, vision: Vision, editor: ImageEditor, lease: Lease) -> str
     try:
         result = vision.preservation_check(after, architecture)
         rate, missing = result.preservation_rate, result.missing_ids
-    except VisionError:
+    except VisionError as exc:
         rate, missing = None, None  # the render succeeded; only the score is missing
+        log.warning("preservation check failed: %s", exc)
 
     with conn.transaction():
         conn.execute(
