@@ -11,22 +11,32 @@ final class StyleImageResolverTests: XCTestCase {
         XCTAssertEqual(StyleImageResolver.imageAssetName(for: "warm-minimal"), "warm-minimal")
     }
 
-    func testAllSixCurrentStylesHaveABundledImage() {
-        for id in ["warm-minimal", "scandi", "mid-century", "japandi", "modern-coastal", "industrial"] {
+    func testAllEighteenCurrentStylesHaveABundledImage() {
+        // The 6 original plus the 12 added by prompt_review/HANDOFF.md §2's 6->18
+        // style expansion.
+        for id in [
+            "warm-minimal", "scandi", "mid-century", "japandi", "modern-coastal", "industrial",
+            "traditional", "art-deco", "dark-academia", "maximalism", "moroccan", "cottagecore",
+            "rustic-farmhouse", "mediterranean", "cyberpunk", "memphis", "christmas", "valentines",
+        ] {
             XCTAssertEqual(StyleImageResolver.imageAssetName(for: id), id, "\(id) should resolve to its own asset name")
         }
     }
 
     func testUnknownStyleIdFallsBackToNilRatherThanCrashingOrGuessing() {
-        // The scenario the user's ask names directly: a 7th style added to
-        // Style.all with no matching artwork yet must fall back gracefully.
+        // The scenario the user's ask names directly: a style added to Style.all
+        // with no matching artwork yet must fall back gracefully.
         XCTAssertNil(StyleImageResolver.imageAssetName(for: "brand-new-style-nobody-made-art-for-yet"))
     }
 
-    func testBundledStyleIdsIsExactlyTheSixShipped() {
+    func testBundledStyleIdsIsExactlyTheEighteenShipped() {
         XCTAssertEqual(
             StyleImageResolver.bundledStyleIds,
-            ["warm-minimal", "scandi", "mid-century", "japandi", "modern-coastal", "industrial"]
+            [
+                "warm-minimal", "scandi", "mid-century", "japandi", "modern-coastal", "industrial",
+                "traditional", "art-deco", "dark-academia", "maximalism", "moroccan", "cottagecore",
+                "rustic-farmhouse", "mediterranean", "cyberpunk", "memphis", "christmas", "valentines",
+            ]
         )
     }
 }
