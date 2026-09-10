@@ -1,0 +1,741 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		01834093A71A53DE7EAD7CE5 /* DesignMyRoomCore in Frameworks */ = {isa = PBXBuildFile; productRef = C926B4BDDACFC30E950B2A06 /* DesignMyRoomCore */; };
+		09CD007FBB5CE96F9C57936F /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E1066A38E159E25474D019 /* SignInView.swift */; };
+		19BED3C490333A935A03E3C5 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6677E08BE0384E089790FCC7 /* AuthManager.swift */; };
+		2308D1C59F5D6D5E0BA9D212 /* AddPhotoFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */; };
+		2671D7E92ABA4F9B4F8DCFBC /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6E2D7EDDF38FB39DA6821E1 /* DesignTokens.swift */; };
+		273EDF7442FE8F920451732C /* RoomDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C28D6E82B112C285FFEDFA /* RoomDetailViewModel.swift */; };
+		27781601B6DE4C0A8E70E16D /* StylePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A262FBAD0153DB53D27F8D32 /* StylePickerView.swift */; };
+		2D59C83A9DB64D21860ADD37 /* AddPhotoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 282558BC4B2FF93667B93D62 /* AddPhotoView.swift */; };
+		310F93EEBAE3857588376732 /* RoomDetailViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5504BC6A9DEF9FFF8142FF3E /* RoomDetailViewModelTests.swift */; };
+		3B4E9D338DDD2E0D57DED3F6 /* DesignMyRoomApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9FFA2D651F7DC04E89AAB2 /* DesignMyRoomApp.swift */; };
+		4B2AC68FB09C78337B17ACB9 /* Style.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63928A038AADBA60090690B8 /* Style.swift */; };
+		610BE26E15F41B518D20A962 /* RenderingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EDC7A623C15253CD70D4F35 /* RenderingView.swift */; };
+		829E36B10C289E5EF79ACC16 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EF67D797C07FBF29A2CA74 /* HomeViewModel.swift */; };
+		8884F87F33C98D0DA6A7C169 /* RoomFlowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D96D714954C52B08ACDDB /* RoomFlowViewModel.swift */; };
+		9BAF4573A55EBB99EBD0B9B5 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494743C2B7F675E85EA429B4 /* AppEnvironment.swift */; };
+		A862652D5E1A33CED8E71AF1 /* RenderSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 688C4BED932E5928FB8E4D2B /* RenderSummaryView.swift */; };
+		AAB678AB69E50EDA6E5D98C6 /* PhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730512B379D0586A579AAAF9 /* PhotoPicker.swift */; };
+		B5571E373723D7D593C91669 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AE5F141F21843B7B64B79C33 /* Assets.xcassets */; };
+		C8EA9658CD092F6A161308A0 /* RoomFlowLiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5770660B237BBE46F20DB92 /* RoomFlowLiveTests.swift */; };
+		CE206251F9AAF39C2F4F8F21 /* CompareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E783CFEE8BB0F25358FDF061 /* CompareView.swift */; };
+		DBEA3A1F4FB91F2BBB3998A4 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B521D179B03C08D7E20836D /* HomeView.swift */; };
+		DE2F2362A8541560E2544FEC /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B8E1849429C207D69E5426 /* RootView.swift */; };
+		EB1FCC23B7BE192A23A997A2 /* ConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0AA52CA1BD5FB302A446E5D /* ConfirmView.swift */; };
+		F8DF10B92E8AD4EB5EFFA202 /* RoomDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32FE370534756CC513D6A083 /* RoomDetailView.swift */; };
+		FA3FFC19C4E69B6B098814F2 /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7725F1E3264A67440C468 /* HomeViewModelTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3C83A6394FE61C21F788427B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CFC36337CBF8147473749180 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 670876AE26B15FD75D4018EE;
+			remoteInfo = DesignMyRoom;
+		};
+		9AAB3840CC63615D10147C1D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CFC36337CBF8147473749180 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 670876AE26B15FD75D4018EE;
+			remoteInfo = DesignMyRoom;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		04EF67D797C07FBF29A2CA74 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		0EDC7A623C15253CD70D4F35 /* RenderingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderingView.swift; sourceTree = "<group>"; };
+		282558BC4B2FF93667B93D62 /* AddPhotoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPhotoView.swift; sourceTree = "<group>"; };
+		2B9FFA2D651F7DC04E89AAB2 /* DesignMyRoomApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignMyRoomApp.swift; sourceTree = "<group>"; };
+		32FE370534756CC513D6A083 /* RoomDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailView.swift; sourceTree = "<group>"; };
+		39B7725F1E3264A67440C468 /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
+		494743C2B7F675E85EA429B4 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		5504BC6A9DEF9FFF8142FF3E /* RoomDetailViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailViewModelTests.swift; sourceTree = "<group>"; };
+		63928A038AADBA60090690B8 /* Style.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Style.swift; sourceTree = "<group>"; };
+		6677E08BE0384E089790FCC7 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		688C4BED932E5928FB8E4D2B /* RenderSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderSummaryView.swift; sourceTree = "<group>"; };
+		730512B379D0586A579AAAF9 /* PhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPicker.swift; sourceTree = "<group>"; };
+		86B8E1849429C207D69E5426 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		8A0E8FEAEA9558281E656168 /* DesignMyRoomUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DesignMyRoomUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B521D179B03C08D7E20836D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		A0AA52CA1BD5FB302A446E5D /* ConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmView.swift; sourceTree = "<group>"; };
+		A262FBAD0153DB53D27F8D32 /* StylePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerView.swift; sourceTree = "<group>"; };
+		AE5F141F21843B7B64B79C33 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AF6D96D714954C52B08ACDDB /* RoomFlowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomFlowViewModel.swift; sourceTree = "<group>"; };
+		C0C28D6E82B112C285FFEDFA /* RoomDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailViewModel.swift; sourceTree = "<group>"; };
+		C5770660B237BBE46F20DB92 /* RoomFlowLiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomFlowLiveTests.swift; sourceTree = "<group>"; };
+		C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPhotoFlowUITests.swift; sourceTree = "<group>"; };
+		D6E1066A38E159E25474D019 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		DEA79348908101C2D6186BFD /* DesignMyRoomCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DesignMyRoomCore; path = DesignMyRoomCore; sourceTree = SOURCE_ROOT; };
+		E6E2D7EDDF38FB39DA6821E1 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		E783CFEE8BB0F25358FDF061 /* CompareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareView.swift; sourceTree = "<group>"; };
+		E80679EEFE72454F3E65D13F /* DesignMyRoom.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = DesignMyRoom.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EAE3BD2AF1BA2C540E1911B5 /* DesignMyRoomAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DesignMyRoomAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3DF4C461457C4D1599E3A309 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01834093A71A53DE7EAD7CE5 /* DesignMyRoomCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0127D4A47A444665386D5743 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E80679EEFE72454F3E65D13F /* DesignMyRoom.app */,
+				EAE3BD2AF1BA2C540E1911B5 /* DesignMyRoomAppTests.xctest */,
+				8A0E8FEAEA9558281E656168 /* DesignMyRoomUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		01C048CE8AD15486F53694EC /* Styles */ = {
+			isa = PBXGroup;
+			children = (
+				63928A038AADBA60090690B8 /* Style.swift */,
+			);
+			path = Styles;
+			sourceTree = "<group>";
+		};
+		0B78F8C93C6203526210995F /* DesignMyRoomUITests */ = {
+			isa = PBXGroup;
+			children = (
+				C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */,
+			);
+			path = DesignMyRoomUITests;
+			sourceTree = "<group>";
+		};
+		2650FEB1F9940A9EA3BDA7F0 /* DesignMyRoomAppTests */ = {
+			isa = PBXGroup;
+			children = (
+				39B7725F1E3264A67440C468 /* HomeViewModelTests.swift */,
+				5504BC6A9DEF9FFF8142FF3E /* RoomDetailViewModelTests.swift */,
+				C5770660B237BBE46F20DB92 /* RoomFlowLiveTests.swift */,
+			);
+			path = DesignMyRoomAppTests;
+			sourceTree = "<group>";
+		};
+		2AE827D4731AA3D4138C405A = {
+			isa = PBXGroup;
+			children = (
+				896A12B9EBCBF662D6050380 /* DesignMyRoomApp */,
+				2650FEB1F9940A9EA3BDA7F0 /* DesignMyRoomAppTests */,
+				0B78F8C93C6203526210995F /* DesignMyRoomUITests */,
+				4AFB57625D74D040DE0966F6 /* Packages */,
+				0127D4A47A444665386D5743 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3A75CB34D990C0176876A0C0 /* AddPhoto */ = {
+			isa = PBXGroup;
+			children = (
+				282558BC4B2FF93667B93D62 /* AddPhotoView.swift */,
+				730512B379D0586A579AAAF9 /* PhotoPicker.swift */,
+			);
+			path = AddPhoto;
+			sourceTree = "<group>";
+		};
+		4AFB57625D74D040DE0966F6 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				DEA79348908101C2D6186BFD /* DesignMyRoomCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		622C5E925A2496AE31260347 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				AE5F141F21843B7B64B79C33 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		6A61D2BBDF9BDC6383439486 /* Confirm */ = {
+			isa = PBXGroup;
+			children = (
+				A0AA52CA1BD5FB302A446E5D /* ConfirmView.swift */,
+			);
+			path = Confirm;
+			sourceTree = "<group>";
+		};
+		77FF3E6C531EE15769AB5EA5 /* Compare */ = {
+			isa = PBXGroup;
+			children = (
+				E783CFEE8BB0F25358FDF061 /* CompareView.swift */,
+			);
+			path = Compare;
+			sourceTree = "<group>";
+		};
+		896A12B9EBCBF662D6050380 /* DesignMyRoomApp */ = {
+			isa = PBXGroup;
+			children = (
+				622C5E925A2496AE31260347 /* Resources */,
+				A6404704A304602DCAF2C476 /* Sources */,
+			);
+			path = DesignMyRoomApp;
+			sourceTree = "<group>";
+		};
+		9F7AFC72963A104F1D1E5758 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				8B521D179B03C08D7E20836D /* HomeView.swift */,
+				04EF67D797C07FBF29A2CA74 /* HomeViewModel.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		A6404704A304602DCAF2C476 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				494743C2B7F675E85EA429B4 /* AppEnvironment.swift */,
+				2B9FFA2D651F7DC04E89AAB2 /* DesignMyRoomApp.swift */,
+				86B8E1849429C207D69E5426 /* RootView.swift */,
+				3A75CB34D990C0176876A0C0 /* AddPhoto */,
+				EDA17055E9F7598A94EAEEB8 /* Auth */,
+				77FF3E6C531EE15769AB5EA5 /* Compare */,
+				6A61D2BBDF9BDC6383439486 /* Confirm */,
+				9F7AFC72963A104F1D1E5758 /* Home */,
+				DF7A2EE298ED418FEE2AB4BB /* Rendering */,
+				BA028E61302F373423F89F97 /* RoomDetail */,
+				E15DBFAF4C5D3FB3F44CC23D /* RoomFlow */,
+				EF11BDA84E631F3A7BAE57CC /* Shared */,
+				B2D5C33BCDB777AC404056FF /* Style */,
+				01C048CE8AD15486F53694EC /* Styles */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		B2D5C33BCDB777AC404056FF /* Style */ = {
+			isa = PBXGroup;
+			children = (
+				A262FBAD0153DB53D27F8D32 /* StylePickerView.swift */,
+			);
+			path = Style;
+			sourceTree = "<group>";
+		};
+		BA028E61302F373423F89F97 /* RoomDetail */ = {
+			isa = PBXGroup;
+			children = (
+				32FE370534756CC513D6A083 /* RoomDetailView.swift */,
+				C0C28D6E82B112C285FFEDFA /* RoomDetailViewModel.swift */,
+			);
+			path = RoomDetail;
+			sourceTree = "<group>";
+		};
+		DF7A2EE298ED418FEE2AB4BB /* Rendering */ = {
+			isa = PBXGroup;
+			children = (
+				0EDC7A623C15253CD70D4F35 /* RenderingView.swift */,
+			);
+			path = Rendering;
+			sourceTree = "<group>";
+		};
+		E15DBFAF4C5D3FB3F44CC23D /* RoomFlow */ = {
+			isa = PBXGroup;
+			children = (
+				AF6D96D714954C52B08ACDDB /* RoomFlowViewModel.swift */,
+			);
+			path = RoomFlow;
+			sourceTree = "<group>";
+		};
+		EDA17055E9F7598A94EAEEB8 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				6677E08BE0384E089790FCC7 /* AuthManager.swift */,
+				D6E1066A38E159E25474D019 /* SignInView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		EF11BDA84E631F3A7BAE57CC /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				E6E2D7EDDF38FB39DA6821E1 /* DesignTokens.swift */,
+				688C4BED932E5928FB8E4D2B /* RenderSummaryView.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		52BABD6254DCCB37262EA0F0 /* DesignMyRoomAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4277A1EC29C993AB160B68AB /* Build configuration list for PBXNativeTarget "DesignMyRoomAppTests" */;
+			buildPhases = (
+				89E696DADED441EA421D0037 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				426FF6C8D3D4A303FCA7119C /* PBXTargetDependency */,
+			);
+			name = DesignMyRoomAppTests;
+			productName = DesignMyRoomAppTests;
+			productReference = EAE3BD2AF1BA2C540E1911B5 /* DesignMyRoomAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		670876AE26B15FD75D4018EE /* DesignMyRoom */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8436C9D02F514A073C8CBF58 /* Build configuration list for PBXNativeTarget "DesignMyRoom" */;
+			buildPhases = (
+				058395C25A95BEA1897088FE /* Sources */,
+				BC9363A05F07CE895678BF38 /* Resources */,
+				3DF4C461457C4D1599E3A309 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DesignMyRoom;
+			packageProductDependencies = (
+				C926B4BDDACFC30E950B2A06 /* DesignMyRoomCore */,
+			);
+			productName = DesignMyRoom;
+			productReference = E80679EEFE72454F3E65D13F /* DesignMyRoom.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AC9CC88A3F8A2764897B5070 /* DesignMyRoomUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BAD93926F5E73AC0023304F7 /* Build configuration list for PBXNativeTarget "DesignMyRoomUITests" */;
+			buildPhases = (
+				40CC34CC7557E8F6F6C21906 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				40D2B5005FA6E82E04F61157 /* PBXTargetDependency */,
+			);
+			name = DesignMyRoomUITests;
+			productName = DesignMyRoomUITests;
+			productReference = 8A0E8FEAEA9558281E656168 /* DesignMyRoomUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CFC36337CBF8147473749180 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					52BABD6254DCCB37262EA0F0 = {
+						DevelopmentTeam = U73T325TMU;
+						ProvisioningStyle = Automatic;
+					};
+					670876AE26B15FD75D4018EE = {
+						DevelopmentTeam = U73T325TMU;
+						ProvisioningStyle = Automatic;
+					};
+					AC9CC88A3F8A2764897B5070 = {
+						DevelopmentTeam = U73T325TMU;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 670876AE26B15FD75D4018EE;
+					};
+				};
+			};
+			buildConfigurationList = D502F5674F21270E6C5A2E4B /* Build configuration list for PBXProject "DesignMyRoom" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 2AE827D4731AA3D4138C405A;
+			packageReferences = (
+				5BCE051D3A76BB76E75C713E /* XCLocalSwiftPackageReference "DesignMyRoomCore" */,
+			);
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				670876AE26B15FD75D4018EE /* DesignMyRoom */,
+				52BABD6254DCCB37262EA0F0 /* DesignMyRoomAppTests */,
+				AC9CC88A3F8A2764897B5070 /* DesignMyRoomUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BC9363A05F07CE895678BF38 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B5571E373723D7D593C91669 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		058395C25A95BEA1897088FE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2D59C83A9DB64D21860ADD37 /* AddPhotoView.swift in Sources */,
+				9BAF4573A55EBB99EBD0B9B5 /* AppEnvironment.swift in Sources */,
+				19BED3C490333A935A03E3C5 /* AuthManager.swift in Sources */,
+				CE206251F9AAF39C2F4F8F21 /* CompareView.swift in Sources */,
+				EB1FCC23B7BE192A23A997A2 /* ConfirmView.swift in Sources */,
+				3B4E9D338DDD2E0D57DED3F6 /* DesignMyRoomApp.swift in Sources */,
+				2671D7E92ABA4F9B4F8DCFBC /* DesignTokens.swift in Sources */,
+				DBEA3A1F4FB91F2BBB3998A4 /* HomeView.swift in Sources */,
+				829E36B10C289E5EF79ACC16 /* HomeViewModel.swift in Sources */,
+				AAB678AB69E50EDA6E5D98C6 /* PhotoPicker.swift in Sources */,
+				A862652D5E1A33CED8E71AF1 /* RenderSummaryView.swift in Sources */,
+				610BE26E15F41B518D20A962 /* RenderingView.swift in Sources */,
+				F8DF10B92E8AD4EB5EFFA202 /* RoomDetailView.swift in Sources */,
+				273EDF7442FE8F920451732C /* RoomDetailViewModel.swift in Sources */,
+				8884F87F33C98D0DA6A7C169 /* RoomFlowViewModel.swift in Sources */,
+				DE2F2362A8541560E2544FEC /* RootView.swift in Sources */,
+				09CD007FBB5CE96F9C57936F /* SignInView.swift in Sources */,
+				4B2AC68FB09C78337B17ACB9 /* Style.swift in Sources */,
+				27781601B6DE4C0A8E70E16D /* StylePickerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		40CC34CC7557E8F6F6C21906 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2308D1C59F5D6D5E0BA9D212 /* AddPhotoFlowUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		89E696DADED441EA421D0037 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA3FFC19C4E69B6B098814F2 /* HomeViewModelTests.swift in Sources */,
+				310F93EEBAE3857588376732 /* RoomDetailViewModelTests.swift in Sources */,
+				C8EA9658CD092F6A161308A0 /* RoomFlowLiveTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		40D2B5005FA6E82E04F61157 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 670876AE26B15FD75D4018EE /* DesignMyRoom */;
+			targetProxy = 3C83A6394FE61C21F788427B /* PBXContainerItemProxy */;
+		};
+		426FF6C8D3D4A303FCA7119C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 670876AE26B15FD75D4018EE /* DesignMyRoom */;
+			targetProxy = 9AAB3840CC63615D10147C1D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0274FD6DA421FDFFC303D125 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.designmyroom.DesignMyRoomAppTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DesignMyRoom.app/DesignMyRoom";
+			};
+			name = Debug;
+		};
+		157386BE8C0F3016B26EA527 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = U73T325TMU;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+		619A10400C7F976E1ECB2D96 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.designmyroom.DesignMyRoomUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = DesignMyRoom;
+			};
+			name = Release;
+		};
+		84E4812857BE25402834D91F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DesignMyRoomApp/DesignMyRoom.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = DesignMyRoomApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.designmyroom.app;
+				PRODUCT_NAME = DesignMyRoom;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E0C65966A88B036D3F61E036 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = U73T325TMU;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+		E2358C2A94F97ACF12C39257 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.designmyroom.DesignMyRoomUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = DesignMyRoom;
+			};
+			name = Debug;
+		};
+		F9413244602ACEB1CD563E91 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.designmyroom.DesignMyRoomAppTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DesignMyRoom.app/DesignMyRoom";
+			};
+			name = Release;
+		};
+		FC2ACE2C4B5258EAEBA32923 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DesignMyRoomApp/DesignMyRoom.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = DesignMyRoomApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.designmyroom.app;
+				PRODUCT_NAME = DesignMyRoom;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4277A1EC29C993AB160B68AB /* Build configuration list for PBXNativeTarget "DesignMyRoomAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0274FD6DA421FDFFC303D125 /* Debug */,
+				F9413244602ACEB1CD563E91 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8436C9D02F514A073C8CBF58 /* Build configuration list for PBXNativeTarget "DesignMyRoom" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC2ACE2C4B5258EAEBA32923 /* Debug */,
+				84E4812857BE25402834D91F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BAD93926F5E73AC0023304F7 /* Build configuration list for PBXNativeTarget "DesignMyRoomUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2358C2A94F97ACF12C39257 /* Debug */,
+				619A10400C7F976E1ECB2D96 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D502F5674F21270E6C5A2E4B /* Build configuration list for PBXProject "DesignMyRoom" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				157386BE8C0F3016B26EA527 /* Debug */,
+				E0C65966A88B036D3F61E036 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5BCE051D3A76BB76E75C713E /* XCLocalSwiftPackageReference "DesignMyRoomCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = DesignMyRoomCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C926B4BDDACFC30E950B2A06 /* DesignMyRoomCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DesignMyRoomCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = CFC36337CBF8147473749180 /* Project object */;
+}

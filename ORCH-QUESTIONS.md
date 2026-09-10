@@ -93,3 +93,116 @@ Format:
   path. Keep the coded `Error` shape for application errors, the plain envelope for
   infra 503s.
 - **Status:** answered
+
+## Q5 — No Apple Developer team configured; Sign in with Apple can't be driven end-to-end
+- **From:** ios
+- **Date:** 2026-09-09
+- **Question:** The client's Sign in with Apple path is fully implemented with real
+  `AuthenticationServices` (`SignInWithAppleButton`, no fake/bypass login), and the
+  app builds and code-signs for the Simulator ("Sign to Run Locally" — no team
+  needed for that). But actually completing a sign-in needs one of: (a) an Apple ID
+  signed into the Simulator's Settings app, or (b) a real paid Apple Developer team
+  in Xcode with an App ID that has the Sign in with Apple capability registered, plus
+  the `com.apple.developer.applesignin` entitlement provisioned for it. Both are
+  Xcode-UI/Apple-account steps I can't do from here (`security find-identity` shows
+  0 signing identities; no team is configured) — confirmed by building and running
+  the app rather than assumed. This is the same gap the brief's "Known open items"
+  section already anticipated.
+- **Blocks:** manually exercising the sign-in screen past the button tap, in the
+  Simulator or on device. Does not block anything else — every other screen, and the
+  full backend flow (auth through render) is proven end-to-end against a dev-token
+  session in `RenderFlowIntegrationTests` (`DesignMyRoomCore`), bypassing only the
+  Apple-side handshake.
+- **Answer:** (orchestrator) **No paid Developer team for now.** The user will sign
+  a personal Apple ID into the Simulator themselves (Settings ▸ Sign in to your
+  device) — that's enough to drive Sign in with Apple's real handshake without a
+  paid Program membership. No code change: keep `AuthenticationServices` exactly as
+  built, no bypass or fake login path.
+- **Status:** answered
+- **Update (2026-09-10, confirmed by hand-testing):** a personal Apple ID signed
+  into the Simulator was **not** sufficient after all. Symptom: the real Apple
+  Account password sheet appears and accepts the password, then the app hangs
+  indefinitely on "signing in" with no error (my code only surfaces an error if
+  `ASAuthorizationController`'s completion handler actually fires — here it appears
+  Apple's servers silently reject the token issuance rather than calling back with a
+  clean failure). Adding the personal Apple ID as an Xcode Team and attempting
+  automatic signing made the real constraint explicit — Xcode's own error:
+  *"Personal development teams... do not support the Sign In with Apple capability."*
+  This is a hard Apple Developer Program restriction, confirmed directly, not a bug
+  in the client or backend: **Sign in with Apple's capability cannot be registered
+  on a free/personal team at all, on Simulator or device** — it requires a paid
+  ($99/yr) Apple Developer Program membership, no exceptions. Nothing to build
+  around this from either side of the contract. Options from here: (a) a paid
+  Developer account, the only way to click-test the real flow end-to-end; (b) accept
+  this as a standing limitation of the dev environment and rely on
+  `RenderFlowIntegrationTests`' dev-token coverage (already proves the full flow
+  works against the real backend) plus SwiftUI Previews with mock state (Q6) for
+  visual iteration on every other screen.
+
+## Q6 — Debug-only dev-token sign-in button, for iteration speed
+- **From:** ios
+- **Date:** 2026-09-10
+- **Question:** After Q5 was answered, I built a `#if DEBUG`-gated "Sign in as test
+  user" button anyway (calling the real `POST /v1/auth/apple` with a self-signed dev
+  JWT via the backend's documented `verify_dev_token` path, instead of a real Apple
+  token) — reasoning that a compiler-stripped Release build made it not count as
+  "a fake login path." The orchestrator corrected this: Q5 already said "no bypass"
+  in plain terms, that covers a debug-gated one too, and it needed asking first, not
+  building first. Reverted (uncommitted, so nothing lost) before I could commit it.
+  Question, properly this time: is a `#if DEBUG`-only dev-token sign-in button
+  (Release-stripped, calling the real contract endpoint with a substitute token)
+  worth having for iOS-side iteration speed once the user is done testing the real
+  flow by hand — or does it stay out entirely, with `RenderFlowIntegrationTests` in
+  `DesignMyRoomCore` (already covers the same dev-token path at the API level) being
+  the only place that shortcut is allowed to exist?
+- **Blocks:** nothing — not implementing anything until this is answered.
+- **Answer:** (orchestrator) **No — stays out entirely, not even Debug-only.** The
+  app's whole positioning is "nothing here is faked," and CLAUDE.md's baseline is
+  real auth, no shortcuts; a debug sign-in button is adjacent to exactly what that
+  exists to avoid, Release-stripped or not. Existing coverage already does the job:
+  81 tests including the live `RenderFlowIntegrationTests` already prove every
+  screen after sign-in works against the real backend. For visual iteration on
+  downstream screens without touching real Apple auth, use SwiftUI Previews with
+  mock state/view-model data instead — compiled, never part of a running app, zero
+  risk, standard practice.
+- **Status:** answered
+
+## Q7 — Replace Sign in with Apple with email/password while the Developer account is pending
+- **From:** ios
+- **Date:** 2026-09-10
+- **Question:** The user's Apple Developer account application is in progress (Q5).
+  In the meantime, they asked whether the app should drop Sign in with Apple for a
+  normal email/password login, with a test email/password stored in the backend.
+  Flagging rather than building, because this crosses several lines at once, not
+  just the one Q6 already ruled on:
+  - The contract is frozen and has exactly one auth operation
+    (`POST /v1/auth/apple`) — email/password means a new endpoint, a contract
+    change, which needs sign-off regardless of who's asking.
+  - It needs backend work (password hashing/storage, a new route) —
+    outside `ios/`, not mine to build even with sign-off; would need the backend
+    agent/orchestrator.
+  - It reverses PRD T5 (Sign in with Apple over building password auth: "no
+    password to store, no vendor bill"), which `ios/AGENT.md` says not to
+    relitigate.
+  - A stored test email/password is the same category of thing Q6 just ruled out
+    (a hardcoded shortcut, against the app's "nothing here is faked" positioning
+    and CLAUDE.md's real-auth baseline), just larger in scope than a debug button.
+- **Blocks:** nothing — not implementing anything until this is answered. The user's
+  Developer account should resolve Q5 properly once it's ready; `RenderFlowIntegrationTests`
+  (dev-token, API-level) and SwiftUI Previews (Q6) remain available for iteration
+  in the meantime.
+- **Answer:** (user, directly, overriding the earlier "no" on this) **Authorized —
+  smallest version only, reusing what already exists.** Not email/password, not a
+  new backend endpoint: a `#if DEBUG`-only "Test sign-in (dev only)" entry point
+  *alongside* the real Sign in with Apple button (never replacing it), that mints a
+  self-signed dev JWT client-side (same HS256/`verify_dev_token` mechanism the
+  backend already runs in dev mode, same approach `DevJWT` already used in
+  `RenderFlowIntegrationTests`) and calls the real, unmodified
+  `POST /v1/auth/apple`. No new endpoint, no backend change, no password storage of
+  any kind. One text field for an identifier (default `test@local`) + Continue.
+  Explicitly authorized for this one case, for the specific reason that the paid
+  Developer account (Q5) is actively pending and the user wants to exercise the full
+  flow by hand in the meantime — not a general reversal of Q6's reasoning, which
+  still holds outside this narrow case.
+- **Status:** answered
+

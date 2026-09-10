@@ -1,0 +1,112 @@
+name: DesignMyRoom
+options:
+  bundleIdPrefix: com.designmyroom
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    # Read from the environment at generate time (XcodeGen's ${VAR} substitution —
+    # ProcessInfo.processInfo.environment, resolved before this file is parsed),
+    # not hardcoded — so a real Team id survives every `xcodegen generate` instead
+    # of being silently reset to empty each time (it used to be a bare ""). Always
+    # run generation via ./generate-project.sh, which guarantees this variable is
+    # defined (empty by default) before xcodegen ever sees it: XcodeGen has no
+    # ${VAR:-default} syntax, so a truly *unset* variable leaves the literal
+    # "${DESIGNMYROOM_DEV_TEAM}" text in the built setting instead of defaulting to
+    # empty — only an unset-vs-empty distinction the wrapper script exists to erase.
+    # Your own team id goes in ios/.env (gitignored — see .env.example), never here.
+    DEVELOPMENT_TEAM: ${DESIGNMYROOM_DEV_TEAM}
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_PREVIEWS: YES
+packages:
+  DesignMyRoomCore:
+    path: DesignMyRoomCore
+targets:
+  DesignMyRoom:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      # XcodeGen 2.42 has no separate top-level `resources:` target key — resource
+      # files (asset catalogs, etc.) are auto-detected by type from whatever's
+      # listed here, same as compiled Swift sources. (Found the hard way: the
+      # earlier `resources:` key was silently ignored — no error, no build-phase
+      # entry — leaving Assets.xcassets never actually wired into the app at all.)
+      - path: DesignMyRoomApp/Sources
+      - path: DesignMyRoomApp/Resources
+    dependencies:
+      - package: DesignMyRoomCore
+    info:
+      path: DesignMyRoomApp/Info.plist
+      properties:
+        CFBundleDisplayName: DesignMyRoom
+        UILaunchScreen: {}
+        NSCameraUsageDescription: "Take a photo of your room to restyle it."
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: DesignMyRoomApp/DesignMyRoom.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.designmyroom.app
+        PRODUCT_NAME: DesignMyRoom
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+  # Unit tests for App-target view models (HomeViewModel, RoomDetailViewModel, ...) —
+  # these depend on SwiftUI/@Observable/@MainActor and other App-target types, so
+  # unlike DesignMyRoomCore they can't run via plain `swift test`; they need a real
+  # Xcode test target hosted by the app so they can `@testable import DesignMyRoom`.
+  DesignMyRoomAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: DesignMyRoomAppTests
+    dependencies:
+      - target: DesignMyRoom
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+  # Drives the real UI (taps, real PHPicker) — the only way to catch a bug that's
+  # fundamentally about *presentation timing* (a view with an in-flight sheet
+  # dismissal getting removed from the tree), not app logic. See
+  # AddPhotoFlowUITests for the regression this exists to catch.
+  DesignMyRoomUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: DesignMyRoomUITests
+    dependencies:
+      - target: DesignMyRoom
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: DesignMyRoom
+schemes:
+  # Unit tests for the core logic run via `swift test` in DesignMyRoomCore/ (see its
+  # own README note and ios/README.md) — that's a real SPM package with its own test
+  # target, not something an Xcode scheme's `test:` action can point at directly.
+  # DesignMyRoomAppTests (App-target view models) run through this scheme's test
+  # action instead, via `xcodebuild test`.
+  DesignMyRoom:
+    build:
+      targets:
+        DesignMyRoom: all
+        DesignMyRoomAppTests: [test]
+        DesignMyRoomUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - DesignMyRoomAppTests
+        - DesignMyRoomUITests
