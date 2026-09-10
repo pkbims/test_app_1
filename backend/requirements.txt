@@ -1,5 +1,16 @@
-fastapi>=0.110
-pydantic>=2.6
+# Pinned exactly: the frozen contract in contract/openapi.json is regenerated from
+# these, and FastAPI/Pydantic change their OpenAPI output between minor versions
+# (binary field rendering, $ref siblings, the ValidationError shape). A test
+# asserts the generated spec still equals the committed one; bumping either pin
+# means re-checking that against the orchestrator.
+fastapi==0.128.8
+pydantic==2.9.2
 uvicorn[standard]>=0.27
 python-multipart>=0.0.9
 psycopg[binary]>=3.1
+psycopg-pool>=3.2
+openai>=1.40
+Pillow>=10.3
+PyJWT[crypto]>=2.8
+httpx>=0.27
+prometheus-client>=0.20

@@ -1,0 +1,32 @@
+[project]
+name = "app1-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Integration tests need a real Postgres. They are opt-in: run everything with
+# `pytest -m ""`, or just the fast units (the default) with plain `pytest`.
+addopts = "-m 'not integration' -q"
+markers = [
+    "integration: needs a real Postgres (set DATABASE_URL); run in CI and locally via compose",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+# The frozen contract. These files are owned by the orchestrator and regenerate
+# `contract/openapi.json` verbatim — a reformat here would fork the contract.
+# We fill in route *bodies* only; we do not lint or format the file.
+extend-exclude = ["app/main.py", "app/schemas.py", "export_openapi.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W"]
+
+[tool.mypy]
+python_version = "3.12"
+# Same reason as the ruff exclude: main.py / schemas.py are the frozen contract.
+files = ["app/db.py", "app/health.py", "app/migrate.py", "app/runtime.py",
+         "app/settings.py", "app/storage.py", "worker", "dashboard"]
+ignore_missing_imports = true
+check_untyped_defs = true
