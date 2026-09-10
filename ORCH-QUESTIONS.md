@@ -119,6 +119,25 @@ Format:
   paid Program membership. No code change: keep `AuthenticationServices` exactly as
   built, no bypass or fake login path.
 - **Status:** answered
+- **Update (2026-09-10, confirmed by hand-testing):** a personal Apple ID signed
+  into the Simulator was **not** sufficient after all. Symptom: the real Apple
+  Account password sheet appears and accepts the password, then the app hangs
+  indefinitely on "signing in" with no error (my code only surfaces an error if
+  `ASAuthorizationController`'s completion handler actually fires — here it appears
+  Apple's servers silently reject the token issuance rather than calling back with a
+  clean failure). Adding the personal Apple ID as an Xcode Team and attempting
+  automatic signing made the real constraint explicit — Xcode's own error:
+  *"Personal development teams... do not support the Sign In with Apple capability."*
+  This is a hard Apple Developer Program restriction, confirmed directly, not a bug
+  in the client or backend: **Sign in with Apple's capability cannot be registered
+  on a free/personal team at all, on Simulator or device** — it requires a paid
+  ($99/yr) Apple Developer Program membership, no exceptions. Nothing to build
+  around this from either side of the contract. Options from here: (a) a paid
+  Developer account, the only way to click-test the real flow end-to-end; (b) accept
+  this as a standing limitation of the dev environment and rely on
+  `RenderFlowIntegrationTests`' dev-token coverage (already proves the full flow
+  works against the real backend) plus SwiftUI Previews with mock state (Q6) for
+  visual iteration on every other screen.
 
 ## Q6 — Debug-only dev-token sign-in button, for iteration speed
 - **From:** ios
