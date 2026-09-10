@@ -6,14 +6,29 @@ shapes without agreement.
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from typing import List
 
 from fastapi import FastAPI, File, Path, Response, UploadFile, status
+from fastapi.responses import JSONResponse
 
+from . import health as health_mod
+from . import runtime
 from .schemas import (
     AppleSignIn, Error, Health, Inventory, Me, Photo, RefreshRequest,
     Render, RenderCreate, Room, RoomCreate, Tokens,
 )
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Opens the pool and runs pending migrations before the first request.
+    runtime.start()
+    try:
+        yield
+    finally:
+        runtime.stop()
+
 
 app = FastAPI(
     title="app_1 API",
@@ -25,6 +40,7 @@ app = FastAPI(
         "preserve. There is no mask — masking was tested and does not preserve "
         "anything. See PRD.md."
     ),
+    lifespan=lifespan,
 )
 
 E = {400: {"model": Error}, 401: {"model": Error}, 402: {"model": Error},
@@ -128,7 +144,17 @@ def list_renders(room_id: str = Path(...)) -> List[Render]:
 def health() -> Health:
     """`down` blocks deploys, `degraded` pages someone, `ok` does nothing. Checks the
     database, photo storage, the queue table, worker heartbeat and queue depth."""
-    _todo()
+    rt = runtime.get()
+    report = health_mod.build_health(
+        pool=rt.pool,
+        storage=rt.storage,
+        queue_depth_threshold=rt.settings.queue_depth_degraded,
+        heartbeat_timeout_s=rt.settings.worker_heartbeat_timeout_s,
+    )
+    return JSONResponse(
+        status_code=health_mod.http_status_for(report.state),
+        content=report.model_dump(mode="json"),
+    )
 
 
 @app.get("/metrics", tags=["ops"], summary="Prometheus metrics",
