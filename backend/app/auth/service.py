@@ -1,8 +1,9 @@
 """Sign-in, refresh, and the current-user read.
 
-One free room is granted at signup as a `credit_ledger` row, not a column — so a
+Credits are granted at signup as a `credit_ledger` row, not a column — so a
 render spend and a refund are just more rows, and the balance can always be
-recounted (PRD §15).
+recounted (PRD §15). How many: the caller passes `signup_free_credits` (from
+`Settings`, default 1 — the product decision; overridable locally for dev/test).
 """
 
 from __future__ import annotations
@@ -14,7 +15,6 @@ from ..schemas import ErrorCode, Me, Tokens
 from . import tokens as tok
 from .apple import AppleAuthError, AppleIdentity
 
-SIGNUP_GRANT = 1
 _SIGN_IN_FAILED = "That sign-in didn't work. Please try again."
 _REFRESH_FAILED = "Your session has ended. Please sign in again."
 
@@ -26,7 +26,14 @@ class Issued:
 
 
 def authenticate(
-    conn, raw_token: str, verifier, *, secret: str, access_ttl_s: int, refresh_ttl_s: int
+    conn,
+    raw_token: str,
+    verifier,
+    *,
+    secret: str,
+    access_ttl_s: int,
+    refresh_ttl_s: int,
+    signup_free_credits: int = 1,
 ) -> Issued:
     try:
         identity = verifier(raw_token)
@@ -39,7 +46,7 @@ def authenticate(
             conn.execute(
                 "INSERT INTO credit_ledger (user_id, delta, reason) "
                 "VALUES (%s, %s, 'signup_grant')",
-                (user_id, SIGNUP_GRANT),
+                (user_id, signup_free_credits),
             )
         issued_tokens = _issue(conn, user_id, secret, access_ttl_s, refresh_ttl_s)
     return Issued(user_id=user_id, tokens=issued_tokens)

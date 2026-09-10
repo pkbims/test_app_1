@@ -38,6 +38,11 @@ class Settings:
     # limits
     max_photo_bytes: int = 12 * 1024 * 1024
 
+    # Credits granted on first sign-in (PRD: one free room). Overridable via
+    # SIGNUP_FREE_CREDITS for local testing only — the committed default stays 1;
+    # never set this in compose.env.
+    signup_free_credits: int = 1
+
     # health thresholds (PRD §17)
     queue_depth_degraded: int = 100
     worker_heartbeat_timeout_s: int = 60
@@ -61,5 +66,6 @@ def load() -> Settings:
         public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000"),
         file_url_secret=os.environ.get("FILE_URL_SECRET", "") or jwt_secret,
         queue_depth_degraded=int(os.environ.get("QUEUE_DEPTH_DEGRADED", "100")),
+        signup_free_credits=int(os.environ.get("SIGNUP_FREE_CREDITS", "1")),
         worker_heartbeat_timeout_s=int(os.environ.get("WORKER_HEARTBEAT_TIMEOUT_S", "60")),
     )
