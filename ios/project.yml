@@ -22,8 +22,12 @@ targets:
     platform: iOS
     deploymentTarget: "17.0"
     sources:
+      # XcodeGen 2.42 has no separate top-level `resources:` target key — resource
+      # files (asset catalogs, etc.) are auto-detected by type from whatever's
+      # listed here, same as compiled Swift sources. (Found the hard way: the
+      # earlier `resources:` key was silently ignored — no error, no build-phase
+      # entry — leaving Assets.xcassets never actually wired into the app at all.)
       - path: DesignMyRoomApp/Sources
-    resources:
       - path: DesignMyRoomApp/Resources
     dependencies:
       - package: DesignMyRoomCore

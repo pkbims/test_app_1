@@ -1,10 +1,14 @@
+import DesignMyRoomCore
 import SwiftUI
 
 /// Screen 4: scrollable image cards with generic sample photos (U4), a preset style
-/// id plus an optional free-text prompt (≤280 chars). No real sample photography is
-/// available to this client, so cards are a plain tinted placeholder + name — swap
-/// for real assets without touching anything else, since restyling the UI must not
-/// touch the flow logic (CLAUDE.md).
+/// id plus an optional free-text prompt (≤280 chars). Sample photos are bundled in
+/// `Assets.xcassets` (see `ios/DesignMyRoomApp/SourceAssets/StyleSamples/README.md`
+/// for their origin and how they're compressed); a style with no matching asset
+/// falls back to a plain tinted placeholder (`StyleImageResolver`, tested in
+/// `DesignMyRoomCore`) rather than a broken image reference — swap art in or out
+/// without touching anything else, since restyling the UI must not touch the flow
+/// logic (CLAUDE.md).
 struct StylePickerView: View {
     @Bindable var flow: RoomFlowViewModel
 
@@ -77,9 +81,9 @@ private struct StyleCard: View {
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(LinearGradient(colors: [.accentColor.opacity(0.35), .accentColor.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                cardArt
                     .frame(width: 130, height: 130)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay {
                         if isSelected {
                             Image(systemName: "checkmark.circle.fill")
@@ -98,5 +102,20 @@ private struct StyleCard: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    /// The real sample photo when one's bundled; otherwise the original tinted
+    /// placeholder, so a style with no artwork yet (a 7th style added to
+    /// `Style.all`) still renders a card instead of a broken image or a crash.
+    @ViewBuilder
+    private var cardArt: some View {
+        if let assetName = StyleImageResolver.imageAssetName(for: style.id) {
+            Image(assetName)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } else {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(LinearGradient(colors: [.accentColor.opacity(0.35), .accentColor.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        }
     }
 }
