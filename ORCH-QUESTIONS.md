@@ -72,3 +72,24 @@ Format:
   regardless (already in its brief). Not worth adding `securitySchemes` — it would
   mean a dependency on every route.
 - **Status:** answered
+
+## Q4 — No way to express 503 / "dependency down" in the contract
+- **From:** backend
+- **Date:** 2026-09-10
+- **Question:** PRD §17 says "DB down → 503 everywhere". The `E` responses dict is
+  `{400,401,402,413,429,500}` (no 503) and `ErrorCode` has no
+  `service_unavailable`. When the pool can't hand out a connection I currently
+  return **503** with the plain `{"detail": "..."}` envelope (not the `Error`
+  shape) plus `Retry-After`, and log `error_code=service_unavailable`. The iOS
+  client should treat any unrecognised non-2xx as "try again shortly".
+  Is that acceptable, or do you want `ErrorCode.service_unavailable` added to the
+  contract (then 503 responses can carry a proper `Error` body)?
+- **Blocks:** nothing — implemented with the plain envelope, easy to switch.
+- **Answer:** (orchestrator) **No contract change.** The plain `{"detail": ...}` +
+  `Retry-After` on 503 is right. 4xx errors are coded because the client *branches*
+  on them (show a message / refresh the token / buy credits); a 503 has exactly one
+  sensible client response — retry with backoff — so a code adds nothing, and when
+  Postgres is down we would rather not depend on the full `Error` serialization
+  path. Keep the coded `Error` shape for application errors, the plain envelope for
+  infra 503s.
+- **Status:** answered

@@ -1,0 +1,75 @@
+# app_1 — one command brings up the whole system: API, Postgres, the render worker,
+# and a metrics dashboard. Same file and same images in every environment; only the
+# configuration differs (PRD §17, "same compose file everywhere").
+name: app1
+
+x-backend: &backend
+  build: ./backend
+  # Source is bind-mounted for a fast edit/test loop in dev. Production builds the
+  # code into the image and does not mount anything.
+  volumes:
+    - ./backend:/srv
+    # The frozen contract, read-only. The backend builds against it and a test
+    # asserts it has not drifted.
+    - ./contract:/contract:ro
+    # Sample room photo, for the opt-in real-OpenAI end-to-end test.
+    - ./inputs:/inputs:ro
+    - photos:/data/photos
+  env_file:
+    - compose.env
+    - .env
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: app1
+      POSTGRES_PASSWORD: app1
+      POSTGRES_DB: app1
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app1 -d app1"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "5432:5432"
+
+  api:
+    <<: *backend
+    # --no-access-log: our RequestMiddleware writes the one structured access line.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--no-access-log"]
+    ports:
+      - "8000:8000"
+    healthcheck:
+      # Uses the three-state endpoint: `down` is a non-2xx here, so an unhealthy DB
+      # marks the container unhealthy too.
+      test: ["CMD-SHELL", "python -c \"import urllib.request as u,sys; sys.exit(0 if u.urlopen('http://localhost:8000/health').status==200 else 1)\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "worker"]
+    ports: []
+
+  dashboard:
+    <<: *backend
+    command: ["python", "-m", "dashboard"]
+    environment:
+      API_BASE: http://api:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  pgdata:
+  photos:
