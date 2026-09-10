@@ -17,7 +17,8 @@ struct StylePickerView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Pick a style")
-                .font(.title2.weight(.semibold))
+                .font(.fraunces(21, weight: .medium))
+                .foregroundStyle(Color.ink)
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
 
@@ -34,7 +35,8 @@ struct StylePickerView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("Anything else? (optional)")
-                    .font(.subheadline.weight(.medium))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.ink)
                 TextField("e.g. \"more natural light\"", text: $flow.prompt, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(3, reservesSpace: true)
@@ -44,15 +46,15 @@ struct StylePickerView: View {
                         }
                     }
                 Text("\(flow.prompt.count)/\(promptLimit) — can't override what's protected")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.faint)
             }
             .padding(.horizontal, 20)
 
             if let bannerMessage = flow.bannerMessage {
                 Text(bannerMessage)
                     .font(.footnote)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.warn)
                     .padding(.horizontal, 20)
             }
 
@@ -62,17 +64,25 @@ struct StylePickerView: View {
                 Task { await flow.startRender() }
             } label: {
                 Text("Restyle this room")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .background(Color.accent, in: RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
             .disabled(!flow.canStartRender)
+            .opacity(flow.canStartRender ? 1 : 0.5)
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
+        .background(Color.paper.ignoresSafeArea())
     }
 }
 
+// HANDOFF §2 "Pick a style": cards become 118×150 portrait (not square — the
+// bundled photos are real interiors and read better tall). Selection state moves
+// from a thin ring overlay to a filled accent circular check-badge in the
+// top-right corner. `StyleImageResolver`'s fallback behavior is unchanged.
 private struct StyleCard: View {
     let style: Style
     let isSelected: Bool
@@ -80,26 +90,27 @@ private struct StyleCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 8) {
-                cardArt
-                    .frame(width: 130, height: 130)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay {
-                        if isSelected {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.title)
-                                .foregroundStyle(.white, Color.accentColor)
+            VStack(spacing: Spacing.s) {
+                ZStack(alignment: .topTrailing) {
+                    cardArt
+                        .frame(width: 118, height: 150)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.styleCard, style: .continuous))
+
+                    if isSelected {
+                        ZStack {
+                            Circle().fill(Color.accent)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.white)
                         }
+                        .frame(width: 22, height: 22)
+                        .padding(6)
                     }
+                }
                 Text(style.displayName)
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.ink)
             }
-            .padding(6)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(isSelected ? Color.accentColor : .clear, lineWidth: 2)
-            )
         }
         .buttonStyle(.plain)
     }
@@ -114,8 +125,8 @@ private struct StyleCard: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
         } else {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(LinearGradient(colors: [.accentColor.opacity(0.35), .accentColor.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing))
+            RoundedRectangle(cornerRadius: Radius.styleCard, style: .continuous)
+                .fill(LinearGradient(colors: [Color.accent.opacity(0.35), Color.accent.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing))
         }
     }
 }
