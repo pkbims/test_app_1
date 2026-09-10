@@ -32,6 +32,15 @@ _log = logging.getLogger("worker.render")
 
 
 @dataclass
+class _Generated:
+    after_key: str
+    generation_prompt: str
+    preservation_rate: float | None
+    missing_ids: list[str] | None
+    preservation_prompt: str | None
+
+
+@dataclass
 class _Job:
     status: str
     style: str
@@ -63,18 +72,18 @@ def run(conn, storage, vision: Vision, editor: ImageEditor, lease: Lease) -> str
 
     try:
         _set_running(conn, lease.render_id)
-        after_key, rate, missing = _generate(storage, vision, editor, lease.render_id, job, log)
-        _finish(conn, lease.render_id, after_key, rate, missing)
+        generated = _generate(storage, vision, editor, lease.render_id, job, log)
+        _finish(conn, lease.render_id, generated)
         mark_done(conn, lease.job_id)
-        log.info("render done", extra={"preservation_rate": rate})
+        log.info("render done", extra={"preservation_rate": generated.preservation_rate})
         return "done"
     except Exception as exc:  # noqa: BLE001 — routed to retry / fail-and-refund
         return _on_error(conn, lease, exc, log)
 
 
-def _generate(storage, vision, editor, render_id, job: _Job, log):
+def _generate(storage, vision, editor, render_id, job: _Job, log) -> _Generated:
     inventory = [InventoryItem(**it) for it in (job.items or [])]
-    prompt = build_prompt(
+    generation_prompt = build_prompt(
         style=job.style,
         user_prompt=job.user_prompt,
         items=inventory,
@@ -82,7 +91,7 @@ def _generate(storage, vision, editor, render_id, job: _Job, log):
         room_label=job.room_label,
     )
     image_bytes = storage.get(f"photos/{job.before_key}")
-    after = editor.edit(image_bytes, job.content_type or "image/jpeg", prompt)
+    after = editor.edit(image_bytes, job.content_type or "image/jpeg", generation_prompt)
 
     after_key = f"{render_id}.png"
     storage.put(f"renders/{after_key}", after, "image/png")
@@ -90,10 +99,22 @@ def _generate(storage, vision, editor, render_id, job: _Job, log):
     architecture = [(it.id, it.description) for it in inventory if it.kind == "architecture"]
     try:
         result = vision.preservation_check(after, architecture)
-        return after_key, result.preservation_rate, result.missing_ids
+        return _Generated(
+            after_key=after_key,
+            generation_prompt=generation_prompt,
+            preservation_rate=result.preservation_rate,
+            missing_ids=result.missing_ids,
+            preservation_prompt=result.prompt,
+        )
     except VisionError as exc:
         log.warning("preservation check failed: %s", exc)
-        return after_key, None, None
+        return _Generated(
+            after_key=after_key,
+            generation_prompt=generation_prompt,
+            preservation_rate=None,
+            missing_ids=None,
+            preservation_prompt=None,
+        )
 
 
 def _on_error(conn, lease: Lease, exc: Exception, log) -> str:
@@ -142,12 +163,21 @@ def _set_running(conn, render_id: str) -> None:
         )
 
 
-def _finish(conn, render_id: str, after_key: str, rate, missing) -> None:
+def _finish(conn, render_id: str, generated: _Generated) -> None:
+    missing = generated.missing_ids
     with conn.transaction():
         conn.execute(
             "UPDATE renders SET status = 'done', after_key = %s, preservation_rate = %s, "
-            "missing_items = %s, updated_at = now() WHERE id = %s",
-            (after_key, rate, Json(missing) if missing is not None else None, render_id),
+            "missing_items = %s, generation_prompt = %s, preservation_prompt = %s, "
+            "updated_at = now() WHERE id = %s",
+            (
+                generated.after_key,
+                generated.preservation_rate,
+                Json(missing) if missing is not None else None,
+                generated.generation_prompt,
+                generated.preservation_prompt,
+                render_id,
+            ),
         )
 
 

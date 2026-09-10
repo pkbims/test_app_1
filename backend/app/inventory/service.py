@@ -38,11 +38,11 @@ def create_inventory(conn, storage, vision: Vision, room_id: str, user_id: str) 
     image_bytes = storage.get(f"photos/{storage_key}")
     INVENTORY_ATTEMPTS.inc()
     try:
-        raw_items = vision.inventory(image_bytes, content_type)
+        result = vision.inventory(image_bytes, content_type)
     except VisionError as exc:
         INVENTORY_FAILURES.inc()
         raise ApiError(ErrorCode.inventory_failed, _VISION_FAILED) from exc
-    if not raw_items:
+    if not result.items:
         INVENTORY_FAILURES.inc()
         raise ApiError(ErrorCode.inventory_failed, _VISION_FAILED)
 
@@ -54,13 +54,14 @@ def create_inventory(conn, storage, vision: Vision, room_id: str, user_id: str) 
             description=raw.description,
             removable=raw.kind != _ARCHITECTURE,
         )
-        for i, raw in enumerate(raw_items)
+        for i, raw in enumerate(result.items)
     ]
     created_at = conn.execute(
-        "INSERT INTO inventories (room_id, items) VALUES (%s, %s) "
-        "ON CONFLICT (room_id) DO UPDATE SET items = EXCLUDED.items, created_at = now() "
+        "INSERT INTO inventories (room_id, items, prompt) VALUES (%s, %s, %s) "
+        "ON CONFLICT (room_id) DO UPDATE "
+        "SET items = EXCLUDED.items, prompt = EXCLUDED.prompt, created_at = now() "
         "RETURNING created_at",
-        (rid, Json([it.model_dump() for it in items])),
+        (rid, Json([it.model_dump() for it in items]), result.prompt),
     ).fetchone()[0]
     return Inventory(room_id=str(rid), items=items, created_at=created_at)
 

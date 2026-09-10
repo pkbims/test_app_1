@@ -74,8 +74,15 @@ def test_openai_vision_parses_items():
     payload = json.dumps(
         {"items": [{"kind": "architecture", "name": "wall", "description": "back wall"}]}
     )
-    items = _client_with(content=payload).inventory(b"bytes", "image/jpeg")
-    assert items == [vision.RawItem("architecture", "wall", "back wall")]
+    result = _client_with(content=payload).inventory(b"bytes", "image/jpeg")
+    assert result.items == [vision.RawItem("architecture", "wall", "back wall")]
+
+
+def test_openai_vision_returns_the_exact_prompt_sent():
+    payload = json.dumps({"items": []})
+    result = _client_with(content=payload).inventory(b"bytes", "image/jpeg")
+    assert result.prompt == vision._INVENTORY_PROMPT
+    assert "Inventory this room photo" in result.prompt
 
 
 def test_openai_vision_wraps_api_errors():
@@ -97,11 +104,39 @@ def test_openai_vision_wraps_missing_items_key():
 
 # ── FakeVision ───────────────────────────────────────────────────────────────
 def test_fake_vision_has_architecture_and_objects():
-    items = vision.FakeVision().inventory(b"", "image/jpeg")
-    kinds = {i.kind for i in items}
+    result = vision.FakeVision().inventory(b"", "image/jpeg")
+    kinds = {i.kind for i in result.items}
     assert kinds == {"architecture", "object"}
+
+
+def test_fake_vision_returns_the_real_inventory_prompt():
+    # No call is actually made, but the stored text should be what a real call
+    # would send, so it's meaningful to review later.
+    result = vision.FakeVision().inventory(b"", "image/jpeg")
+    assert result.prompt == vision._INVENTORY_PROMPT
 
 
 def test_disabled_vision_raises():
     with pytest.raises(vision.VisionError):
         vision.DisabledVision().inventory(b"", "image/jpeg")
+
+
+# ── preservation_check prompts ────────────────────────────────────────────────
+def test_preservation_prompt_names_every_architecture_item():
+    architecture = [("A", "the back wall"), ("B", "the flooring")]
+    result = vision.FakeVision().preservation_check(b"", architecture)
+    assert "A: the back wall" in result.prompt
+    assert "B: the flooring" in result.prompt
+
+
+def test_preservation_prompt_is_empty_when_nothing_architectural():
+    result = vision.FakeVision().preservation_check(b"", [])
+    assert result.prompt == ""
+
+
+def test_openai_preservation_check_returns_the_exact_prompt_sent():
+    payload = json.dumps({"present": ["A"]})
+    architecture = [("A", "the back wall")]
+    result = _client_with(content=payload).preservation_check(b"after-bytes", architecture)
+    assert result.prompt == vision._preservation_prompt(architecture)
+    assert "A: the back wall" in result.prompt
