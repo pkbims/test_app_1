@@ -79,6 +79,10 @@ struct HomeView: View {
                 .padding(.horizontal, Spacing.screenEdge)
                 .padding(.vertical, Spacing.m)
                 .background(Color.paper)
+                // Copy changed to "+ Decorate a New Room" for the redesign, but
+                // AddPhotoFlowUITests looks this button up by its old label — keep the
+                // identifier stable so that regression test doesn't silently break.
+                .accessibilityIdentifier("New Room")
             }
             .task {
                 await viewModel.loadRooms()
