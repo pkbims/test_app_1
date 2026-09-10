@@ -126,6 +126,27 @@ contract unilaterally has silently forked the system.
 Docker now works, so this is no longer forced: backend starts first (schema + a
 running API), iOS ~30 min later against the live server.
 
+## Known issue: `remove_ids` is unreliable
+
+Found 2026-09-10. `KEEP` holds up in every render (position, identity, finish
+restyled correctly) — but items tapped for **removal** often survive in the output.
+Opposite of the assumed failure direction. Being addressed as part of a
+`render/prompt.py` rewrite (see below), which must ship with a test proving removal
+actually works, not just a hoped-for side effect.
+
+## Style expansion, 6 → 18, in progress
+
+Prompt-engineering work (`prompt_review/HANDOFF.md` once written) is expanding the
+style catalog from 6 to 18, including non-traditional directions (a "cyberpunk"
+style was A/B tested), each with a `decor_scale` controlling how much new decor it
+may introduce. `style` stays a plain unvalidated string for this pass — a contract
+enum is the right eventual fix, deliberately deferred (the frozen OpenAPI must
+regenerate byte-identically, more delicate than it looks).
+
+Two decisions explicitly deferred, not blockers: whether a dark/moody style makes
+the preservation *metric* unreliable (measurement gap vs. render bug), and whether
+seasonal styles (e.g. Christmas) show year-round or need availability logic.
+
 ## Working agreement with the user
 
 - Flag when something has been done two or three times — it is a candidate for a skill.
