@@ -1712,6 +1712,18 @@
           "has_inventory": {
             "type": "boolean",
             "title": "Has Inventory"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url",
+            "description": "Signed read URL for the room's latest done render's after-image, or its original photo if no render has finished yet. Null if the room has no photo. Same short-lived /files/... scheme as Photo.url and Render.after_url \u2014 never cached by key, reissued on every read."
           }
         },
         "type": "object",

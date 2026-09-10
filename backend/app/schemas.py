@@ -43,6 +43,13 @@ class Room(BaseModel):
     created_at: datetime
     has_photo: bool
     has_inventory: bool
+    thumbnail_url: Optional[str] = Field(
+        None,
+        description="Signed read URL for the room's latest done render's after-image, "
+                    "or its original photo if no render has finished yet. Null if the "
+                    "room has no photo. Same short-lived /files/... scheme as Photo.url "
+                    "and Render.after_url — never cached by key, reissued on every read.",
+    )
 
 
 class Photo(BaseModel):
