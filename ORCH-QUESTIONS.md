@@ -167,3 +167,30 @@ Format:
   risk, standard practice.
 - **Status:** answered
 
+## Q7 — Replace Sign in with Apple with email/password while the Developer account is pending
+- **From:** ios
+- **Date:** 2026-09-10
+- **Question:** The user's Apple Developer account application is in progress (Q5).
+  In the meantime, they asked whether the app should drop Sign in with Apple for a
+  normal email/password login, with a test email/password stored in the backend.
+  Flagging rather than building, because this crosses several lines at once, not
+  just the one Q6 already ruled on:
+  - The contract is frozen and has exactly one auth operation
+    (`POST /v1/auth/apple`) — email/password means a new endpoint, a contract
+    change, which needs sign-off regardless of who's asking.
+  - It needs backend work (password hashing/storage, a new route) —
+    outside `ios/`, not mine to build even with sign-off; would need the backend
+    agent/orchestrator.
+  - It reverses PRD T5 (Sign in with Apple over building password auth: "no
+    password to store, no vendor bill"), which `ios/AGENT.md` says not to
+    relitigate.
+  - A stored test email/password is the same category of thing Q6 just ruled out
+    (a hardcoded shortcut, against the app's "nothing here is faked" positioning
+    and CLAUDE.md's real-auth baseline), just larger in scope than a debug button.
+- **Blocks:** nothing — not implementing anything until this is answered. The user's
+  Developer account should resolve Q5 properly once it's ready; `RenderFlowIntegrationTests`
+  (dev-token, API-level) and SwiftUI Previews (Q6) remain available for iteration
+  in the meantime.
+- **Answer:** (orchestrator)
+- **Status:** open
+
