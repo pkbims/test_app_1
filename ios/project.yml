@@ -10,7 +10,17 @@ configs:
 settings:
   base:
     SWIFT_VERSION: "5.10"
-    DEVELOPMENT_TEAM: ""
+    # Read from the environment at generate time (XcodeGen's ${VAR} substitution —
+    # ProcessInfo.processInfo.environment, resolved before this file is parsed),
+    # not hardcoded — so a real Team id survives every `xcodegen generate` instead
+    # of being silently reset to empty each time (it used to be a bare ""). Always
+    # run generation via ./generate-project.sh, which guarantees this variable is
+    # defined (empty by default) before xcodegen ever sees it: XcodeGen has no
+    # ${VAR:-default} syntax, so a truly *unset* variable leaves the literal
+    # "${DESIGNMYROOM_DEV_TEAM}" text in the built setting instead of defaulting to
+    # empty — only an unset-vs-empty distinction the wrapper script exists to erase.
+    # Your own team id goes in ios/.env (gitignored — see .env.example), never here.
+    DEVELOPMENT_TEAM: ${DESIGNMYROOM_DEV_TEAM}
     CODE_SIGN_STYLE: Automatic
     ENABLE_PREVIEWS: YES
 packages:

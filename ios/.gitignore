@@ -5,3 +5,6 @@ xcuserdata/
 .swiftpm/
 .build/
 DerivedData/
+
+# Local Team id for generate-project.sh — see .env.example.
+.env

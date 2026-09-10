@@ -118,18 +118,27 @@ cd /tmp/xcodegen-src && swift build -c release --product xcodegen
 cp .build/release/xcodegen ~/.local/bin/xcodegen   # or wherever's on your PATH
 ```
 
-Then, after editing `project.yml`:
+Then, after editing `project.yml`, regenerate with the wrapper script — **not**
+`xcodegen generate` directly:
 
 ```bash
-xcodegen generate --spec project.yml
+./generate-project.sh
 ```
 
 `DesignMyRoom.xcodeproj` is committed, so this step is only needed when the project
 *structure* changes (a new target, a new Info.plist key, ...) — not for ordinary
-Swift file edits, which Xcode's existing project already picks up. Regenerating
-resets the local Signing & Capabilities Team selection to empty (`project.yml`
-intentionally leaves it unset for a portable committed project) — reselect it
-afterward if you'd set one.
+Swift file edits, which Xcode's existing project already picks up.
+
+Your Signing & Capabilities Team selection now survives regeneration: put your Team
+id in `ios/.env` (gitignored — one line, `DESIGNMYROOM_DEV_TEAM=YOUR_TEAM_ID`),
+layered over the committed `xcodegen.env` (empty default) the same way the repo's
+own `compose.env`/`.env` work. `project.yml` reads `DEVELOPMENT_TEAM` from that
+environment variable rather than hardcoding it, so a fresh checkout with no `.env`
+still gets an empty/automatic default — the wrapper script exists specifically
+because XcodeGen's own `${VAR}` substitution has no "default if unset" syntax;
+calling `xcodegen generate` directly without the
+variable already exported would leave the literal text `${DESIGNMYROOM_DEV_TEAM}`
+sitting in the generated setting instead of an empty string.
 
 **Gotcha found the hard way:** XcodeGen 2.42 has no top-level `resources:` target
 key at all — an early version of `project.yml` had one, and it was silently
