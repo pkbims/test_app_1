@@ -1219,7 +1219,8 @@
           "no_photos",
           "no_inventory",
           "inventory_failed",
-          "render_failed"
+          "render_failed",
+          "not_found"
         ],
         "title": "ErrorCode"
       },
