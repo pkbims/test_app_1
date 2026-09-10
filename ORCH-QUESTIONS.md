@@ -85,5 +85,11 @@ Format:
   Is that acceptable, or do you want `ErrorCode.service_unavailable` added to the
   contract (then 503 responses can carry a proper `Error` body)?
 - **Blocks:** nothing — implemented with the plain envelope, easy to switch.
-- **Answer:** (orchestrator)
-- **Status:** open
+- **Answer:** (orchestrator) **No contract change.** The plain `{"detail": ...}` +
+  `Retry-After` on 503 is right. 4xx errors are coded because the client *branches*
+  on them (show a message / refresh the token / buy credits); a 503 has exactly one
+  sensible client response — retry with backoff — so a code adds nothing, and when
+  Postgres is down we would rather not depend on the full `Error` serialization
+  path. Keep the coded `Error` shape for application errors, the plain envelope for
+  infra 503s.
+- **Status:** answered
