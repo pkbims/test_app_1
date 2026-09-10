@@ -12,6 +12,9 @@ ios/
 │                         `swift test` runs it with no Xcode project, no simulator.
 ├── DesignMyRoomApp/      SwiftUI views + view models. Thin — restyling a screen here
 │                         must never mean touching DesignMyRoomCore.
+├── DesignMyRoomAppTests/ Xcode unit tests for App-target view models (Home,
+│                         RoomDetail) — these need a real Xcode test target since
+│                         they depend on SwiftUI/@Observable, unlike DesignMyRoomCore.
 ├── project.yml           XcodeGen spec — the source of truth for project structure.
 └── DesignMyRoom.xcodeproj  Generated from project.yml, committed so opening it in
                             Xcode needs no extra tooling.
@@ -42,9 +45,34 @@ of a mock (per the orchestrator's instruction — a stronger test than a stub wh
 practical); they skip themselves (not a failure) if `docker compose up` isn't
 running. `POST /v1/auth/apple` is rate-limited 10/hr per IP (PRD §16) shared across
 every process hitting that backend, including your own repeated `swift test` runs —
-if integration tests suddenly fail with `rateLimited`, that's why; `docker compose
-restart api` resets the in-process limiter's window immediately instead of waiting
-out the hour.
+if integration tests suddenly fail with `rateLimited`, that's why.
+
+`docker compose restart api` resets the in-process limiter's window immediately
+instead of waiting out the hour — **but this compose stack's project name is fixed
+(`docker-compose.yml`: `name: app1`)**, so it's the *same* containers/volumes as
+every other worktree and any manual testing happening against them right now,
+restart included. Don't reach for this once someone might be signed in and testing
+by hand — it won't lose data (no `-v`), but it can still restart a container that's
+serving their live session. Prefer just waiting out the window, or
+`docker compose run --rm --no-deps api pytest ...`-style isolation if you need a
+clean check.
+
+### App-target view model tests
+
+`HomeViewModel`/`RoomDetailViewModel` live in the app target, not the SwiftPM
+package, so they can't run via `swift test` — they run through Xcode's own test
+action instead:
+
+```bash
+xcodebuild test -project DesignMyRoom.xcodeproj -scheme DesignMyRoom \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:DesignMyRoomAppTests
+```
+
+Each of these view models depends on a narrow protocol (`RoomListProviding`,
+`RenderListProviding`) that the real `APIClient` conforms to, rather than the
+concrete type — tests use a plain stub instead of standing up a real
+`APIClient`/`MockTransport` stack, which already has its own coverage above.
 
 ## Build and run the app
 
@@ -98,29 +126,47 @@ xcodegen generate --spec project.yml
 
 `DesignMyRoom.xcodeproj` is committed, so this step is only needed when the project
 *structure* changes (a new target, a new Info.plist key, ...) — not for ordinary
-Swift file edits, which Xcode's existing project already picks up.
+Swift file edits, which Xcode's existing project already picks up. Regenerating
+resets the local Signing & Capabilities Team selection to empty (`project.yml`
+intentionally leaves it unset for a portable committed project) — reselect it
+afterward if you'd set one.
 
-## Known limitation: Sign in with Apple needs a human, once
+**Gotcha found the hard way:** XcodeGen 2.42 has no top-level `resources:` target
+key at all — an early version of `project.yml` had one, and it was silently
+ignored (no error), leaving `Assets.xcassets` out of the Resources build phase
+entirely for a while. Resource files are auto-detected by type from whatever's
+listed under `sources:` instead — that's why both `DesignMyRoomApp/Sources` and
+`DesignMyRoomApp/Resources` are listed there now.
 
-No Apple Developer team is configured in this environment (`security find-identity`
-shows zero signing identities). The sign-in code itself is real —
-`AuthenticationServices`' `SignInWithAppleButton`, no fake/bypass login path — and the
-app builds, installs, and renders the sign-in screen correctly. But actually
-completing a sign-in past the button tap needs one of:
+## Known limitation: Sign in with Apple needs a paid Developer account
 
-- **An Apple ID signed into the Simulator** (Settings ▸ Sign in to your iPhone), or
-- **A real Apple Developer team** added in Xcode (Signing & Capabilities), with an
-  App ID that has the Sign in with Apple capability registered, matching the
-  `com.apple.developer.applesignin` entitlement already in
-  `DesignMyRoomApp/DesignMyRoom.entitlements`.
+Confirmed by hand-testing, not just assumed: a personal/free Apple ID as an Xcode
+Team **cannot** register the Sign in with Apple capability at all — Xcode's own
+error says so explicitly, on Simulator or device. The sign-in code itself is real
+(`AuthenticationServices`' `SignInWithAppleButton`, no fake/bypass login as the
+primary path) and the app builds, installs, and renders the sign-in screen
+correctly; a personal Apple ID signed into the Simulator gets you as far as the
+real system password sheet, which can even accept the password, before failing
+silently rather than completing. A paid ($99/yr) Apple Developer Program
+membership, added in Xcode (Signing & Capabilities), is the only fix — see
+`../ORCH-QUESTIONS.md` Q5.
 
-Both are Xcode-UI/Apple-account steps — see `../ORCH-QUESTIONS.md` Q5. Everything
-past that handshake is proven end-to-end against the real backend already: the
-`RenderFlowIntegrationTests` in `DesignMyRoomCore` sign in via the backend's
-documented dev-JWT path (`backend/app/auth/apple.py::verify_dev_token`, active
-whenever `APPLE_CLIENT_ID` is unset — the committed `compose.env` default) and drive
-the full flow: room → photo → inventory → render → poll to done, plus the
-idempotency-key, `no_photos`, and `not_found` edge cases.
+Everything past that handshake is proven end-to-end against the real backend
+already: `RenderFlowIntegrationTests` in `DesignMyRoomCore` sign in via the
+backend's documented dev-JWT path (`backend/app/auth/apple.py::verify_dev_token`,
+active whenever `APPLE_CLIENT_ID` is unset — the committed `compose.env` default)
+and drive the full flow: room → photo → inventory → render → poll to done, plus
+`listRooms`, the idempotency-key, `no_photos`, and `not_found` edge cases.
+
+**In the running app itself** (not just tests), a `#if DEBUG`-only "Test sign-in
+(dev only)" field + button sits below the real Apple button on the sign-in screen —
+explicitly authorized (`../ORCH-QUESTIONS.md` Q7) as a narrow, temporary exception
+while the Developer account is pending, not a general policy (Q6 ruled this out by
+default; ask before extending it). It mints a self-signed dev token (`DevJWT`,
+shared with the integration tests above) and calls the exact same real
+`POST /v1/auth/apple` the Apple button does — never a second code path, never
+present in a Release build (verified by symbol-table inspection of the built
+binary). Worth removing once the Developer account is active.
 
 ## Architecture, and the tradeoff behind each choice
 
@@ -134,7 +180,9 @@ idempotency-key, `no_photos`, and `not_found` edge cases.
 | **No CI/CD** (PRD F3) | iOS CI needs macOS runners (~10× the cost of Linux minutes) and code-signing/provisioning-profile automation — the single fiddliest thing in the whole series, and deliberately not solved here. Build and test locally. | Nothing gates a bad commit before it lands; a deliberate, recorded hole in the baseline, same as the backend's. |
 | **Crash/error reporting: a home-grown JSON-line log** (`CrashReporter`), not a vendor SDK | The client brief locks "no third-party dependencies"; the backend's Sentry choice doesn't extend to the client. | No dashboard, no alerting, no crash symbolication, and it cannot catch a Swift-level fatal trap (`fatalError`, a force-unwrapped `nil`) — only `NSException`-style crashes and errors explicitly logged from a `catch` block. Real error tracking is worth a vendor once this justifies the spend. |
 | **Style catalog is hard-coded**, not fetched | `RenderCreate.style` is a bare string in the contract — there's no endpoint that lists styles. Six ids, shared with the backend by convention (`ios/AGENT.md`), not a contract field. | If the backend's accepted list ever differs, that's a cross-cutting question (`../ORCH-QUESTIONS.md`), not something either side can discover from the contract alone. |
-| **Style cards are placeholder art**, not real sample photography | No stock-photo asset pipeline exists for this client yet. | Visually thin next to the design mock in `../ui_ux/`; swapping in real assets touches only `StylePickerView`, nothing else, by design. |
+| **Style cards show real bundled sample images**, resized/re-encoded from the originals (gpt-image-2) | The tinted placeholder was a first-pass stand-in; real art is worth ~96% smaller once resized to display size (`SourceAssets/StyleSamples/README.md`). | A 7th style with no matching art must fall back gracefully — `StyleImageResolver` (`DesignMyRoomCore`, unit-tested) makes that an explicit, tested decision rather than a broken image reference. |
+| **Home/RoomDetail view models depend on narrow protocols** (`RoomListProviding`/`RenderListProviding`), not the concrete `APIClient` | Lets them be unit-tested with a plain stub instead of a real `APIClient`/`MockTransport` stack. | A small protocol per dependency to keep in sync if `APIClient`'s method signature changes. |
+| **Room history is read-only for v1** — no restyle from an existing room, only "New Room" | Product decision: once you leave a room it's history; a new render always starts fresh. Simplifies Compare to one "Done" action. | No way to cheaply retry a style on an existing room without redoing the whole add-photo flow — a real UX cost, deliberately accepted for v1. |
 
 ## What's tested, and how
 
@@ -161,11 +209,30 @@ idempotency-key, `no_photos`, and `not_found` edge cases.
   wins over it when present.
 - **`CrashReporter`** — the JSON-line sink appends correctly and survives a fresh
   instance (an app relaunch) without truncating what a previous one wrote.
+- **`StyleImageResolver`** — a style id with bundled art resolves to it; one
+  without (a hypothetical 7th style) falls back to `nil` rather than a broken image
+  reference, so `StyleCard`'s placeholder path is a tested branch, not a hope.
+- **`DevJWT`** (`#if DEBUG` only, compiles out of Release) — token *shape* (three
+  base64url segments, `HS256` header, the given subject/expiry, a signature that
+  re-derives correctly) with fast, no-network tests; the actual proof a token it
+  produces is accepted stays in the live integration tests below.
 - **Live integration** (`RenderFlowIntegrationTests`) — the same suite, but every
   call goes to a real running backend instead of `MockTransport`: full sign-in
-  (dev-JWT) → room → photo → inventory → render → poll-to-done, plus the real HEIC
-  fixture converted and uploaded, `no_photos`, `not_found`, and idempotency-key
-  reuse. Skips itself if the backend isn't running.
+  (dev-JWT) → room → photo → inventory → render → poll-to-done, plus `listRooms`
+  including a just-created room, the real HEIC fixture converted and uploaded,
+  `no_photos`, `not_found`, and idempotency-key reuse. Skips itself if the backend
+  isn't running.
+
+`DesignMyRoomAppTests`' suite (`xcodebuild test`, see above) — App-target view
+models, each against a plain stub rather than a real `APIClient`:
+
+- **`HomeViewModel`** — populates rooms on success, sets an `ErrorCopy`-mapped
+  message on `ApiError` (a generic one otherwise), `isLoading` true only while the
+  request is in flight, a later successful reload clears a previous error.
+- **`RoomDetailViewModel`** — populates this room's renders, requests *this* room's
+  id specifically (not just any id), same error-message behavior as `HomeViewModel`,
+  and doesn't choke on a room whose renders include a still-`queued`/`running` one
+  (history is read-only, so it just shows whatever the server reports).
 
 View code is intentionally not unit-tested (CLAUDE.md: pure layout doesn't need a
 test) — verified instead by building for the simulator and taking it through the
