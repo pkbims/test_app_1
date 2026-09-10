@@ -184,6 +184,96 @@ def test_list_rooms_reflects_photo_and_inventory_state(api):
     assert by_id[ready_room]["has_inventory"] is True
 
 
+def _submit_render(api, headers, room_id, key="idem-thumb", remove_ids=None):
+    return api.post(
+        f"/v1/rooms/{room_id}/renders",
+        json={
+            "style": "warm-minimal",
+            "remove_ids": remove_ids or [],
+            "idempotency_key": key,
+        },
+        headers=headers,
+    )
+
+
+def _room(rooms, room_id):
+    return next(r for r in rooms if r["room_id"] == room_id)
+
+
+def test_create_room_thumbnail_is_null(api):
+    headers = sign_in(api)
+    body = api.post("/v1/rooms", json={}, headers=headers).json()
+    assert body["thumbnail_url"] is None
+
+
+def test_list_rooms_thumbnail_is_null_with_no_photo(api):
+    headers = sign_in(api)
+    room_id = api.post("/v1/rooms", json={}, headers=headers).json()["room_id"]
+    listed = api.get("/v1/rooms", headers=headers).json()
+    assert _room(listed, room_id)["thumbnail_url"] is None
+
+
+def test_list_rooms_thumbnail_is_the_photo_before_any_render(api):
+    headers = sign_in(api)
+    room_id = _create_room(api, headers)
+    photo_url = api.post(
+        f"/v1/rooms/{room_id}/photos",
+        files={"file": ("r.jpg", _jpeg(), "image/jpeg")},
+        headers=headers,
+    ).json()["url"]
+
+    listed = api.get("/v1/rooms", headers=headers).json()
+    thumb = _room(listed, room_id)["thumbnail_url"]
+    assert thumb.split("?")[0] == photo_url.split("?")[0]
+    assert api.get(thumb).status_code == 200
+
+
+def test_list_rooms_thumbnail_is_the_latest_done_renders_after_image(api, run_worker):
+    headers = sign_in(api)
+    room_id = _create_room(api, headers)
+    api.post(
+        f"/v1/rooms/{room_id}/photos",
+        files={"file": ("r.jpg", _jpeg(), "image/jpeg")},
+        headers=headers,
+    )
+    api.post(f"/v1/rooms/{room_id}/inventory", headers=headers)
+
+    render = _submit_render(api, headers, room_id).json()
+    assert run_worker() == "done"
+    after_url = api.get(f"/v1/renders/{render['render_id']}", headers=headers).json()["after_url"]
+
+    listed = api.get("/v1/rooms", headers=headers).json()
+    thumb = _room(listed, room_id)["thumbnail_url"]
+    assert thumb.split("?")[0] == after_url.split("?")[0]
+    assert api.get(thumb).status_code == 200
+
+
+def test_list_rooms_thumbnail_falls_back_to_photo_when_render_failed(api, run_worker):
+    from app.imagegen import ImageEditError
+
+    class BoomEditor:
+        def edit(self, *_a):
+            raise ImageEditError("image model exploded")
+
+    headers = sign_in(api)
+    room_id = _create_room(api, headers)
+    photo_url = api.post(
+        f"/v1/rooms/{room_id}/photos",
+        files={"file": ("r.jpg", _jpeg(), "image/jpeg")},
+        headers=headers,
+    ).json()["url"]
+    api.post(f"/v1/rooms/{room_id}/inventory", headers=headers)
+    _submit_render(api, headers, room_id)
+
+    assert run_worker(editor=BoomEditor()) == "retry"
+    assert run_worker(editor=BoomEditor()) == "retry"
+    assert run_worker(editor=BoomEditor()) == "failed"
+
+    listed = api.get("/v1/rooms", headers=headers).json()
+    thumb = _room(listed, room_id)["thumbnail_url"]
+    assert thumb.split("?")[0] == photo_url.split("?")[0]
+
+
 def test_list_rooms_is_scoped_to_the_caller(api):
     owner = sign_in(api, sub="rooms.owner")
     _create_room(api, owner)

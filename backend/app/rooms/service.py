@@ -33,14 +33,23 @@ def create_room(conn, user_id: str, label: str | None) -> Room:
     )
 
 
-def list_rooms(conn, user_id: str) -> list[Room]:
+def list_rooms(
+    conn, user_id: str, *, public_base_url: str, url_secret: str, url_ttl_s: int
+) -> list[Room]:
     rows = conn.execute(
         "SELECT r.id, r.label, r.created_at, "
         "(p.room_id IS NOT NULL) AS has_photo, "
-        "(i.room_id IS NOT NULL) AS has_inventory "
+        "(i.room_id IS NOT NULL) AS has_inventory, "
+        "p.storage_key AS photo_key, "
+        "lr.after_key AS render_after_key "
         "FROM rooms r "
         "LEFT JOIN photos p ON p.room_id = r.id "
         "LEFT JOIN inventories i ON i.room_id = r.id "
+        "LEFT JOIN LATERAL ("
+        "  SELECT after_key FROM renders "
+        "  WHERE room_id = r.id AND status = 'done' "
+        "  ORDER BY created_at DESC LIMIT 1"
+        ") lr ON true "
         "WHERE r.user_id = %s "
         "ORDER BY r.created_at DESC",
         (user_id,),
@@ -52,9 +61,31 @@ def list_rooms(conn, user_id: str) -> list[Room]:
             created_at=created_at,
             has_photo=has_photo,
             has_inventory=has_inventory,
+            thumbnail_url=_thumbnail_url(
+                photo_key,
+                render_after_key,
+                public_base_url=public_base_url,
+                url_secret=url_secret,
+                url_ttl_s=url_ttl_s,
+            ),
         )
-        for rid, label, created_at, has_photo, has_inventory in rows
+        for rid, label, created_at, has_photo, has_inventory, photo_key, render_after_key in rows
     ]
+
+
+def _thumbnail_url(
+    photo_key: str | None,
+    render_after_key: str | None,
+    *,
+    public_base_url: str,
+    url_secret: str,
+    url_ttl_s: int,
+) -> str | None:
+    if render_after_key is not None:
+        return signed_url(public_base_url, "renders", render_after_key, url_secret, url_ttl_s)
+    if photo_key is not None:
+        return signed_url(public_base_url, "photos", photo_key, url_secret, url_ttl_s)
+    return None
 
 
 def delete_room(conn, storage: Storage, room_id: str, user_id: str) -> None:
