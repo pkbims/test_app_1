@@ -55,6 +55,24 @@ public actor APIClient {
         return tokens
     }
 
+    /// Attempts to restore a session from a stored refresh token at app launch. The
+    /// access token is in-memory only, so it's always nil right after a cold launch
+    /// even when a refresh token survived in the Keychain — and a request sent with
+    /// no `Authorization` header comes back `401 apple_token_invalid` (a *missing*
+    /// token, not an aged-out one), which the 401-triggered refresh dance
+    /// deliberately doesn't treat as refreshable. So this is its own explicit path,
+    /// reusing the same refresh mechanics. Never throws: "no session yet" is a normal
+    /// outcome at launch, not an error worth propagating.
+    public func restoreSession() async -> Bool {
+        guard await config.tokenStore.refreshToken() != nil else { return false }
+        do {
+            try await performRefresh()
+            return true
+        } catch {
+            return false
+        }
+    }
+
     public func me() async throws -> Me {
         let request = plainRequest(path: "v1/me", method: "GET")
         let (data, response) = try await send(request, authorized: true, idempotent: true)

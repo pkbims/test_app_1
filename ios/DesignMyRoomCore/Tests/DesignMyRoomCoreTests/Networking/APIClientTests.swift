@@ -333,6 +333,55 @@ final class APIClientTests: XCTestCase {
         XCTAssertEqual(request.httpMethod, "DELETE")
         XCTAssertEqual(request.url?.path, "/v1/rooms/rm_1")
     }
+
+    // MARK: - restoreSession (app cold launch)
+    //
+    // The access token is in-memory only, so it's always nil right after launch even
+    // when a refresh token survived in the Keychain. A request sent with no
+    // Authorization header at all comes back `401 apple_token_invalid` (missing token
+    // is a different case from an aged-out one — see middleware.py), which the
+    // 401-triggered refresh dance deliberately does NOT treat as refreshable. So
+    // restoring a session at launch needs its own explicit path.
+
+    func testRestoreSessionWithNoStoredRefreshTokenReturnsFalseWithoutAnyRequest() async {
+        let transport = MockTransport()
+        let tokenStore = InMemoryTokenStore(access: nil, refresh: nil)
+        let client = makeClient(transport: transport, tokenStore: tokenStore)
+
+        let restored = await client.restoreSession()
+
+        XCTAssertFalse(restored)
+        let count = await transport.requestCount
+        XCTAssertEqual(count, 0)
+    }
+
+    func testRestoreSessionWithValidRefreshTokenSucceeds() async {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 200, json: #"{"access_token":"fresh-access","refresh_token":"fresh-refresh","expires_in":900}"#)
+        let tokenStore = InMemoryTokenStore(access: nil, refresh: "surviving-refresh")
+        let client = makeClient(transport: transport, tokenStore: tokenStore)
+
+        let restored = await client.restoreSession()
+
+        XCTAssertTrue(restored)
+        let request = await transport.recordedRequests[0]
+        XCTAssertEqual(request.url?.path, "/v1/auth/refresh")
+        let storedAccess = await tokenStore.accessToken()
+        XCTAssertEqual(storedAccess, "fresh-access")
+    }
+
+    func testRestoreSessionWithRevokedRefreshTokenFailsAndClears() async {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 401, json: #"{"code":"apple_token_invalid","message":"nope"}"#)
+        let tokenStore = InMemoryTokenStore(access: nil, refresh: "revoked-refresh")
+        let client = makeClient(transport: transport, tokenStore: tokenStore)
+
+        let restored = await client.restoreSession()
+
+        XCTAssertFalse(restored)
+        let clearCount = await tokenStore.clearCallCount
+        XCTAssertEqual(clearCount, 1)
+    }
 }
 
 private extension URLRequest {
