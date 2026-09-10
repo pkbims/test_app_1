@@ -126,6 +126,14 @@ def me() -> Me:
 
 
 # ── rooms ─────────────────────────────────────────────────────────────────────
+@app.get("/v1/rooms", response_model=List[Room], responses=E, tags=["rooms"],
+         summary="Rooms for the current user")
+def list_rooms() -> List[Room]:
+    """The user's own rooms, most recent first. Powers the app's home/history
+    screen — no other operation lists rooms across a user, only within one."""
+    _todo()
+
+
 @app.post("/v1/rooms", response_model=Room, status_code=status.HTTP_201_CREATED,
           responses=E, tags=["rooms"], summary="Create a room")
 def create_room(body: RoomCreate) -> Room:
