@@ -140,6 +140,7 @@ class ErrorCode(str, Enum):
     no_inventory = "no_inventory"
     inventory_failed = "inventory_failed"
     render_failed = "render_failed"
+    not_found = "not_found"  # 404: unknown id, or a resource that is not yours (no existence leak)
 
 
 class Error(BaseModel):
