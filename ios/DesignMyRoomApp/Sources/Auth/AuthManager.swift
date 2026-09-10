@@ -87,6 +87,31 @@ final class AuthManager {
         return "Sign in with Apple couldn't complete (\(error))."
     }
 
+    #if DEBUG
+    /// Explicitly authorized for local testing while a paid Apple Developer account
+    /// is pending (`../ORCH-QUESTIONS.md` Q7) — alongside `handleSignInResult`, never
+    /// replacing it. Calls the exact same real `POST /v1/auth/apple` the Apple
+    /// button does; only the identity token differs, a self-signed one the
+    /// backend's already-running dev auth path accepts (`DevJWT`, shared with
+    /// `DesignMyRoomCore`'s own integration tests rather than a second
+    /// implementation). `#if DEBUG` means this method compiles out of a Release
+    /// build entirely, not just hidden UI.
+    func signInWithDevToken(identifier: String) async {
+        state = .signingIn
+        let devToken = DevJWT.signed(subject: identifier)
+        do {
+            _ = try await apiClient.signInWithApple(identityToken: devToken)
+            await refreshMe()
+        } catch let error as ApiError {
+            crashReporter.logHandledError(error, context: "AuthManager.signInWithDevToken")
+            state = .signInFailed(ErrorCopy.message(for: error))
+        } catch {
+            crashReporter.logHandledError(error, context: "AuthManager.signInWithDevToken")
+            state = .signInFailed(Self.describe(error))
+        }
+    }
+    #endif
+
     /// A voluntary sign-out (a "Sign out" button) — the tokens are still valid, so
     /// this clears them itself. Compare `handleSignedOutFromServer()`, used when
     /// `APIClientError.signedOut` surfaces from some other call: `APIClient` has

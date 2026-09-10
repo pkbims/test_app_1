@@ -191,6 +191,18 @@ Format:
   Developer account should resolve Q5 properly once it's ready; `RenderFlowIntegrationTests`
   (dev-token, API-level) and SwiftUI Previews (Q6) remain available for iteration
   in the meantime.
-- **Answer:** (orchestrator)
-- **Status:** open
+- **Answer:** (user, directly, overriding the earlier "no" on this) **Authorized —
+  smallest version only, reusing what already exists.** Not email/password, not a
+  new backend endpoint: a `#if DEBUG`-only "Test sign-in (dev only)" entry point
+  *alongside* the real Sign in with Apple button (never replacing it), that mints a
+  self-signed dev JWT client-side (same HS256/`verify_dev_token` mechanism the
+  backend already runs in dev mode, same approach `DevJWT` already used in
+  `RenderFlowIntegrationTests`) and calls the real, unmodified
+  `POST /v1/auth/apple`. No new endpoint, no backend change, no password storage of
+  any kind. One text field for an identifier (default `test@local`) + Continue.
+  Explicitly authorized for this one case, for the specific reason that the paid
+  Developer account (Q5) is actively pending and the user wants to exercise the full
+  flow by hand in the meantime — not a general reversal of Q6's reasoning, which
+  still holds outside this narrow case.
+- **Status:** answered
 

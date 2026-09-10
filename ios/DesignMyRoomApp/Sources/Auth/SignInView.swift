@@ -5,6 +5,10 @@ import SwiftUI
 struct SignInView: View {
     let authManager: AuthManager
 
+    #if DEBUG
+    @State private var devIdentifier = "test@local"
+    #endif
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -41,6 +45,29 @@ struct SignInView: View {
                 ProgressView()
                     .padding(.bottom, 16)
             }
+
+            #if DEBUG
+            // Stripped from Release builds entirely — see AuthManager.signInWithDevToken.
+            // Explicitly authorized (ORCH-QUESTIONS Q7) while a paid Developer account
+            // is pending; alongside the real button above, never in place of it.
+            VStack(spacing: 8) {
+                Divider().padding(.horizontal, 32)
+                Text("TEST SIGN-IN (DEV ONLY)")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.orange)
+                TextField("Identifier", text: $devIdentifier)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding(.horizontal, 32)
+                Button("Continue (dev only)") {
+                    Task { await authManager.signInWithDevToken(identifier: devIdentifier) }
+                }
+                .disabled(isSigningIn || devIdentifier.isEmpty)
+                .padding(.horizontal, 32)
+            }
+            .padding(.bottom, 24)
+            #endif
         }
     }
 

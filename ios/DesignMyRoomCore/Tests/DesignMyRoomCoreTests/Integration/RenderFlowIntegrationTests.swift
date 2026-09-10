@@ -12,7 +12,7 @@ import XCTest
 /// still passes for anyone who hasn't run `docker compose up`.
 final class RenderFlowIntegrationTests: XCTestCase {
     private static let baseURL = URL(string: "http://localhost:8000")!
-    private static let devSecret = "dev-insecure-do-not-use-in-production"
+    private static let devSecret = DevJWT.localDevSecret
 
     override func setUp() async throws {
         try await super.setUp()
