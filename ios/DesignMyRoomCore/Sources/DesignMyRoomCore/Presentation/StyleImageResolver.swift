@@ -13,6 +13,8 @@ import Foundation
 public enum StyleImageResolver {
     public static let bundledStyleIds: Set<String> = [
         "warm-minimal", "scandi", "mid-century", "japandi", "modern-coastal", "industrial",
+        "traditional", "art-deco", "dark-academia", "maximalism", "moroccan", "cottagecore",
+        "rustic-farmhouse", "mediterranean", "cyberpunk", "memphis", "christmas", "valentines",
     ]
 
     public static func imageAssetName(for styleId: String) -> String? {

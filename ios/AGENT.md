@@ -83,8 +83,9 @@ The PRD §8 / F2 imagine letter outlines positioned *on the photo*. The frozen
 - **No low-confidence screen.** There is no confidence field in the contract; that
   flow belonged to the removed mask architecture. Skip screen 4 of the prototype.
 - **Style ids** (shared with the backend — hard-code this list, raise a question if
-  the backend's list differs): `warm-minimal`, `scandi`, `mid-century`, `japandi`,
-  `modern-coastal`, `industrial`.
+  the backend's list differs): 18 as of `prompt_review/HANDOFF.md` §2 (grown from the
+  original 6) — see `Style.swift` for the current id/display-name list, that file is
+  the source of truth, not this one.
 - **Image URLs** (`Photo.url`, `Render.before_url`, `Render.after_url`) are
   fully-formed signed URLs the server hands you. Load them as-is (`AsyncImage`).
   Never construct, parse, or cache-key them — they expire (~24h) and get reissued.
