@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DesignMyRoom — visual redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,400,500,600;9..144,1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- design tokens (this proposal's system) ---------- */
+:root{
+  --paper:#F7F3EA; --surface:#FFFFFF; --surface-2:#FBF8F1;
+  --ink:#1C1912; --ink-soft:#5B5548; --faint:#948C7C; --line:#E6DFD0;
+  --accent:#B2582F; --accent-ink:#FFF7EF; --accent-soft:#F2DFCB; --accent-deep:#8A4322;
+  --warn:#9C5A1E; --warn-soft:#F5E7D3;
+  --shadow-sm:0 1px 2px rgba(28,25,18,.06), 0 1px 1px rgba(28,25,18,.04);
+  --shadow-md:0 8px 24px rgba(28,25,18,.10), 0 2px 6px rgba(28,25,18,.06);
+  --shadow-lg:0 20px 48px rgba(28,25,18,.16), 0 6px 16px rgba(28,25,18,.08);
+  --r-card:20px; --r-chip:999px; --r-btn:16px;
+  /* skill scaffolding tokens, remapped onto this palette */
+  --bg:var(--paper); --panel:#FFFFFF; --muted:var(--ink-soft); --line:#E6DFD0;
+  --soft:var(--accent-soft); --quote:#F1ECE1; --s1:6px;--s2:8px;--s3:10px;--s4:12px;--s5:16px;--s6:24px;--s7:32px;
+  --r:10px;--r2:14px;
+}
+body[data-accent="moss"]{ --accent:#5C6B45; --accent-ink:#FBFAF3; --accent-soft:#E2E6D4; --accent-deep:#454F32; --soft:#E2E6D4; }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:15px/1.6 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{letter-spacing:-.01em}
+.serif{font-family:Fraunces,'Iowan Old Style',Georgia,serif}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}
+
+header{position:sticky;top:0;z-index:60;background:var(--surface);
+  border-bottom:1px solid var(--line);padding:var(--s4) var(--s6);
+  display:flex;align-items:center;gap:var(--s5)}
+header h1{font-size:15px;margin:0;font-weight:650;font-family:Inter,sans-serif}
+.tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-deep);
+  background:var(--accent-soft);padding:3px var(--s2);border-radius:var(--s1);font-weight:650}
+.spacer{flex:1}.count{font-size:13px;color:var(--muted)}
+
+.layout{display:grid;grid-template-columns:196px minmax(0,1fr) 316px;gap:var(--s7);
+  max-width:1520px;margin:0 auto;padding:var(--s6) var(--s6) 160px}
+@media(max-width:1240px){.layout{grid-template-columns:176px minmax(0,1fr)}aside.right{display:none}}
+@media(max-width:860px){.layout{grid-template-columns:1fr}nav.toc{display:none}}
+
+nav.toc{position:sticky;top:78px;align-self:start;max-height:calc(100vh - 110px);overflow-y:auto;font-size:13px}
+nav.toc .grp{color:var(--faint);text-transform:uppercase;letter-spacing:.07em;font-size:10.5px;font-weight:700;margin:var(--s5) 0 var(--s2)}
+nav.toc .grp:first-child{margin-top:0}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:5px var(--s3);
+  border-left:2px solid transparent;border-radius:0 var(--s1) var(--s1) 0}
+nav.toc a.on{color:var(--accent-deep);border-left-color:var(--accent);background:var(--accent-soft);font-weight:600}
+
+section{background:transparent;border:0;border-radius:0;padding:0;margin-bottom:72px;position:relative;scroll-margin-top:84px}
+section.boxed{background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);padding:var(--s6) 28px}
+section:hover > .cbtn{opacity:1}
+section > .shead{display:flex;align-items:baseline;gap:14px;margin:0 0 6px;flex-wrap:wrap}
+section > .shead h2{font-size:26px;margin:0;font-family:Fraunces,serif;font-weight:500}
+.num{color:var(--faint);font-weight:600;font-size:14px;margin-right:2px;font-family:Inter,sans-serif}
+.sub{color:var(--muted);font-size:14px;margin:0 0 28px;max-width:640px;line-height:1.6}
+.note{color:var(--muted);font-size:13px;margin:10px 0 0;line-height:1.55}
+.rationale{font-size:12.5px;color:var(--faint);margin-top:8px;font-style:italic}
+
+blockquote{margin:var(--s3) 0;padding:var(--s3) var(--s5);background:var(--quote);
+  border-left:2px solid var(--line);border-radius:0 var(--s2) var(--s2) 0;font-size:13.5px}
+.plain{background:var(--accent-soft);border-left:3px solid var(--accent);padding:var(--s3) var(--s5);
+  border-radius:0 var(--s2) var(--s2) 0;margin:var(--s4) 0;font-size:13.5px}
+.plain b{color:var(--accent-deep)}
+.risk{background:var(--warn-soft);border-left:3px solid var(--warn);padding:12px var(--s5);
+  border-radius:0 var(--s2) var(--s2) 0;margin:18px 0;font-size:13.5px;max-width:640px}
+.risk b{color:var(--warn)}
+
+.cbtn{position:absolute;top:0;right:0;opacity:0;transition:opacity .15s;
+  background:var(--surface);border:1px solid var(--line);color:var(--muted);font:inherit;
+  font-size:11.5px;padding:4px 10px;border-radius:var(--s2);cursor:pointer;z-index:5}
+.cbtn:hover{color:var(--accent-deep);border-color:var(--accent)}
+.cbtn.has{opacity:1;color:var(--accent-deep);border-color:var(--accent);background:var(--accent-soft)}
+[data-anchor]{position:relative}
+[data-anchor]:hover > .cbtn{opacity:1}
+
+.d{border:1px solid var(--line);border-radius:var(--r);padding:var(--s5) 18px;
+  margin:var(--s5) 0;position:relative;background:var(--surface);max-width:900px}
+.d:hover .cbtn{opacity:1}
+.d.open{border-left:3px solid var(--accent)}
+.q{font-weight:650;font-size:15px;margin-bottom:3px;font-family:Fraunces,serif}
+.why{color:var(--muted);font-size:13px;margin-bottom:var(--s4)}
+label.opt{display:flex;gap:var(--s3);align-items:flex-start;padding:9px var(--s4);
+  border:1px solid transparent;border-radius:var(--s2);cursor:pointer;font-size:14px}
+label.opt:hover{background:var(--paper)}
+label.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+label.opt input{margin-top:3px;accent-color:var(--accent);flex:none}
+.oh{font-weight:550}.od{color:var(--muted);font-size:12.5px;display:block;margin-top:1px}
+
+details.ref{border:1px solid var(--line);border-radius:var(--r);padding:var(--s4) 18px;margin:var(--s4) 0;background:var(--surface);max-width:900px}
+details.ref summary{cursor:pointer;font-weight:650;font-size:14px;color:var(--accent-deep)}
+
+aside.right{position:sticky;top:78px;align-self:start;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r2);padding:var(--s5) 18px;
+  max-height:calc(100vh - 110px);display:flex;flex-direction:column}
+aside.right h2{font-size:15px;margin:0;font-family:Inter,sans-serif}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:9px}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.dlist{overflow-y:auto;max-height:26vh;margin:var(--s3) -4px 0;padding:0 4px}
+.dr{display:flex;gap:9px;align-items:center;padding:5px var(--s2);border-radius:var(--s1);cursor:pointer;font-size:12.5px}
+.dr:hover{background:var(--paper)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--line);flex:none}
+.dr.done .dot{background:var(--accent)}
+.dn{color:var(--muted);font-weight:700;flex:none}
+.dr.todo .dv{color:var(--muted);font-style:italic}
+#queue{flex:1;overflow-y:auto;margin:var(--s4) -4px;padding:0 4px;min-height:60px}
+.qi{border:1px solid var(--line);border-radius:var(--s2);padding:var(--s3) var(--s4);margin-bottom:9px;font-size:13px;background:var(--paper)}
+.qa{color:var(--accent-deep);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px}
+.qx{float:right;cursor:pointer;color:var(--muted);border:0;background:none;font-size:15px}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:var(--s6) var(--s3)}
+button.primary{width:100%;background:var(--accent);color:#fff;border:0;padding:11px;
+  border-radius:var(--r);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
+#pop{position:absolute;z-index:100;width:328px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);padding:var(--s4);box-shadow:var(--shadow-lg);display:none}
+#pop .pa{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-deep);font-weight:700;margin-bottom:var(--s2)}
+#pop textarea{width:100%;min-height:88px;border:1px solid var(--line);border-radius:var(--s2);padding:9px;font:inherit;font-size:13.5px;background:var(--paper);color:var(--ink)}
+#pop .row{display:flex;gap:var(--s2);margin-top:var(--s3)}
+#pop button{flex:1;padding:var(--s2);border-radius:var(--s2);font:inherit;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+#pop button.add{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:650}
+#toast{position:fixed;bottom:var(--s6);left:50%;transform:translateX(-50%);
+  background:var(--ink);color:var(--paper);padding:var(--s3) 18px;border-radius:var(--s2);
+  font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:200}
+#toast.on{opacity:1}
+.flash{animation:fl 1.1s ease-out}
+@keyframes fl{0%{background:var(--accent-soft)}100%{background:transparent}}
+
+/* ---------- phone frame ---------- */
+.rack{display:flex;gap:36px;flex-wrap:wrap;align-items:flex-start}
+.phone-col{display:flex;flex-direction:column;align-items:center;gap:14px;flex:none}
+.phone-cap{font-size:12px;color:var(--muted);text-align:center;max-width:340px}
+.phone-cap b{color:var(--ink)}
+.phone{width:346px;background:#111;border-radius:48px;padding:12px;box-shadow:var(--shadow-lg);position:relative}
+.phone .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:100px;height:24px;
+  background:#111;border-radius:0 0 16px 16px;z-index:5}
+.screen{background:var(--surface);border-radius:38px;overflow:hidden;height:716px;display:flex;flex-direction:column;position:relative}
+.screen.dark-status{background:var(--paper)}
+.status{display:flex;justify-content:space-between;align-items:center;padding:16px 24px 4px;flex:none;font-family:Inter,sans-serif}
+.status .time{font-weight:650;font-size:15px;letter-spacing:.01em}
+.status .icons{display:flex;gap:5px;align-items:center}
+.home-ind{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:128px;height:5px;border-radius:3px;background:rgba(28,25,18,.25);z-index:6}
+.screen-body{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.screen-body::-webkit-scrollbar{width:0}
+
+/* ---------- shared UI atoms used across mockups ---------- */
+.pill-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);
+  color:#fff;font-weight:650;font-size:15px;padding:15px;border-radius:var(--r-btn);border:0;cursor:pointer;
+  box-shadow:0 6px 16px rgba(178,88,47,.28);width:100%}
+.pill-btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid var(--line)}
+.pill-btn.dark{background:#0B0B0C}
+.pill-btn.white{background:#fff;color:#0B0B0C;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.mosaic{position:absolute;inset:0;display:grid;grid-template-columns:1.35fr 1fr;grid-template-rows:1fr 1fr;gap:3px}
+.mosaic .big{grid-row:1/3;overflow:hidden}
+.mosaic img{width:100%;height:100%;object-fit:cover;display:block}
+.mosaic-scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(8,6,3,.94) 0%,rgba(8,6,3,.62) 30%,rgba(8,6,3,.08) 58%,rgba(8,6,3,.18) 100%)}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent-deep);
+  font-size:12.5px;font-weight:650;padding:5px 12px;border-radius:var(--r-chip)}
+.chip.faint{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+.eyebrow{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);font-weight:600}
+.letter{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
+  border-radius:7px;background:var(--surface-2);border:1px solid var(--line);font-family:ui-monospace,monospace;
+  font-size:12px;font-weight:700;color:var(--ink-soft);flex:none}
+.scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,8,4,.78) 0%,rgba(10,8,4,.32) 42%,rgba(10,8,4,0) 68%)}
+.bottombar{padding:14px 20px 20px;background:linear-gradient(to top,var(--surface) 60%,rgba(255,255,255,0));flex:none}
+
+/* room cards */
+.grid-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.room-card{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:3/4;background:var(--surface-2);cursor:pointer;box-shadow:var(--shadow-sm)}
+.room-card img{width:100%;height:100%;object-fit:cover;display:block}
+.room-card .info{position:absolute;left:12px;right:12px;bottom:10px;color:#fff}
+.room-card .info .lbl{font-weight:650;font-size:14px}
+.room-card .info .dt{font-size:11px;opacity:.82;margin-top:1px}
+.feed-card{border-radius:18px;overflow:hidden;background:var(--surface-2);cursor:pointer;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+.feed-card img{width:100%;aspect-ratio:16/11;object-fit:cover;display:block}
+.feed-card .info{padding:12px 4px 0}
+.feed-card .info .lbl{font-weight:600;font-size:15.5px;font-family:Fraunces,serif}
+.feed-card .info .dt{font-size:11.5px;color:var(--faint);margin-top:1px}
+.new-room-inline{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--line);border-radius:18px;
+  padding:18px;margin-bottom:20px;cursor:pointer;color:var(--ink-soft)}
+.new-room-inline .plus{width:38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--accent-deep);
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+
+/* style cards */
+.style-rail{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 8px}
+.style-card{flex:none;width:118px;cursor:pointer}
+.style-card .art{width:118px;height:150px;border-radius:16px;overflow:hidden;position:relative;box-shadow:var(--shadow-sm)}
+.style-card .art img{width:100%;height:100%;object-fit:cover}
+.style-card.sel .art{outline:2.5px solid var(--accent);outline-offset:2px}
+.style-card .check{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--accent);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:var(--shadow-sm)}
+.style-card .nm{font-size:12.5px;font-weight:600;margin-top:8px;text-align:center}
+
+/* progress ring */
+.ring{width:88px;height:88px;border-radius:50%;border:5px solid var(--accent-soft);border-top-color:var(--accent);
+  animation:spin 1.1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* compare */
+.cmp-img{border-radius:16px;overflow:hidden;position:relative;box-shadow:var(--shadow-sm)}
+.cmp-img img{width:100%;display:block;object-fit:cover}
+.cmp-tag{position:absolute;top:10px;left:10px;background:rgba(10,8,4,.62);color:#fff;font-size:10.5px;
+  letter-spacing:.08em;text-transform:uppercase;font-weight:650;padding:4px 10px;border-radius:var(--r-chip)}
+.fidelity{display:flex;align-items:center;gap:14px;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:16px;padding:14px 16px;margin-top:14px}
+.fidelity .num{font-family:Fraunces,serif;font-size:30px;font-weight:600;color:var(--accent-deep);line-height:1}
+.fidelity .lbl{font-size:12.5px;color:var(--ink-soft);line-height:1.4}
+
+.swatch{width:100%;height:56px;border-radius:12px;border:1px solid var(--line)}
+.type-row{display:flex;align-items:baseline;gap:16px;padding:10px 0;border-bottom:1px solid var(--line)}
+.type-row:last-child{border-bottom:0}
+.type-tag{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--faint);width:150px;flex:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>DesignMyRoom — visual redesign</h1>
+  <span class="tag" id="round">Round 1</span>
+  <div class="spacer"></div>
+  <span class="count" id="dcount">—</span>
+</header>
+
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main>
+
+<section id="s-intro" data-anchor="intro" data-label="Intro" data-group="System" data-title="Why this direction">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif">It's still your room.</h2></div>
+  <p class="sub">A visual pass over the eight screens that exist today — same flow, same data, same decisions
+  already locked in the PRD (stacked before/after, image-card styles, tap-to-remove). Nothing here changes what
+  the app does; it changes what it feels like to use. Click through the screens below in order, or jump with the
+  rail on the left. Where there's a genuine layout choice — the Home screen, mainly — both directions are built so
+  you can compare them side by side, not just take my word for one.</p>
+  <p class="note"><b>Grounded in:</b> DecorAI's App Store listing and marketing site, and a Houzz redesign case
+  study, both converge on the same pattern for this category — photography-forward layouts, muted/neutral chrome,
+  minimal borders, whitespace doing the separating instead of lines. That's the starting hypothesis here, tuned
+  warmer than DecorAI's blue-tinted neutral because this product's photography (real rooms, real light) is warmer
+  than a generic tech-app palette suggests. The six style-sample photos already in the app are the proof — they
+  look like a design magazine, and the chrome around them should get out of the way rather than compete.</p>
+</section>
+
+<section id="s-system" class="boxed" data-anchor="system" data-label="Design system" data-group="System" data-title="Palette &amp; type">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">·</span>The system</h2></div>
+  <p class="sub">One palette, one type pairing, one photography rule, reused on every screen so restyling later
+  stays cheap — change a token here, not five screens.</p>
+
+  <div data-anchor="system-palette" data-label="Palette">
+    <button class="cbtn">comment</button>
+    <div class="eyebrow" style="margin-bottom:10px">Palette — pick the accent</div>
+    <div class="d open" data-anchor="d-accent" data-label="Accent color decision">
+      <button class="cbtn">comment</button>
+      <div class="q">Which accent carries the app?</div>
+      <div class="why">Everything else in the system is fixed neutrals (paper, ink, warm grey line). This one color
+      does all the work — primary buttons, selection rings, the fidelity number, credits chip. Toggling it here
+      re-colors every mockup on this page live, including the room-detail and rendering states below.</div>
+      <div data-radio="accent">
+        <label class="opt sel"><input type="radio" name="accent" value="clay" checked>
+          <span><span class="oh">Clay / terracotta</span><span class="od">Warmest, closest to the wood and warm-light tones already in the style photos. Reads confidently "designer," not "tech."</span></span></label>
+        <label class="opt"><input type="radio" name="accent" value="moss">
+          <span><span class="oh">Moss / olive</span><span class="od">Quieter, more editorial-magazine. Pairs a little better with the cooler style photos (scandi, industrial) but is less distinctive against them.</span></span></label>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:640px;margin-top:16px">
+      <div><div class="swatch" style="background:var(--paper)"></div><div class="type-tag" style="width:auto;margin-top:6px">paper (bg)</div></div>
+      <div><div class="swatch" style="background:var(--ink)"></div><div class="type-tag" style="width:auto;margin-top:6px">ink (text)</div></div>
+      <div><div class="swatch" style="background:var(--accent)"></div><div class="type-tag" style="width:auto;margin-top:6px">accent</div></div>
+      <div><div class="swatch" style="background:var(--accent-soft)"></div><div class="type-tag" style="width:auto;margin-top:6px">accent soft</div></div>
+      <div><div class="swatch" style="background:var(--line)"></div><div class="type-tag" style="width:auto;margin-top:6px">hairline</div></div>
+    </div>
+  </div>
+
+  <div data-anchor="system-type" data-label="Typography" style="margin-top:28px">
+    <button class="cbtn">comment</button>
+    <div class="eyebrow" style="margin-bottom:10px">Type — three roles, not two</div>
+    <div class="type-row"><span class="type-tag">Display / headings</span><span class="serif" style="font-size:26px">Pick a style</span></div>
+    <div class="type-row"><span class="type-tag">UI text, body</span><span style="font-size:16px">One photo is all we need.</span></div>
+    <div class="type-row"><span class="type-tag">Meta, mono</span><span class="mono" style="font-size:13px">2 ROOMS LEFT · A · B · C</span></div>
+    <p class="note" style="max-width:640px">Fraunces for anything that reads as a moment (screen titles, the
+    fidelity score) — it's warm and a little editorial without tipping into decorative. Everything functional
+    stays on the system sans so it still feels native and fast. Monospace is reserved for small counted things
+    (credits, inventory letters) — a quiet nod to the old design pass, and it makes short numeric labels easy to
+    scan against prose.</p>
+  </div>
+</section>
+
+<!-- ============ 1. SIGN IN ============ -->
+<section id="s-signin" data-anchor="signin" data-label="Sign in" data-group="Flow" data-title="1 · Sign in">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">1</span>Sign in</h2></div>
+  <p class="sub">Round 2 rework — the single photo strip read flat and the wordmark undersold the positioning. This
+  version leans all the way into the photography and borrows the sharper headline from the old design pass, which
+  says what the app does better than a feature-y subtitle does.</p>
+
+  <div class="rack">
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="screen-body" style="position:relative">
+            <div data-anchor="signin-image" data-label="Full-bleed style mosaic (was: single photo strip)" style="position:absolute;inset:0">
+              <button class="cbtn">comment</button>
+              <div class="mosaic">
+                <div class="big"><img src="images/japandi.png" alt=""></div>
+                <div><img src="images/warm-minimal.png" alt=""></div>
+                <div><img src="images/industrial.png" alt=""></div>
+              </div>
+              <div class="mosaic-scrim"></div>
+            </div>
+            <div class="status" style="position:relative;color:#fff;z-index:2">
+              <span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div>
+            </div>
+            <div style="flex:1"></div>
+            <div data-anchor="signin-headline" data-label="Headline + wordmark (was: DesignMyRoom + generic subtitle)"
+                 style="position:relative;z-index:2;margin-top:auto;padding:0 26px 26px;color:#fff">
+              <button class="cbtn">comment</button>
+              <div class="mono" style="font-size:10.5px;letter-spacing:.14em;color:rgba(255,255,255,.72);margin-bottom:10px">DESIGNMYROOM</div>
+              <div class="serif" style="font-size:34px;font-weight:500;line-height:1.06;margin-bottom:10px">It&rsquo;s still<br>your room.</div>
+              <p style="font-size:14px;line-height:1.55;color:rgba(255,255,255,.82);margin:0 0 24px;max-width:280px">
+                Restyles your room. Never invents a different one.</p>
+
+              <div data-anchor="signin-cta" data-label="Sign in with Apple button">
+                <button class="cbtn">comment</button>
+                <button class="pill-btn white" onclick="goto('s-home')" style="font-size:15px">
+                  <span style="font-size:17px">&#63743;</span> Sign in with Apple
+                </button>
+              </div>
+              <div data-anchor="signin-trust" data-label="Trust footer">
+                <button class="cbtn">comment</button>
+                <p class="mono" style="font-size:10px;letter-spacing:.04em;color:rgba(255,255,255,.6);margin:14px 0 4px;text-align:center">ONE FREE ROOM · NO PASSWORD, EVER</p>
+              </div>
+            </div>
+          </div>
+          <div class="home-ind" style="background:rgba(255,255,255,.55)"></div>
+        </div>
+      </div>
+      <div class="phone-cap">A mosaic of three style photos instead of one — it implies range ("look what's
+      possible") rather than showing a single static room. Headline and CTA both sit inside the photo now, using
+      Apple's <span class="mono">.white</span> button style for contrast on dark.
+      <div class="rationale">Trade-off: the whole screen is now one image-heavy composition instead of a two-zone
+      layout — heavier to load, but this is the very first thing anyone sees, so it's worth spending the weight
+      here.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. HOME ============ -->
+<section id="s-home" data-anchor="home" data-label="Home" data-group="Flow" data-title="2 · Home (priority)">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">2</span>Home</h2></div>
+  <p class="sub">The screen you called out. Today it's a plain text list — label and date, no image — with
+  "New Room" as a bordered button. The room's own photography is the strongest thing this product has; it
+  currently isn't on the one screen someone opens every time. Two real directions below, built full-size so you
+  can compare them as you'd actually see them, not toggle between descriptions.</p>
+
+  <div class="risk"><b>Depends on a small contract change.</b> <code>GET /v1/rooms</code> today returns
+  <span class="mono">roomId, label, createdAt, hasPhoto, hasInventory</span> — no image URL. Both directions below
+  need a thumbnail (the room's photo, or its latest render's <span class="mono">after_url</span>) added to that
+  response to work for real. That's additive to an existing endpoint, not new business logic, so it should stay
+  cheap — flagging it because it's a real dependency, not a visual-only change.</div>
+
+  <div class="d open" data-anchor="d-home-layout" data-label="Home layout decision">
+    <button class="cbtn">comment</button>
+    <div class="q">Which direction for the room list?</div>
+    <div class="why">Both keep the same data and the same "New Room" entry point — they differ in density and in
+    where the primary action lives.</div>
+    <div data-radio="home-layout">
+      <label class="opt sel"><input type="radio" name="home-layout" value="grid" checked>
+        <span><span class="oh">Gallery grid</span><span class="od">Two columns, portrait cards, label/date overlaid on the photo. Scans fast, shows more rooms per screen. "New Room" pinned as a bottom bar.</span></span></label>
+      <label class="opt"><input type="radio" name="home-layout" value="feed">
+        <span><span class="oh">Editorial feed</span><span class="od">One column, larger photos, caption sits below the image on the paper background instead of overlaid. Feels more like a lookbook; fewer rooms visible at once. "New Room" is an inline card at the top of the list.</span></span></label>
+    </div>
+  </div>
+
+  <div class="rack">
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div></div>
+          <div class="screen-body" style="padding:6px 20px 0">
+            <div data-anchor="home-header" data-label="Home header row" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 14px">
+              <button class="cbtn">comment</button>
+              <div class="serif" style="font-size:24px;font-weight:500">My Latest Decors</div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="chip mono">2 LEFT</span>
+                <span style="font-size:12.5px;color:var(--faint);text-decoration:underline">Sign out</span>
+              </div>
+            </div>
+            <div data-anchor="home-grid" data-label="Gallery grid direction (A)" style="flex:1">
+              <button class="cbtn">comment</button>
+              <div class="grid-cards">
+                <div class="room-card" onclick="goto('s-roomdetail')"><img src="images/scandi.png" alt=""><div class="scrim"></div><div class="info"><div class="lbl">Living Room</div><div class="dt">Sep 8</div></div></div>
+                <div class="room-card" onclick="goto('s-roomdetail')"><img src="images/mid-century.png" alt=""><div class="scrim"></div><div class="info"><div class="lbl">Guest Room</div><div class="dt">Sep 3</div></div></div>
+                <div class="room-card" onclick="goto('s-roomdetail')"><img src="images/industrial.png" alt=""><div class="scrim"></div><div class="info"><div class="lbl">Studio Loft</div><div class="dt">Aug 27</div></div></div>
+                <div class="room-card" onclick="goto('s-roomdetail')"><img src="images/modern-coastal.png" alt=""><div class="scrim"></div><div class="info"><div class="lbl">Sun Room</div><div class="dt">Aug 19</div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="bottombar" data-anchor="home-cta-grid" data-label="New Room CTA (grid direction)">
+            <button class="cbtn">comment</button>
+            <button class="pill-btn" onclick="goto('s-addphoto')">+ Decorate a New Room</button>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="phone-cap"><b>A — Gallery grid.</b> Fastest scan, most rooms visible; label/date need the scrim to stay legible over busy photos.</div>
+    </div>
+
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div></div>
+          <div class="screen-body" style="padding:6px 20px 0">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px">
+              <div class="serif" style="font-size:24px;font-weight:500">My Latest Decors</div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="chip mono">2 LEFT</span>
+                <span style="font-size:12.5px;color:var(--faint);text-decoration:underline">Sign out</span>
+              </div>
+            </div>
+            <div data-anchor="home-feed" data-label="Editorial feed direction (B)" style="flex:1">
+              <button class="cbtn">comment</button>
+              <div class="new-room-inline" data-anchor="home-cta-feed" data-label="New Room entry (feed direction)" onclick="goto('s-addphoto')">
+                <button class="cbtn">comment</button>
+                <div class="plus">+</div>
+                <div><div style="font-weight:600;font-size:14.5px">Decorate a new room</div><div style="font-size:12px;color:var(--faint)">One free room, then 3 credits each</div></div>
+              </div>
+              <div class="feed-card" onclick="goto('s-roomdetail')"><img src="images/japandi.png" alt=""><div class="info"><div class="lbl">Living Room</div><div class="dt">Sep 8, 2026</div></div></div>
+              <div class="feed-card" onclick="goto('s-roomdetail')"><img src="images/warm-minimal.png" alt=""><div class="info"><div class="lbl">Guest Room</div><div class="dt">Sep 3, 2026</div></div></div>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="phone-cap"><b>B — Editorial feed.</b> More generous per room, closer to a lookbook; the new-room entry stays in the scroll instead of pinned chrome.</div>
+    </div>
+  </div>
+
+  <details class="ref" style="margin-top:24px">
+    <summary>Empty state (first-time user, no rooms yet)</summary>
+    <div style="max-width:346px;margin-top:14px;text-align:center;padding:36px 20px;background:var(--surface);border:1px dashed var(--line);border-radius:18px">
+      <div style="font-size:32px;margin-bottom:10px">&#127968;</div>
+      <div style="font-weight:600;margin-bottom:4px">No rooms yet</div>
+      <div style="font-size:13px;color:var(--muted)">Tap "Decorate a New Room" to restyle your first one — it's free.</div>
+    </div>
+  </details>
+</section>
+
+<!-- ============ 3. ADD PHOTO ============ -->
+<section id="s-addphoto" data-anchor="addphoto" data-label="Add a photo" data-group="Flow" data-title="3 · Add a photo">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">3</span>Add a photo</h2></div>
+  <p class="sub">One photo, asked once, silently (U1) — no "add another" nagging. Same copy as today; the icon +
+  spacer layout becomes an actual drop-zone card so the tap target reads as inviting rather than a system icon
+  floating in space.</p>
+  <div class="rack">
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div></div>
+          <div class="screen-body" style="padding:22px 22px 0;text-align:center">
+            <div class="serif" style="font-size:22px;font-weight:500;margin-bottom:8px">Add a photo of your room</div>
+            <p style="color:var(--ink-soft);font-size:14px;line-height:1.55;margin:0 0 22px">One photo is all we need. Frame the whole room — anything we can't see, we can't protect.</p>
+            <div data-anchor="addphoto-dropzone" data-label="Drop-zone card" style="flex:1;display:flex;align-items:center;justify-content:center">
+              <button class="cbtn">comment</button>
+              <div style="width:100%;aspect-ratio:1/1;border:1.5px dashed var(--line);border-radius:22px;
+                display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--surface-2)">
+                <div style="width:56px;height:56px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent-deep)">&#128247;</div>
+                <div style="font-size:13px;color:var(--muted)">Tap to take or choose a photo</div>
+              </div>
+            </div>
+          </div>
+          <div class="bottombar">
+            <button class="pill-btn" onclick="goto('s-confirm')">Add a photo</button>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="phone-cap">The dashed drop-zone is now the primary target itself, not a separate button beneath a small icon.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. CONFIRM ============ -->
+<section id="s-confirm" data-anchor="confirm" data-label="What's in this room" data-group="Flow" data-title="4 · What's in this room">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">4</span>What's in this room</h2></div>
+  <p class="sub">The screen no competitor has (R2). The inventory has no coordinates today, so this stays a labelled
+  list over the photo rather than drawn outlines — same information architecture as the current build, restyled:
+  architecture rows read as visibly locked, object rows are the only interactive ones.</p>
+  <div class="rack">
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div></div>
+          <div class="screen-body" style="padding:14px 20px 0">
+            <div style="border-radius:16px;overflow:hidden;height:170px;flex:none;filter:saturate(.75) brightness(.94)">
+              <img src="images/mid-century.png" style="width:100%;height:100%;object-fit:cover" alt="Uploaded room photo (placeholder)">
+            </div>
+            <div class="serif" style="font-size:20px;font-weight:500;margin:16px 0 4px">What's in this room</div>
+            <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 14px;line-height:1.5">The architecture stays exactly where it is. Tap anything else you'd like removed — everything else is kept.</p>
+
+            <div data-anchor="confirm-architecture" data-label="Architecture — locked">
+              <button class="cbtn">comment</button>
+              <div class="eyebrow" style="margin-bottom:6px">Architecture — locked</div>
+              <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:14px">
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border-radius:10px;opacity:.85">
+                  <span class="letter">A</span><span style="flex:1;font-size:13.5px">Fireplace &amp; mantel</span><span style="color:var(--faint)">&#128274;</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border-radius:10px;opacity:.85">
+                  <span class="letter">B</span><span style="flex:1;font-size:13.5px">Wall alcove</span><span style="color:var(--faint)">&#128274;</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border-radius:10px;opacity:.85">
+                  <span class="letter">C</span><span style="flex:1;font-size:13.5px">Bay window</span><span style="color:var(--faint)">&#128274;</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-anchor="confirm-objects" data-label="Objects — removable">
+              <button class="cbtn">comment</button>
+              <div class="eyebrow" style="margin-bottom:6px">Objects</div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px">
+                  <span class="letter">D</span><span style="flex:1;font-size:13.5px">Floor lamp</span>
+                  <span class="chip faint" style="font-size:11px;padding:4px 10px">Remove</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px">
+                  <span class="letter">E</span><span style="flex:1;font-size:13.5px;text-decoration:line-through;color:var(--faint)">Side table</span>
+                  <span class="chip" style="font-size:11px;padding:4px 10px">Removed</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px">
+                  <span class="letter">F</span><span style="flex:1;font-size:13.5px">Bookshelf</span>
+                  <span class="chip faint" style="font-size:11px;padding:4px 10px">Remove</span>
+                </div>
+              </div>
+            </div>
+            <div style="height:14px"></div>
+          </div>
+          <div class="bottombar">
+            <button class="pill-btn" onclick="goto('s-style')">Continue</button>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="phone-cap">Locked rows sit on a slightly recessed surface with a lock glyph; removable rows stay on the plain background so the two states read apart at a glance, not just by icon.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. STYLE ============ -->
+<section id="s-style" data-anchor="style" data-label="Pick a style" data-group="Flow" data-title="5 · Pick a style">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">5</span>Pick a style</h2></div>
+  <p class="sub">The six sample photos are the best asset in the app; they were undersized as 130×130 squares.
+  Bigger, portrait-oriented cards let them read as actual interiors instead of icons.</p>
+  <div class="rack">
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div></div>
+          <div class="screen-body" style="padding:16px 0 0">
+            <div class="serif" style="font-size:22px;font-weight:500;padding:0 20px 12px">Pick a style</div>
+            <div class="style-rail" data-anchor="style-cards" data-label="Style card rail" style="padding-left:20px;padding-right:8px">
+              <button class="cbtn">comment</button>
+              <div class="style-card sel"><div class="art"><img src="images/warm-minimal.png" alt=""><div class="check">&#10003;</div></div><div class="nm">Warm Minimal</div></div>
+              <div class="style-card"><div class="art"><img src="images/scandi.png" alt=""></div><div class="nm">Scandi</div></div>
+              <div class="style-card"><div class="art"><img src="images/mid-century.png" alt=""></div><div class="nm">Mid-Century</div></div>
+              <div class="style-card"><div class="art"><img src="images/japandi.png" alt=""></div><div class="nm">Japandi</div></div>
+              <div class="style-card"><div class="art"><img src="images/modern-coastal.png" alt=""></div><div class="nm">Modern Coastal</div></div>
+              <div class="style-card"><div class="art"><img src="images/industrial.png" alt=""></div><div class="nm">Industrial</div></div>
+            </div>
+            <div data-anchor="style-prompt" data-label="Optional prompt field" style="padding:18px 20px 0">
+              <button class="cbtn">comment</button>
+              <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">Anything else? (optional)</div>
+              <div style="border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:13.5px;color:var(--faint);background:var(--surface-2)">e.g. "more natural light"</div>
+              <div style="font-size:11px;color:var(--faint);margin-top:6px">0/280 — can't override what's protected</div>
+            </div>
+          </div>
+          <div class="bottombar">
+            <button class="pill-btn" onclick="goto('s-rendering')">Restyle this room</button>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="phone-cap">Selection is a filled accent check-badge over the photo, not a thin ring around it — reads clearly at thumb distance while scrolling the rail.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. RENDERING ============ -->
+<section id="s-rendering" data-anchor="rendering" data-label="Rendering" data-group="Flow" data-title="6 · Rendering">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">6</span>Rendering</h2></div>
+  <p class="sub">Same 2-second-poll state machine underneath; a warm ring instead of the system spinner keeps the
+  wait on-brand for the ~60 seconds someone is looking at it (TR1).</p>
+  <div class="rack">
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div></div>
+          <div class="screen-body" data-anchor="rendering-progress" data-label="Rendering progress state" style="align-items:center;justify-content:center;gap:18px;text-align:center;padding:0 40px">
+            <button class="cbtn">comment</button>
+            <div class="ring"></div>
+            <div class="serif" style="font-size:19px;font-weight:500">Restyling your room…</div>
+            <div style="font-size:13.5px;color:var(--muted)">This usually takes under a minute.</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="phone-cap">One shared component — the fill color and status copy already come from the state machine (queued / running).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. COMPARE ============ -->
+<section id="s-compare" data-anchor="compare" data-label="Compare" data-group="Flow" data-title="7 · Compare">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">7</span>Compare</h2></div>
+  <p class="sub">Where the promise gets proven (R2). Stacked, never a slider — output isn't pixel-aligned with
+  input, so a wipe slider would imply a false relationship (U3, already decided). The fidelity score gets a
+  confident, numeral-forward treatment since it's the same number the dashboard watches at the 5th percentile.</p>
+  <div class="rack">
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div></div>
+          <div class="screen-body" style="padding:16px 20px 0">
+            <div data-anchor="compare-images" data-label="Before/after images" style="display:flex;flex-direction:column;gap:12px">
+              <button class="cbtn">comment</button>
+              <div class="cmp-img"><img src="images/mid-century.png" style="filter:saturate(.7) brightness(.9)" alt="Before"><span class="cmp-tag">Before</span></div>
+              <div class="cmp-img"><img src="images/japandi.png" alt="After"><span class="cmp-tag">After</span></div>
+            </div>
+            <div class="fidelity" data-anchor="compare-fidelity" data-label="Fidelity score">
+              <button class="cbtn">comment</button>
+              <div class="num">96%</div>
+              <div class="lbl">Preservation — how much of your room's<br>structure survived the restyle.</div>
+            </div>
+            <div style="font-size:12.5px;color:var(--faint);margin-top:10px">2 rooms left</div>
+          </div>
+          <div class="bottombar"><button class="pill-btn" onclick="goto('s-home')">Done</button></div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="phone-cap">Fidelity gets a numeral, not a percentage buried in a row — it's the number this whole product exists to earn.</div>
+    </div>
+
+    <div class="phone-col">
+      <div style="width:346px;display:flex;flex-direction:column;gap:16px">
+        <div class="eyebrow">Edge states — same screen, different data</div>
+        <div style="background:var(--warn-soft);border:1px solid #E3C79A;border-radius:16px;padding:16px 18px">
+          <div style="font-weight:650;font-size:13.5px;color:var(--warn);margin-bottom:4px">&#9888; Low confidence</div>
+          <div style="font-size:13px;color:var(--ink-soft);line-height:1.5">We weren't fully sure about this room's structure, so treat this result with a little more scrutiny than usual (C3).</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center">
+          <div style="font-size:26px;margin-bottom:6px">&#9888;&#65039;</div>
+          <div style="font-weight:600;font-size:14.5px;margin-bottom:4px">That didn't work.</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Your credit is back.</div>
+          <button class="pill-btn ghost" style="width:auto;padding:9px 20px;font-size:13px">Try again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. ROOM DETAIL ============ -->
+<section id="s-roomdetail" data-anchor="roomdetail" data-label="Room detail" data-group="Flow" data-title="8 · Room detail (history)">
+  <button class="cbtn">comment</button>
+  <div class="shead"><h2 class="serif"><span class="num">8</span>Room detail</h2></div>
+  <p class="sub">Read-only history for a room — every past render, same before/after + fidelity treatment as
+  Compare so the two never visually drift apart (they already share one Swift view; this keeps that true visually
+  too).</p>
+  <div class="rack">
+    <div class="phone-col">
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span class="time">9:41</span><div class="icons">SIGNAL WIFI BATT</div></div>
+          <div class="screen-body" style="padding:16px 20px 0">
+            <div class="serif" style="font-size:22px;font-weight:500;margin-bottom:14px">Living Room</div>
+            <div data-anchor="roomdetail-list" data-label="Render history list">
+              <button class="cbtn">comment</button>
+              <div style="border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:18px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+                  <span style="font-weight:600;font-size:14px">Japandi</span><span style="font-size:11.5px;color:var(--faint)">Sep 8</span>
+                </div>
+                <div class="cmp-img" style="margin-bottom:6px"><img src="images/japandi.png" alt=""></div>
+                <div style="font-size:12px;color:var(--muted)">96% preserved</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+                  <span style="font-weight:600;font-size:14px">Warm Minimal</span><span style="font-size:11.5px;color:var(--faint)">Sep 6</span>
+                </div>
+                <div class="cmp-img" style="margin-bottom:6px"><img src="images/warm-minimal.png" alt=""></div>
+                <div style="font-size:12px;color:var(--muted)">91% preserved</div>
+              </div>
+            </div>
+            <div style="height:20px"></div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="phone-cap">No "restyle again" here by product decision — a new render always starts fresh from Home's "Decorate a New Room."</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<aside class="right">
+  <h2>Decisions</h2>
+  <p class="sub" style="margin:2px 0 0" id="dprog">—</p>
+  <div class="bar"><i id="dbar" style="width:0"></i></div>
+  <div class="dlist" id="dlist"></div>
+  <h2 style="margin-top:16px">Feedback queue</h2>
+  <p class="sub" style="margin:2px 0 0">Nothing is sent until you confirm.</p>
+  <div id="queue"></div>
+  <button class="primary" id="send">Confirm &amp; send</button>
+</aside>
+</div>
+
+<div id="pop">
+  <div class="pa" id="popanchor"></div>
+  <textarea id="poptext" placeholder="What is wrong, missing, or should change here?"></textarea>
+  <div class="row"><button id="popcancel">Cancel</button><button id="popadd" class="add">Add to queue</button></div>
+</div>
+<div id="toast"></div>
+
+<script>
+function goto(id){const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});}
+
+const S={decisions:{},comments:[],batches:[]}; let ROUND=1;
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),1700)};
+const post=(u,b)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify(b)}).then(r=>r.json());
+const D=k=>S.decisions[k];
+function groups(){return [...document.querySelectorAll('[data-radio],[data-check]')]}
+
+function buildToc(){
+  let last='';
+  $('#toc').innerHTML=[...document.querySelectorAll('main section')].map(s=>{
+    let out=''; if(s.dataset.group!==last){out+=`<div class="grp">${s.dataset.group}</div>`;last=s.dataset.group}
+    return out+`<a href="#${s.id}" data-id="${s.id}">${s.dataset.title}</a>`}).join('');
+  const links=[...document.querySelectorAll('#toc a')];
+  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting)
+    links.forEach(l=>l.classList.toggle('on',l.dataset.id===e.target.id)) }),
+    {rootMargin:'-84px 0px -70% 0px'});
+  document.querySelectorAll('main section').forEach(s=>io.observe(s));
+}
+function renderDecisions(){
+  const gs=groups(); let done=0;
+  $('#dlist').innerHTML=gs.map(g=>{
+    const id=g.dataset.radio||g.dataset.check, blk=g.closest('.d');
+    const ch=[...g.querySelectorAll('input:checked')]; if(ch.length) done++;
+    const val=ch.map(i=>i.closest('label').querySelector('.oh').textContent).join(', ');
+    return `<div class="dr ${ch.length?'done':'todo'}" data-goto="${blk.dataset.anchor}">
+      <span class="dot"></span><span class="dn">${id.toUpperCase()}</span>
+      <span class="dv">${esc(val||'not decided')}</span></div>`}).join('');
+  $('#dprog').textContent=`${done} of ${gs.length} decided`;
+  $('#dbar').style.width=(gs.length?done/gs.length*100:0)+'%';
+  $('#dcount').textContent=`${done}/${gs.length} decided · ${S.comments.filter(c=>c.status==='queued').length} queued`;
+  document.querySelectorAll('.dr').forEach(r=>r.onclick=()=>{
+    const el=document.querySelector(`[data-anchor="${r.dataset.goto}"]`); if(!el)return;
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash')});
+}
+function renderQueue(){
+  const q=S.comments.filter(c=>c.status==='queued');
+  $('#send').textContent=`Confirm & send round ${ROUND}`+(q.length?` — ${q.length} comment${q.length===1?'':'s'}`:'');
+  $('#queue').innerHTML=q.length?q.map(c=>
+    `<div class="qi"><button class="qx" data-id="${c.id}">×</button>
+     <div class="qa">${esc(c.anchorLabel)}</div>${esc(c.text)}</div>`).join('')
+    :'<div class="empty">No comments.<br>Hover any block and hit <em>comment</em>.</div>';
+  document.querySelectorAll('.qx').forEach(b=>b.onclick=async()=>{
+    const r=await post('/api/comment/delete',{id:b.dataset.id});
+    S.comments=r.comments; renderQueue(); markAnchors(); renderDecisions()});
+}
+function markAnchors(){
+  document.querySelectorAll('[data-anchor]').forEach(el=>{
+    const has=S.comments.some(c=>c.anchor===el.dataset.anchor&&c.status==='queued');
+    const b=el.querySelector(':scope > .cbtn');
+    if(b){b.classList.toggle('has',has); b.textContent=has?'commented':'comment'}});
+}
+let target=null;
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.cbtn');
+  if(!btn){ if(!e.target.closest('#pop')) $('#pop').style.display='none'; return }
+  e.stopPropagation();
+  const el=btn.closest('[data-anchor]');
+  target={anchor:el.dataset.anchor,label:el.dataset.label,
+          text:(el.querySelector('h2,.q')||{}).textContent||''};
+  const p=$('#pop'),r=btn.getBoundingClientRect();
+  $('#popanchor').textContent=target.label; $('#poptext').value='';
+  p.style.display='block'; p.style.top=(window.scrollY+r.bottom+8)+'px';
+  p.style.left=Math.max(12,Math.min(r.right-328+window.scrollX,document.body.clientWidth-340))+'px';
+  $('#poptext').focus();
+});
+$('#popcancel').onclick=()=>$('#pop').style.display='none';
+$('#popadd').onclick=async()=>{
+  const t=$('#poptext').value.trim(); if(!t||!target)return;
+  const r=await post('/api/comment',{id:'c'+Date.now(),anchor:target.anchor,
+    anchorLabel:target.label,anchorText:target.text,text:t});
+  S.comments=r.comments; $('#pop').style.display='none';
+  renderQueue(); markAnchors(); renderDecisions(); toast('Queued — not sent yet')};
+$('#send').onclick=async()=>{
+  const r=await post('/api/send',{});
+  S.comments.forEach(c=>{if(c.status==='queued')c.status='sent'});
+  ROUND+=1; $('#round').textContent=`Round ${ROUND}`;
+  renderQueue(); markAnchors(); renderDecisions();
+  toast(`Round ${ROUND-1} sent — ${r.sent} comment${r.sent===1?'':'s'} + decisions`)};
+document.addEventListener('change',async e=>{
+  const i=e.target;
+  if(i.type==='radio'){S.decisions[i.name]=i.value; await post('/api/decision',{id:i.name,value:i.value})}
+  else if(i.type==='checkbox'){
+    const v=[...document.querySelectorAll(`input[name="${i.name}"]:checked`)].map(x=>x.value);
+    S.decisions[i.name]=v; await post('/api/decision',{id:i.name,value:v})}
+  else return;
+  document.querySelectorAll('label.opt').forEach(l=>l.classList.toggle('sel',l.querySelector('input').checked));
+  if(i.name==='accent') document.body.setAttribute('data-accent', i.value);
+  renderDecisions(); toast('Saved')});
+
+fetch('/api/state').then(r=>r.json()).then(async st=>{
+  S.decisions=st.decisions||{}; S.comments=st.comments||[]; S.batches=st.batches||[];
+  ROUND=S.batches.length+1; $('#round').textContent=`Round ${ROUND}`;
+  for(const [k,v] of Object.entries(S.decisions))
+    (Array.isArray(v)?v:[v]).forEach(val=>{
+      const i=document.querySelector(`input[name="${k}"][value="${val}"]`); if(i)i.checked=true});
+  document.querySelectorAll('label.opt').forEach(l=>l.classList.toggle('sel',l.querySelector('input').checked));
+  if(S.decisions.accent) document.body.setAttribute('data-accent', S.decisions.accent);
+  post('/api/groups',{groups:groups().map(g=>g.dataset.radio||g.dataset.check)});
+  buildToc(); renderQueue(); markAnchors(); renderDecisions();
+});
+</script>
+</body>
+</html>
