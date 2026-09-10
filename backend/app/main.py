@@ -12,8 +12,9 @@ from typing import List
 from fastapi import FastAPI, File, Path, Response, UploadFile, status
 from fastapi.responses import JSONResponse
 
-from . import health as health_mod
-from . import runtime
+from . import context, errors, health as health_mod, ratelimit, runtime
+from .auth import service as auth_service
+from .middleware import RequestMiddleware
 from .schemas import (
     AppleSignIn, Error, Health, Inventory, Me, Photo, RefreshRequest,
     Render, RenderCreate, Room, RoomCreate, Tokens,
@@ -46,6 +47,15 @@ app = FastAPI(
 E = {400: {"model": Error}, 401: {"model": Error}, 402: {"model": Error},
      413: {"model": Error}, 429: {"model": Error}, 500: {"model": Error}}
 
+# Cross-cutting wiring (not part of the contract): the ApiError -> Error handler,
+# and one middleware that stamps a request id and enforces auth on /v1/* (except
+# /v1/auth/*). See ORCH-QUESTIONS Q3.
+errors.install(app)
+app.add_middleware(
+    RequestMiddleware,
+    secret_provider=lambda: runtime.get().settings.jwt_secret,
+)
+
 
 def _todo():
     raise NotImplementedError("contract only — the backend agent implements this")
@@ -57,19 +67,45 @@ def _todo():
 def auth_apple(body: AppleSignIn) -> Tokens:
     """Verifies the token against Apple's keys. Creates the user and grants one free
     room on first sight. Rate limit 10/hr per IP."""
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"auth_apple:{ctx.client_ip}", 10, 3600)
+    with rt.pool.connection() as conn:
+        issued = auth_service.authenticate(
+            conn,
+            body.identity_token,
+            rt.apple_verifier,
+            secret=rt.settings.jwt_secret,
+            access_ttl_s=rt.settings.access_ttl_s,
+            refresh_ttl_s=rt.settings.refresh_ttl_s,
+        )
+    return issued.tokens
 
 
 @app.post("/v1/auth/refresh", response_model=Tokens, responses=E, tags=["auth"],
           summary="Trade a refresh token for a new access token")
 def auth_refresh(body: RefreshRequest) -> Tokens:
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"auth_refresh:{ctx.client_ip}", 60, 3600)
+    with rt.pool.connection() as conn:
+        return auth_service.refresh(
+            conn,
+            body.refresh_token,
+            secret=rt.settings.jwt_secret,
+            access_ttl_s=rt.settings.access_ttl_s,
+            refresh_ttl_s=rt.settings.refresh_ttl_s,
+        )
 
 
 @app.get("/v1/me", response_model=Me, responses=E, tags=["auth"],
          summary="Current user and credits remaining")
 def me() -> Me:
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"me:{ctx.user_id}", 60, 60)
+    with rt.pool.connection() as conn:
+        return auth_service.current_user(conn, ctx.user_id)
 
 
 # ── rooms ─────────────────────────────────────────────────────────────────────

@@ -25,6 +25,11 @@ class Settings:
     openai_api_key: str = ""
     apple_client_id: str = ""
 
+    # signed read URLs for photos / render images (ORCH-QUESTIONS Q1)
+    public_base_url: str = "http://localhost:8000"
+    file_url_secret: str = ""  # falls back to jwt_secret in load()
+    file_url_ttl_s: int = 24 * 60 * 60
+
     # limits
     max_photo_bytes: int = 12 * 1024 * 1024
 
@@ -34,13 +39,19 @@ class Settings:
 
 
 def load() -> Settings:
+    jwt_secret = os.environ.get("JWT_SECRET", "dev-insecure")
+    app_env = os.environ.get("APP_ENV", "dev")
+    if app_env == "production" and len(jwt_secret) < 32:
+        raise RuntimeError("JWT_SECRET must be at least 32 bytes in production")
     return Settings(
         database_url=os.environ.get("DATABASE_URL", "postgresql://app1:app1@db:5432/app1"),
         photo_dir=os.environ.get("PHOTO_DIR", "/data/photos"),
-        jwt_secret=os.environ.get("JWT_SECRET", "dev-insecure"),
-        app_env=os.environ.get("APP_ENV", "dev"),
+        jwt_secret=jwt_secret,
+        app_env=app_env,
         openai_api_key=os.environ.get("OPENAI_API_KEY", ""),
         apple_client_id=os.environ.get("APPLE_CLIENT_ID", ""),
+        public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000"),
+        file_url_secret=os.environ.get("FILE_URL_SECRET", "") or jwt_secret,
         queue_depth_degraded=int(os.environ.get("QUEUE_DEPTH_DEGRADED", "100")),
         worker_heartbeat_timeout_s=int(os.environ.get("WORKER_HEARTBEAT_TIMEOUT_S", "60")),
     )

@@ -11,6 +11,10 @@ addopts = "-m 'not integration' -q"
 markers = [
     "integration: needs a real Postgres (set DATABASE_URL); run in CI and locally via compose",
 ]
+filterwarnings = [
+    # toy signing secrets in tests trip PyJWT's length check; production enforces >=32 in settings.load()
+    "ignore:The HMAC key",
+]
 
 [tool.ruff]
 target-version = "py312"
