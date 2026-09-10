@@ -26,23 +26,7 @@ struct CompareView: View {
     @ViewBuilder
     private func doneContent(_ render: Render) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            stackedImages(before: render.beforeUrl, after: render.afterUrl)
-
-            if let rate = render.preservationRate {
-                HStack {
-                    Text("Preservation")
-                        .font(.subheadline.weight(.medium))
-                    Spacer()
-                    Text("\(Int((rate * 100).rounded()))%")
-                        .font(.subheadline.weight(.semibold))
-                }
-            }
-
-            if let missing = render.missingItems, !missing.isEmpty {
-                Text("Not found in the result: \(missing.joined(separator: ", "))")
-                    .font(.footnote)
-                    .foregroundStyle(.orange)
-            }
+            RenderSummaryView(render: render)
 
             if let creditsLeft = render.creditsLeft {
                 Text("\(creditsLeft) room\(creditsLeft == 1 ? "" : "s") left")
@@ -50,21 +34,15 @@ struct CompareView: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 12) {
-                Button {
-                    flow.returnToStylePickerForRestyle()
-                } label: {
-                    Text("Restyle").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button {
-                    flow.startOver()
-                } label: {
-                    Text("New room").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+            // Per the product decision: an existing room becomes read-only history
+            // once you leave it — a new render always starts a brand-new room via
+            // Home's "New Room", not a "restyle this room again" from here.
+            Button {
+                flow.finish()
+            } label: {
+                Text("Done").frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .padding(.top, 8)
         }
@@ -118,37 +96,5 @@ struct CompareView: View {
             .controlSize(.large)
         }
         .padding(40)
-    }
-
-    @ViewBuilder
-    private func stackedImages(before: String?, after: String?) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            labelledImage(title: "Before", urlString: before)
-            labelledImage(title: "After", urlString: after)
-        }
-    }
-
-    @ViewBuilder
-    private func labelledImage(title: String, urlString: String?) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title.uppercased())
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-            if let urlString, let url = URL(string: urlString) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().aspectRatio(contentMode: .fit)
-                    case .failure:
-                        Color.secondary.opacity(0.15)
-                    default:
-                        ProgressView()
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: 180)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-        }
     }
 }

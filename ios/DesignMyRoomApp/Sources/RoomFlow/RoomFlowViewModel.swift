@@ -37,11 +37,17 @@ final class RoomFlowViewModel {
     private let apiClient: APIClient
     private let authManager: AuthManager
     private let crashReporter: CrashReporter
+    /// Called when the user is done with this room — a finished render's "Done", or
+    /// backing out early — so the presenting screen can dismiss this flow and return
+    /// to Home. One room per `RoomFlowViewModel` instance; there's no in-place
+    /// "start another room" anymore (see `finish()`).
+    private let onFinished: () -> Void
 
-    init(apiClient: APIClient, authManager: AuthManager, crashReporter: CrashReporter) {
+    init(apiClient: APIClient, authManager: AuthManager, crashReporter: CrashReporter, onFinished: @escaping () -> Void) {
         self.apiClient = apiClient
         self.authManager = authManager
         self.crashReporter = crashReporter
+        self.onFinished = onFinished
     }
 
     // MARK: - Add a photo
@@ -151,21 +157,15 @@ final class RoomFlowViewModel {
         }
     }
 
-    // MARK: - Starting over
+    // MARK: - Finishing
 
-    /// Compare screen's implicit "done" path, or recovering from an edge state: a
-    /// fresh room for a fresh pass through the flow.
-    func startOver() {
-        step = .addPhoto
-        room = nil
-        photo = nil
-        inventory = nil
-        removeIds = []
-        selectedStyleId = nil
-        prompt = ""
-        renderState = .idle
-        renderMachine = nil
-        bannerMessage = nil
+    /// The Compare screen's "Done", or a "Cancel" partway through — either way,
+    /// this room's flow is over. Product decision: a finished (or abandoned) room
+    /// becomes read-only history; there is no in-place "restyle this room again" or
+    /// "start another room without leaving" for v1 — both go through Home.
+    func finish() {
+        cancelRenderPolling()
+        onFinished()
     }
 
     // MARK: - Errors

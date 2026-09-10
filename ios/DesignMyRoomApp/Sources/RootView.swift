@@ -1,10 +1,10 @@
 import DesignMyRoomCore
 import SwiftUI
 
-/// Top-level switch: sign-in state decides whether we're showing `SignInView` or the
-/// room flow. A fresh `RoomFlowViewModel` per signed-in session — restarting the flow
-/// on sign-out and back in is simplest, and matches "one room per pass" already being
-/// the flow's own model.
+/// Top-level switch: sign-in state decides whether we're showing `SignInView` or
+/// Home. Per the product decision, signing in lands on the room history/Home
+/// screen, not straight into a fresh room — a new room is now always a deliberate
+/// "New Room" tap, presented modally over Home.
 struct RootView: View {
     let environment: AppEnvironment
     @State private var authManager: AuthManager
@@ -26,7 +26,7 @@ struct RootView: View {
             case .signedOut, .signingIn, .signInFailed:
                 SignInView(authManager: authManager)
             case .signedIn(let me):
-                RoomFlowContainerView(environment: environment, authManager: authManager, me: me)
+                HomeContainerView(environment: environment, authManager: authManager, me: me)
             }
         }
         .task {
@@ -35,53 +35,108 @@ struct RootView: View {
     }
 }
 
-/// Owns the `RoomFlowViewModel` for one signed-in session and routes between its
-/// steps — a plain `switch` on `flow.step`, not a `NavigationStack`, since the flow
-/// is strictly linear and never wants back-swipe to skip a step (PRD §8: one photo,
-/// asked once; no going back to re-add).
-private struct RoomFlowContainerView: View {
+/// Owns the `HomeViewModel` for one signed-in session, and the modal presentation of
+/// a brand-new `RoomFlowViewModel` per "New Room" tap — a fresh flow instance every
+/// time, never reused, since a finished (or abandoned) room's flow is simply thrown
+/// away once `finish()` dismisses it (see `RoomFlowViewModel.finish()`).
+private struct HomeContainerView: View {
     let environment: AppEnvironment
     let authManager: AuthManager
     let me: Me
-    @State private var flow: RoomFlowViewModel
+    @State private var homeViewModel: HomeViewModel
+    @State private var showingNewRoomFlow = false
 
     init(environment: AppEnvironment, authManager: AuthManager, me: Me) {
         self.environment = environment
         self.authManager = authManager
         self.me = me
-        _flow = State(initialValue: RoomFlowViewModel(
-            apiClient: environment.apiClient,
-            authManager: authManager,
+        _homeViewModel = State(initialValue: HomeViewModel(
+            roomsProvider: environment.apiClient,
             crashReporter: environment.crashReporter
         ))
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("\(me.creditsLeft) room\(me.creditsLeft == 1 ? "" : "s") left")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Sign out") {
-                    Task { await authManager.signOut() }
-                }
-                .font(.footnote)
+        NavigationStack {
+            HomeView(viewModel: homeViewModel, creditsLeft: me.creditsLeft) {
+                showingNewRoomFlow = true
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .navigationDestination(for: Room.self) { room in
+                RoomDetailView(viewModel: RoomDetailViewModel(
+                    room: room,
+                    rendersProvider: environment.apiClient,
+                    crashReporter: environment.crashReporter
+                ))
+            }
+            .toolbar {
+                // Credits moved into the list header (below) rather than a toolbar
+                // item — a plain Text in a toolbar item picks up the system's pill
+                // chrome at a fixed width and truncates ("Sign out", an actual
+                // button, is fine with that same chrome).
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Sign out") {
+                        Task { await authManager.signOut() }
+                    }
+                    .font(.footnote)
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showingNewRoomFlow) {
+            NewRoomFlowView(environment: environment, authManager: authManager) {
+                showingNewRoomFlow = false
+                Task { await homeViewModel.loadRooms() }
+            }
+        }
+    }
+}
 
-            switch flow.step {
-            case .addPhoto:
-                AddPhotoView(flow: flow)
-            case .confirm:
-                ConfirmView(flow: flow)
-            case .style:
-                StylePickerView(flow: flow)
-            case .rendering:
-                RenderingView(flow: flow)
-            case .compare:
-                CompareView(flow: flow)
+/// The existing add-photo → confirm → style → render → compare flow (screens 2-6),
+/// unchanged, just now presented modally from Home instead of being the app's only
+/// screen. `onFinished` fires on the Compare screen's "Done" or an early "Cancel" —
+/// either way this whole flow (and its `RoomFlowViewModel`) is discarded.
+private struct NewRoomFlowView: View {
+    let environment: AppEnvironment
+    let authManager: AuthManager
+    let onFinished: () -> Void
+    @State private var flow: RoomFlowViewModel
+
+    init(environment: AppEnvironment, authManager: AuthManager, onFinished: @escaping () -> Void) {
+        self.environment = environment
+        self.authManager = authManager
+        self.onFinished = onFinished
+        _flow = State(initialValue: RoomFlowViewModel(
+            apiClient: environment.apiClient,
+            authManager: authManager,
+            crashReporter: environment.crashReporter,
+            onFinished: onFinished
+        ))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                switch flow.step {
+                case .addPhoto:
+                    AddPhotoView(flow: flow)
+                case .confirm:
+                    ConfirmView(flow: flow)
+                case .style:
+                    StylePickerView(flow: flow)
+                case .rendering:
+                    RenderingView(flow: flow)
+                case .compare:
+                    CompareView(flow: flow)
+                }
+            }
+            .toolbar {
+                // Not shown once a render has actually finished — Compare's own
+                // "Done" is the way out of that state; this is for backing out of
+                // an in-progress room before it gets that far.
+                if flow.step != .compare {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { flow.finish() }
+                    }
+                }
             }
         }
     }

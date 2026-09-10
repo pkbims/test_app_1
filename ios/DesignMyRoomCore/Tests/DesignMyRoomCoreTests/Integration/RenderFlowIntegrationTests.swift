@@ -145,6 +145,15 @@ final class RenderFlowIntegrationTests: XCTestCase {
         XCTAssertGreaterThan(photo.width, 0)
     }
 
+    func testListRoomsIncludesARoomJustCreated() async throws {
+        let client = try await sharedReadOnlyClient()
+        let room = try await client.createRoom(label: "Integration test list-rooms")
+
+        let rooms = try await client.listRooms()
+
+        XCTAssertTrue(rooms.contains { $0.roomId == room.roomId }, "a just-created room must show up in the user's own list")
+    }
+
     func testCreateInventoryWithoutAPhotoReturnsNoPhotos() async throws {
         let client = try await sharedReadOnlyClient()
         let room = try await client.createRoom(label: nil)

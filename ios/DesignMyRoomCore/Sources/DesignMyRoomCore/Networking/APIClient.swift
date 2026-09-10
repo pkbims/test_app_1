@@ -96,6 +96,13 @@ public actor APIClient {
         }
     }
 
+    /// The user's own rooms, most recent first — powers the home/history screen.
+    public func listRooms() async throws -> [Room] {
+        let request = plainRequest(path: "v1/rooms", method: "GET")
+        let (data, response) = try await send(request, authorized: true, idempotent: true)
+        return try decodeOrThrow(data, response)
+    }
+
     /// Not idempotent — a second call would re-upload over "one photo per room".
     public func uploadPhoto(roomId: String, data imageData: Data, filename: String, mimeType: String) async throws -> Photo {
         let boundary = config.boundaryGenerator()

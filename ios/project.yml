@@ -50,14 +50,35 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+  # Unit tests for App-target view models (HomeViewModel, RoomDetailViewModel, ...) —
+  # these depend on SwiftUI/@Observable/@MainActor and other App-target types, so
+  # unlike DesignMyRoomCore they can't run via plain `swift test`; they need a real
+  # Xcode test target hosted by the app so they can `@testable import DesignMyRoom`.
+  DesignMyRoomAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: DesignMyRoomAppTests
+    dependencies:
+      - target: DesignMyRoom
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   # Unit tests for the core logic run via `swift test` in DesignMyRoomCore/ (see its
   # own README note and ios/README.md) — that's a real SPM package with its own test
-  # target, not something an Xcode scheme's `test:` action can point at directly, so
-  # this scheme only builds and runs the app.
+  # target, not something an Xcode scheme's `test:` action can point at directly.
+  # DesignMyRoomAppTests (App-target view models) run through this scheme's test
+  # action instead, via `xcodebuild test`.
   DesignMyRoom:
     build:
       targets:
         DesignMyRoom: all
+        DesignMyRoomAppTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - DesignMyRoomAppTests

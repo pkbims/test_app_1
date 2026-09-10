@@ -334,6 +334,42 @@ final class APIClientTests: XCTestCase {
         XCTAssertEqual(request.url?.path, "/v1/rooms/rm_1")
     }
 
+    // MARK: - listRooms (home/history screen)
+
+    func testListRoomsDecodesArrayMostRecentFirst() async throws {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 200, json: """
+        [
+          {"room_id":"rm_2","label":"Bedroom","created_at":"2026-09-10T10:00:00Z","has_photo":true,"has_inventory":true},
+          {"room_id":"rm_1","label":null,"created_at":"2026-09-09T10:00:00Z","has_photo":true,"has_inventory":true}
+        ]
+        """)
+        let client = makeClient(transport: transport)
+
+        let rooms = try await client.listRooms()
+
+        XCTAssertEqual(rooms.map(\.roomId), ["rm_2", "rm_1"])
+        XCTAssertEqual(rooms[0].label, "Bedroom")
+        XCTAssertNil(rooms[1].label)
+        let request = await transport.recordedRequests[0]
+        XCTAssertEqual(request.httpMethod, "GET")
+        XCTAssertEqual(request.url?.path, "/v1/rooms")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer initial-access")
+    }
+
+    func testListRoomsRetriesTransientFailureBecauseItsIdempotent() async throws {
+        let transport = MockTransport()
+        await transport.enqueue(.failure(URLError(.networkConnectionLost)))
+        await transport.enqueueJSON(status: 200, json: "[]")
+        let client = makeClient(transport: transport)
+
+        let rooms = try await client.listRooms()
+
+        XCTAssertEqual(rooms, [])
+        let count = await transport.requestCount
+        XCTAssertEqual(count, 2)
+    }
+
     // MARK: - restoreSession (app cold launch)
     //
     // The access token is in-memory only, so it's always nil right after launch even
