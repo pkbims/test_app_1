@@ -147,3 +147,49 @@ def _png(size=(400, 400)) -> bytes:
     buf = io.BytesIO()
     Image.new("RGB", size, (10, 20, 30)).save(buf, format="PNG")
     return buf.getvalue()
+
+
+# ── GET /v1/rooms — list ─────────────────────────────────────────────────────
+def test_list_rooms_is_empty_for_a_fresh_user(api):
+    headers = sign_in(api)
+    r = api.get("/v1/rooms", headers=headers)
+    assert r.status_code == 200
+    assert r.json() == []
+
+
+def test_list_rooms_is_newest_first(api):
+    headers = sign_in(api)
+    first = api.post("/v1/rooms", json={"label": "First"}, headers=headers).json()["room_id"]
+    second = api.post("/v1/rooms", json={"label": "Second"}, headers=headers).json()["room_id"]
+
+    ids = [r["room_id"] for r in api.get("/v1/rooms", headers=headers).json()]
+    assert ids == [second, first]
+
+
+def test_list_rooms_reflects_photo_and_inventory_state(api):
+    headers = sign_in(api)
+    bare_room = api.post("/v1/rooms", json={}, headers=headers).json()["room_id"]
+    ready_room = _create_room(api, headers)
+    api.post(
+        f"/v1/rooms/{ready_room}/photos",
+        files={"file": ("r.jpg", _jpeg(), "image/jpeg")},
+        headers=headers,
+    )
+    api.post(f"/v1/rooms/{ready_room}/inventory", headers=headers)
+
+    by_id = {r["room_id"]: r for r in api.get("/v1/rooms", headers=headers).json()}
+    assert by_id[bare_room]["has_photo"] is False
+    assert by_id[bare_room]["has_inventory"] is False
+    assert by_id[ready_room]["has_photo"] is True
+    assert by_id[ready_room]["has_inventory"] is True
+
+
+def test_list_rooms_is_scoped_to_the_caller(api):
+    owner = sign_in(api, sub="rooms.owner")
+    _create_room(api, owner)
+    intruder = sign_in(api, sub="rooms.intruder")
+    assert api.get("/v1/rooms", headers=intruder).json() == []
+
+
+def test_list_rooms_requires_a_token(api):
+    assert api.get("/v1/rooms").status_code == 401

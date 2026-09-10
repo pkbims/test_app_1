@@ -33,6 +33,30 @@ def create_room(conn, user_id: str, label: str | None) -> Room:
     )
 
 
+def list_rooms(conn, user_id: str) -> list[Room]:
+    rows = conn.execute(
+        "SELECT r.id, r.label, r.created_at, "
+        "(p.room_id IS NOT NULL) AS has_photo, "
+        "(i.room_id IS NOT NULL) AS has_inventory "
+        "FROM rooms r "
+        "LEFT JOIN photos p ON p.room_id = r.id "
+        "LEFT JOIN inventories i ON i.room_id = r.id "
+        "WHERE r.user_id = %s "
+        "ORDER BY r.created_at DESC",
+        (user_id,),
+    ).fetchall()
+    return [
+        Room(
+            room_id=str(rid),
+            label=label,
+            created_at=created_at,
+            has_photo=has_photo,
+            has_inventory=has_inventory,
+        )
+        for rid, label, created_at, has_photo, has_inventory in rows
+    ]
+
+
 def delete_room(conn, storage: Storage, room_id: str, user_id: str) -> None:
     rid = parse_uuid(room_id, _NOT_FOUND)
     with conn.transaction():

@@ -131,7 +131,11 @@ def me() -> Me:
 def list_rooms() -> List[Room]:
     """The user's own rooms, most recent first. Powers the app's home/history
     screen — no other operation lists rooms across a user, only within one."""
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, "rooms_list", ctx.user_id)
+    with rt.pool.connection() as conn:
+        return rooms_service.list_rooms(conn, ctx.user_id)
 
 
 @app.post("/v1/rooms", response_model=Room, status_code=status.HTTP_201_CREATED,

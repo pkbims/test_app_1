@@ -26,8 +26,8 @@ _HOUR = 3600
 _MINUTE = 60
 
 # Every limited route in one place. `by` is what the key is scoped to.
-# The first five are the PRD §16 table verbatim; `inventory` and `render_list`
-# are ours (a vision call costs money; a list is cheap but unbounded).
+# The first five are the PRD §16 table verbatim; the rest are ours
+# (a vision call costs money; a list is cheap but unbounded).
 LIMITS: dict[str, tuple[int, int, str]] = {
     "auth_apple": (10, _HOUR, "ip"),  # PRD §16
     "auth_refresh": (60, _HOUR, "ip"),  # PRD §16
@@ -38,6 +38,7 @@ LIMITS: dict[str, tuple[int, int, str]] = {
     "inventory": (20, _HOUR, "user"),
     "render_create": (30, _HOUR, "user"),
     "render_list": (60, _MINUTE, "user"),
+    "rooms_list": (60, _MINUTE, "user"),  # same bucket shape as render_list / me
 }
 
 
