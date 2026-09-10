@@ -66,13 +66,25 @@ final class AuthManager {
                 state = .signInFailed(ErrorCopy.message(for: .appleTokenInvalid))
             }
         case .failure(let error):
-            // Includes the user cancelling the sheet — not really a "failure" worth
-            // a red banner, but there's nothing more specific the contract's
-            // ErrorCode gives us either; back to signedOut, silently. Still logged:
-            // a real Apple-side failure (vs. a cancel) is worth having on record.
             crashReporter.logHandledError(error, context: "AuthManager.signIn.appleSide")
-            state = .signedOut
+            if let authError = error as? ASAuthorizationError, authError.code == .canceled {
+                // The user dismissed the sheet — not a failure worth a red banner.
+                state = .signedOut
+            } else {
+                // Anything else (an entitlement/capability problem, no network, ...)
+                // used to also fall through to plain `.signedOut` with nothing shown
+                // — which looked identical to a cancel and made this undebuggable
+                // from the screen alone. Show the real error instead.
+                state = .signInFailed(Self.describe(error))
+            }
         }
+    }
+
+    private static func describe(_ error: Error) -> String {
+        if let authError = error as? ASAuthorizationError {
+            return "Sign in with Apple couldn't complete (\(authError.code.rawValue): \(authError.localizedDescription))."
+        }
+        return "Sign in with Apple couldn't complete (\(error))."
     }
 
     /// A voluntary sign-out (a "Sign out" button) — the tokens are still valid, so
