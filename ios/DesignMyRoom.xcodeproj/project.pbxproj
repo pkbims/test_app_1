@@ -10,6 +10,7 @@
 		01834093A71A53DE7EAD7CE5 /* DesignMyRoomCore in Frameworks */ = {isa = PBXBuildFile; productRef = C926B4BDDACFC30E950B2A06 /* DesignMyRoomCore */; };
 		09CD007FBB5CE96F9C57936F /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E1066A38E159E25474D019 /* SignInView.swift */; };
 		19BED3C490333A935A03E3C5 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6677E08BE0384E089790FCC7 /* AuthManager.swift */; };
+		2308D1C59F5D6D5E0BA9D212 /* AddPhotoFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */; };
 		273EDF7442FE8F920451732C /* RoomDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C28D6E82B112C285FFEDFA /* RoomDetailViewModel.swift */; };
 		27781601B6DE4C0A8E70E16D /* StylePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A262FBAD0153DB53D27F8D32 /* StylePickerView.swift */; };
 		2D59C83A9DB64D21860ADD37 /* AddPhotoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 282558BC4B2FF93667B93D62 /* AddPhotoView.swift */; };
@@ -23,6 +24,7 @@
 		A862652D5E1A33CED8E71AF1 /* RenderSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 688C4BED932E5928FB8E4D2B /* RenderSummaryView.swift */; };
 		AAB678AB69E50EDA6E5D98C6 /* PhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730512B379D0586A579AAAF9 /* PhotoPicker.swift */; };
 		B5571E373723D7D593C91669 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AE5F141F21843B7B64B79C33 /* Assets.xcassets */; };
+		C8EA9658CD092F6A161308A0 /* RoomFlowLiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5770660B237BBE46F20DB92 /* RoomFlowLiveTests.swift */; };
 		CE206251F9AAF39C2F4F8F21 /* CompareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E783CFEE8BB0F25358FDF061 /* CompareView.swift */; };
 		DBEA3A1F4FB91F2BBB3998A4 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B521D179B03C08D7E20836D /* HomeView.swift */; };
 		DE2F2362A8541560E2544FEC /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B8E1849429C207D69E5426 /* RootView.swift */; };
@@ -32,6 +34,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		3C83A6394FE61C21F788427B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CFC36337CBF8147473749180 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 670876AE26B15FD75D4018EE;
+			remoteInfo = DesignMyRoom;
+		};
 		9AAB3840CC63615D10147C1D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CFC36337CBF8147473749180 /* Project object */;
@@ -55,12 +64,15 @@
 		688C4BED932E5928FB8E4D2B /* RenderSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderSummaryView.swift; sourceTree = "<group>"; };
 		730512B379D0586A579AAAF9 /* PhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPicker.swift; sourceTree = "<group>"; };
 		86B8E1849429C207D69E5426 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		8A0E8FEAEA9558281E656168 /* DesignMyRoomUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DesignMyRoomUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B521D179B03C08D7E20836D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		A0AA52CA1BD5FB302A446E5D /* ConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmView.swift; sourceTree = "<group>"; };
 		A262FBAD0153DB53D27F8D32 /* StylePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerView.swift; sourceTree = "<group>"; };
 		AE5F141F21843B7B64B79C33 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AF6D96D714954C52B08ACDDB /* RoomFlowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomFlowViewModel.swift; sourceTree = "<group>"; };
 		C0C28D6E82B112C285FFEDFA /* RoomDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailViewModel.swift; sourceTree = "<group>"; };
+		C5770660B237BBE46F20DB92 /* RoomFlowLiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomFlowLiveTests.swift; sourceTree = "<group>"; };
+		C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPhotoFlowUITests.swift; sourceTree = "<group>"; };
 		D6E1066A38E159E25474D019 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		DEA79348908101C2D6186BFD /* DesignMyRoomCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DesignMyRoomCore; path = DesignMyRoomCore; sourceTree = SOURCE_ROOT; };
 		E783CFEE8BB0F25358FDF061 /* CompareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareView.swift; sourceTree = "<group>"; };
@@ -85,6 +97,7 @@
 			children = (
 				E80679EEFE72454F3E65D13F /* DesignMyRoom.app */,
 				EAE3BD2AF1BA2C540E1911B5 /* DesignMyRoomAppTests.xctest */,
+				8A0E8FEAEA9558281E656168 /* DesignMyRoomUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -97,11 +110,20 @@
 			path = Styles;
 			sourceTree = "<group>";
 		};
+		0B78F8C93C6203526210995F /* DesignMyRoomUITests */ = {
+			isa = PBXGroup;
+			children = (
+				C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */,
+			);
+			path = DesignMyRoomUITests;
+			sourceTree = "<group>";
+		};
 		2650FEB1F9940A9EA3BDA7F0 /* DesignMyRoomAppTests */ = {
 			isa = PBXGroup;
 			children = (
 				39B7725F1E3264A67440C468 /* HomeViewModelTests.swift */,
 				5504BC6A9DEF9FFF8142FF3E /* RoomDetailViewModelTests.swift */,
+				C5770660B237BBE46F20DB92 /* RoomFlowLiveTests.swift */,
 			);
 			path = DesignMyRoomAppTests;
 			sourceTree = "<group>";
@@ -111,6 +133,7 @@
 			children = (
 				896A12B9EBCBF662D6050380 /* DesignMyRoomApp */,
 				2650FEB1F9940A9EA3BDA7F0 /* DesignMyRoomAppTests */,
+				0B78F8C93C6203526210995F /* DesignMyRoomUITests */,
 				4AFB57625D74D040DE0966F6 /* Packages */,
 				0127D4A47A444665386D5743 /* Products */,
 			);
@@ -285,6 +308,22 @@
 			productReference = E80679EEFE72454F3E65D13F /* DesignMyRoom.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AC9CC88A3F8A2764897B5070 /* DesignMyRoomUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BAD93926F5E73AC0023304F7 /* Build configuration list for PBXNativeTarget "DesignMyRoomUITests" */;
+			buildPhases = (
+				40CC34CC7557E8F6F6C21906 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				40D2B5005FA6E82E04F61157 /* PBXTargetDependency */,
+			);
+			name = DesignMyRoomUITests;
+			productName = DesignMyRoomUITests;
+			productReference = 8A0E8FEAEA9558281E656168 /* DesignMyRoomUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -301,6 +340,11 @@
 					670876AE26B15FD75D4018EE = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
+					};
+					AC9CC88A3F8A2764897B5070 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = 670876AE26B15FD75D4018EE;
 					};
 				};
 			};
@@ -321,6 +365,7 @@
 			targets = (
 				670876AE26B15FD75D4018EE /* DesignMyRoom */,
 				52BABD6254DCCB37262EA0F0 /* DesignMyRoomAppTests */,
+				AC9CC88A3F8A2764897B5070 /* DesignMyRoomUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -362,18 +407,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		40CC34CC7557E8F6F6C21906 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2308D1C59F5D6D5E0BA9D212 /* AddPhotoFlowUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		89E696DADED441EA421D0037 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				FA3FFC19C4E69B6B098814F2 /* HomeViewModelTests.swift in Sources */,
 				310F93EEBAE3857588376732 /* RoomDetailViewModelTests.swift in Sources */,
+				C8EA9658CD092F6A161308A0 /* RoomFlowLiveTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		40D2B5005FA6E82E04F61157 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 670876AE26B15FD75D4018EE /* DesignMyRoom */;
+			targetProxy = 3C83A6394FE61C21F788427B /* PBXContainerItemProxy */;
+		};
 		426FF6C8D3D4A303FCA7119C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 670876AE26B15FD75D4018EE /* DesignMyRoom */;
@@ -466,6 +525,24 @@
 			};
 			name = Debug;
 		};
+		619A10400C7F976E1ECB2D96 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.designmyroom.DesignMyRoomUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = DesignMyRoom;
+			};
+			name = Release;
+		};
 		84E4812857BE25402834D91F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -545,6 +622,24 @@
 			};
 			name = Release;
 		};
+		E2358C2A94F97ACF12C39257 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.designmyroom.DesignMyRoomUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = DesignMyRoom;
+			};
+			name = Debug;
+		};
 		F9413244602ACEB1CD563E91 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -600,6 +695,15 @@
 			buildConfigurations = (
 				FC2ACE2C4B5258EAEBA32923 /* Debug */,
 				84E4812857BE25402834D91F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BAD93926F5E73AC0023304F7 /* Build configuration list for PBXNativeTarget "DesignMyRoomUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2358C2A94F97ACF12C39257 /* Debug */,
+				619A10400C7F976E1ECB2D96 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

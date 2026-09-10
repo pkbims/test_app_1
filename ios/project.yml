@@ -75,6 +75,22 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+  # Drives the real UI (taps, real PHPicker) — the only way to catch a bug that's
+  # fundamentally about *presentation timing* (a view with an in-flight sheet
+  # dismissal getting removed from the tree), not app logic. See
+  # AddPhotoFlowUITests for the regression this exists to catch.
+  DesignMyRoomUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: DesignMyRoomUITests
+    dependencies:
+      - target: DesignMyRoom
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: DesignMyRoom
 schemes:
   # Unit tests for the core logic run via `swift test` in DesignMyRoomCore/ (see its
   # own README note and ios/README.md) — that's a real SPM package with its own test
@@ -86,9 +102,11 @@ schemes:
       targets:
         DesignMyRoom: all
         DesignMyRoomAppTests: [test]
+        DesignMyRoomUITests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
         - DesignMyRoomAppTests
+        - DesignMyRoomUITests

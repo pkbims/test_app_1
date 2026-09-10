@@ -42,8 +42,16 @@ struct PhotoLibraryPicker: UIViewControllerRepresentable {
         /// re-encode. Preferring HEIC/HEIF's own type identifier over a generic one
         /// keeps that real: an iPhone photo stays HEIC bytes until the converter
         /// deliberately re-encodes it.
+        ///
+        /// Deliberately does **not** call `picker.dismiss(animated:)` — this picker
+        /// is presented via SwiftUI's `.sheet(isPresented:)`, which already owns the
+        /// dismissal and drives it from the `showingLibraryPicker = false` in
+        /// `onPick`/`onCancel`. Calling `.dismiss()` here too, imperatively, races
+        /// that: it desyncs SwiftUI's belief about what's presented from the real
+        /// UIKit hierarchy, which can cascade into SwiftUI incorrectly collapsing an
+        /// *ancestor* presentation (the whole New Room flow, not just this sheet) —
+        /// reproduced and confirmed via DesignMyRoomUITests/AddPhotoFlowUITests.
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            picker.dismiss(animated: true)
             guard let provider = results.first?.itemProvider else {
                 onCancel()
                 return
@@ -100,8 +108,10 @@ struct CameraPicker: UIViewControllerRepresentable {
             self.onCancel = onCancel
         }
 
+        // Same reasoning as PhotoLibraryPicker.Coordinator above: presented via
+        // .fullScreenCover(isPresented:), which already owns dismissal via
+        // showingCameraPicker — no imperative picker.dismiss() here.
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            picker.dismiss(animated: true)
             guard let image = info[.originalImage] as? UIImage, let data = image.jpegData(compressionQuality: 0.92) else {
                 onCancel()
                 return
@@ -110,7 +120,6 @@ struct CameraPicker: UIViewControllerRepresentable {
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            picker.dismiss(animated: true)
             onCancel()
         }
     }
