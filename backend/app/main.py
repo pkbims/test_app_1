@@ -14,7 +14,9 @@ from fastapi.responses import JSONResponse
 
 from . import context, errors, health as health_mod, ratelimit, runtime
 from .auth import service as auth_service
+from .files_route import router as files_router
 from .middleware import RequestMiddleware
+from .rooms import service as rooms_service
 from .schemas import (
     AppleSignIn, Error, Health, Inventory, Me, Photo, RefreshRequest,
     Render, RenderCreate, Room, RoomCreate, Tokens,
@@ -51,6 +53,7 @@ E = {400: {"model": Error}, 401: {"model": Error}, 402: {"model": Error},
 # and one middleware that stamps a request id and enforces auth on /v1/* (except
 # /v1/auth/*). See ORCH-QUESTIONS Q3.
 errors.install(app)
+app.include_router(files_router)
 app.add_middleware(
     RequestMiddleware,
     secret_provider=lambda: runtime.get().settings.jwt_secret,
@@ -112,7 +115,11 @@ def me() -> Me:
 @app.post("/v1/rooms", response_model=Room, status_code=status.HTTP_201_CREATED,
           responses=E, tags=["rooms"], summary="Create a room")
 def create_room(body: RoomCreate) -> Room:
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"rooms:{ctx.user_id}", 30, 3600)
+    with rt.pool.connection() as conn:
+        return rooms_service.create_room(conn, ctx.user_id, body.label)
 
 
 @app.post("/v1/rooms/{room_id}/photos", response_model=Photo, responses=E,
@@ -123,13 +130,37 @@ def upload_photo(room_id: str = Path(...), file: UploadFile = File(...)) -> Phot
     HEIC is what iPhones produce by default and the image API does not accept it,
     so the client converts to JPEG before upload. The server rejects anything that
     is not JPEG or PNG with `photo_unsupported`."""
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"photos:{ctx.user_id}", 20, 3600)
+    if file.size is not None and file.size > rt.settings.max_photo_bytes:
+        raise errors.ApiError(
+            errors.ErrorCode.photo_too_large, "That photo is over 12 MB. Try a smaller one."
+        )
+    data = file.file.read()
+    with rt.pool.connection() as conn:
+        return rooms_service.upload_photo(
+            conn,
+            rt.storage,
+            room_id=room_id,
+            user_id=ctx.user_id,
+            data=data,
+            max_bytes=rt.settings.max_photo_bytes,
+            public_base_url=rt.settings.public_base_url,
+            url_secret=rt.settings.file_url_secret,
+            url_ttl_s=rt.settings.file_url_ttl_s,
+        )
 
 
 @app.delete("/v1/rooms/{room_id}", status_code=status.HTTP_204_NO_CONTENT,
             responses=E, tags=["rooms"], summary="Delete a room and its photos")
 def delete_room(room_id: str = Path(...)) -> Response:
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"rooms:{ctx.user_id}", 30, 3600)
+    with rt.pool.connection() as conn:
+        rooms_service.delete_room(conn, rt.storage, room_id, ctx.user_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ── inventory ─────────────────────────────────────────────────────────────────
