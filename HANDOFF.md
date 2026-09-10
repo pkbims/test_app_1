@@ -23,9 +23,13 @@ itself is built yet; route bodies raise NotImplementedError on purpose.
 
 **Stage 5 (build) started 2026-09-09.** Two worker agents (Sonnet) in git worktrees:
 `backend` and `ios`. Briefs: `backend/AGENT.md`, `ios/AGENT.md`. Cross-cutting and
-contract questions go in `ORCH-QUESTIONS.md`. Backend started first; iOS follows once
-the backend has a running API. Orchestrator pushes and integrates; workers commit
-locally to their own branch only.
+contract questions go in `ORCH-QUESTIONS.md`. Orchestrator pushes and integrates;
+workers commit locally to their own branch only.
+
+**Sequencing (user's call, 2026-09-09):** backend runs to completion first; the iOS
+worktree exists and its brief is ready, but the iOS agent stays paused until the
+backend is done. First contract change already made: `ErrorCode.not_found` (404),
+commit `4df0db7`.
 
 | Artefact | Location |
 |---|---|
