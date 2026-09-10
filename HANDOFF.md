@@ -18,14 +18,27 @@ most repeated complaint in the research and the only problem this app solves.
 ## Where we are
 
 Pipeline stages 1–4 are done. **The contract is frozen** — see `contract/openapi.json`,
-generated from `backend/app/schemas.py` and `backend/app/main.py`. Nothing of the app
-itself is built yet; route bodies raise NotImplementedError on purpose.
+generated from `backend/app/schemas.py` and `backend/app/main.py`.
 
 **Stage 5 (build) started 2026-09-09.** Two worker agents (Sonnet) in git worktrees:
 `backend` and `ios`. Briefs: `backend/AGENT.md`, `ios/AGENT.md`. Cross-cutting and
-contract questions go in `ORCH-QUESTIONS.md`. Backend started first; iOS follows once
-the backend has a running API. Orchestrator pushes and integrates; workers commit
-locally to their own branch only.
+contract questions go in `ORCH-QUESTIONS.md`. Orchestrator pushes and integrates;
+workers commit locally to their own branch only.
+
+**Backend is done and merged into `main`** (`dac3e44`, 2026-09-09): docker compose
+(api/db/worker/dashboard), three-state health, migrations, Sign in with Apple,
+rooms + photos + signed file URLs, inventory (`gpt-4.1`), renders + queue worker
+(`gpt-image-2`, no mask) + preservation scoring, rate limiting, `/metrics`,
+structured logging, error tracking, the PRD §17 failure table, full CI. 151 tests
+green (95 unit + 56 integration), a real-OpenAI end-to-end render passes, contract
+byte-identical throughout. Independently verified by the orchestrator (clean
+`docker compose up --build`, `/health` ok, 95 unit tests green in a fresh
+container). `VISION_BACKEND=fake` is the default — the whole stack runs with no
+OpenAI key. Four contract questions resolved (`ORCH-QUESTIONS.md` Q1–Q4); one
+contract change made — `ErrorCode.not_found` (404), commit `4df0db7`.
+
+**iOS resumed 2026-09-09** once the backend was verified — rebased onto the merged
+`main`, now building against the real running API (not mocks) wherever practical.
 
 | Artefact | Location |
 |---|---|
