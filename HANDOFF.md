@@ -2,6 +2,50 @@
 
 Context for a fresh session acting as orchestrator. Read this, then `PRD.md`.
 
+## Orchestrator — the role, and where things stand right now
+
+**What "orchestrator" means here:** I don't write app code. I write agent briefs,
+create/manage herdr worktrees and panes, own the frozen contract's *shape* (never
+its implementation), answer cross-cutting questions in `ORCH-QUESTIONS.md`, merge
+each worker's branch into `main` at checkpoints and push, verify what workers claim
+rather than relay it uncritically, and give the user periodic status summaries on
+request. Full standing preferences: `[[orchestrator-reporting-cadence]]`,
+`[[app1-stage5-orchestration]]` in memory — read those too if resuming this role.
+
+**Live agent roster as of 2026-09-10, ~5pm:**
+
+| Agent | Herdr location | Owns | Worktree? |
+|---|---|---|---|
+| `backend` | its own workspace | `backend/` | yes, branch `backend` |
+| `ios` | its own workspace | `ios/` | yes, branch `ios` |
+| `prompt-design` | a tab in the orchestrator's workspace | prompt/render research, writes handoff docs, no code | **no** — shares the orchestrator's plain checkout, see the git-collision gotcha below |
+| `ui-design-reviewer` | a tab in the orchestrator's workspace | visual/UI research via the html-worker skill, writes handoff docs, no code | no, same as above |
+
+Re-bind a lost agent name with `herdr agent rename <pane_id> <name>` if
+`herdr agent get <name>` returns `agent_not_found` (happens after that agent's own
+context auto-compacts).
+
+**Gotcha inherited from this session — read before committing anything on `main`:**
+non-worktree agents share the orchestrator's checkout. Always
+`git branch --show-current` before committing there — a design agent switching
+branches (even briefly, even by mistake) silently redirects the next commit onto
+that branch instead of `main`. Full story: `[[shared-checkout-branch-collision]]`
+in memory.
+
+**In flight right now:** a style-system rewrite — 18 styles (up from 6) plus a fix
+for a real bug (`remove_ids` doesn't reliably work; `keep` does). Handoff doc at
+`prompt_review/HANDOFF.md`, dispatched to `backend` (prompt.py + styles + the
+REMOVE fix, with a required render-level acceptance test) and `ios` (the style id
+list; 18 sample images already generated and sitting in
+`ios/DesignMyRoomApp/SourceAssets/StyleSamples/`, waiting to be wired into the
+asset catalog). See `[[app1-remove-bug-and-style-expansion]]` in memory for the
+full diagnosis. Also just shipped: a full visual redesign (`ui_design_v2/HANDOFF.md`,
+merged, all 7 screens) — clay accent, grid home layout with photo thumbnails.
+
+**Monitor:** a background watch is armed with 5-minute status heartbeats (the user
+can say "pause/resume the summary" to toggle just the heartbeat; the event-only
+watch for commits/new `ORCH-QUESTIONS.md` entries stays on regardless).
+
 ## What this is
 
 App #1 of a planned series of ~30 small full-stack apps, each built to production
