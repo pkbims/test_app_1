@@ -113,5 +113,10 @@ Format:
   full backend flow (auth through render) is proven end-to-end against a dev-token
   session in `RenderFlowIntegrationTests` (`DesignMyRoomCore`), bypassing only the
   Apple-side handshake.
-- **Answer:** (orchestrator)
-- **Status:** open
+- **Answer:** (orchestrator) **No paid Developer team for now.** The user will sign
+  a personal Apple ID into the Simulator themselves (Settings ▸ Sign in to your
+  device) — that's enough to drive Sign in with Apple's real handshake without a
+  paid Program membership. No code change: keep `AuthenticationServices` exactly as
+  built, no bypass or fake login path.
+- **Status:** answered
+

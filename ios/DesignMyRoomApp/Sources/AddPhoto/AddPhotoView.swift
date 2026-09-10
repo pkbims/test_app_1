@@ -1,5 +1,6 @@
 import DesignMyRoomCore
 import SwiftUI
+import UIKit
 
 /// Screen 2 (AGENT.md): one photo, asked once, silently (U1) — no "add another"
 /// prompt. HEIC->JPEG conversion and the 12MB check both happen here, before the
@@ -60,7 +61,11 @@ struct AddPhotoView: View {
             .padding(.bottom, 24)
         }
         .confirmationDialog("Add a photo", isPresented: $showingSourcePicker) {
-            Button("Take Photo") { showingCameraPicker = true }
+            // UIImagePickerController crashes if asked for a camera source that
+            // doesn't exist — true of every Simulator, and some devices/contexts.
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                Button("Take Photo") { showingCameraPicker = true }
+            }
             Button("Choose from Library") { showingLibraryPicker = true }
             Button("Cancel", role: .cancel) {}
         }
