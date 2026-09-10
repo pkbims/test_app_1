@@ -73,10 +73,10 @@ def test_render_prompts_are_stored(api, run_worker, pg_url):
         ).fetchone()
 
     # the exact text sent to gpt-image-2
-    assert "Restyle this room in a warm minimal style." in generation_prompt
-    assert "keep it cosy" in generation_prompt
+    assert "THE STYLE THE CUSTOMER CHOSE — Warm minimal:" in generation_prompt
+    assert "The customer also asked for: keep it cosy" in generation_prompt
     assert "MUST REMAIN EXACTLY WHERE THEY ARE" in generation_prompt
-    assert "REMOVE these entirely" in generation_prompt
+    assert "NOT IN THE ROOM" in generation_prompt
 
     # the exact text sent to the preservation check
     architecture_ids = [i["id"] for i in inv["items"] if i["kind"] == "architecture"]
