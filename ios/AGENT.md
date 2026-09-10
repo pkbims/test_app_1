@@ -132,6 +132,29 @@ If you disagree with these, raise it in `../ORCH-QUESTIONS.md` — don't just di
   free room / three restyles". Display whatever `Render.credits_left` and `/v1/me`
   return; don't hard-code the rule.
 
+## The backend is done and runnable (merged to `main`)
+
+The full backend is in this worktree. Run it and develop against the real API:
+
+```bash
+cd /Users/bimalsaran/.herdr/worktrees/app_1/ios   # repo root of this worktree
+docker compose up --build                          # api :8000, dashboard :8080
+```
+
+- `docker compose` needs a login shell PATH; if `docker` isn't found, use
+  `~/.docker/bin/docker` or open a fresh terminal.
+- `VISION_BACKEND=fake` is the committed default — **no OpenAI key needed**. The
+  inventory and render calls return deterministic stand-ins, so the whole flow
+  works offline. The render still goes through the queue + worker + polling exactly
+  as in production, and returns a real (fake) after-image and `preservation_rate`.
+- `curl localhost:8000/health` → `{"state":"ok",...}`. OpenAPI at
+  `localhost:8000/openapi.json` (should match `contract/openapi.json` byte-for-byte).
+- Auth: the middleware verifies real Apple identity tokens. For simulator testing
+  without an Apple Developer team, see `backend/README.md` — there is a documented
+  path. If it forces a contract question, raise it; do not invent a bypass.
+- Read `backend/README.md` for the exact flow, the signed `/files/...` URL scheme
+  (Q1), the 401/403/404/503 behaviours (Q2–Q4), and the credit model.
+
 ## Done looks like
 
 The app builds in Xcode and runs in the simulator. With the backend running locally
