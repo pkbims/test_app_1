@@ -57,6 +57,15 @@ Pick a simulator (iPhone 17 or similar, iOS 17+) and Run. Base URL defaults to
 `DESIGNMYROOM_BASE_URL` to the scheme's environment variables (Product ▸ Scheme ▸
 Edit Scheme ▸ Run ▸ Arguments).
 
+The Simulator shares the host Mac's network, so `localhost:8000` reaches the
+Dockerized backend directly — and `localhost`/loopback connections are exempt from
+App Transport Security by default, so no Info.plist change was needed. **On a real
+device** this breaks: `localhost` means the device itself, not your Mac. Point
+`DESIGNMYROOM_BASE_URL` at your Mac's LAN IP (`http://192.168.x.x:8000`) instead, and
+that address will need its own ATS exception (`NSAppTransportSecurity` /
+`NSExceptionDomains` in Info.plist) since it isn't the exempted loopback case —
+nothing to do until on-device testing is actually needed.
+
 Verified from the command line too:
 
 ```bash
