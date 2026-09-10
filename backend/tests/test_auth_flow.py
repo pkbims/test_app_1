@@ -27,6 +27,29 @@ def test_first_sign_in_grants_one_credit(api):
     assert me.json()["credits_left"] == 1
 
 
+def test_signup_grant_is_configurable(pg_url, tmp_path, monkeypatch):
+    # A local dev override (SIGNUP_FREE_CREDITS) so testers don't run out of
+    # rooms; the committed default stays 1, matching the product decision.
+    monkeypatch.setenv("DATABASE_URL", pg_url)
+    monkeypatch.setenv("PHOTO_DIR", str(tmp_path))
+    monkeypatch.setenv("JWT_SECRET", TEST_JWT_SECRET)
+    monkeypatch.setenv("APP_ENV", "dev")
+    monkeypatch.setenv("APPLE_CLIENT_ID", "")
+    monkeypatch.setenv("VISION_BACKEND", "fake")
+    monkeypatch.setenv("SIGNUP_FREE_CREDITS", "1000")
+
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    with TestClient(app) as client:
+        tokens = client.post(
+            "/v1/auth/apple", json={"identity_token": _dev_token("generous.grant.user")}
+        ).json()
+        me = client.get("/v1/me", headers={"Authorization": f"Bearer {tokens['access_token']}"})
+        assert me.json()["credits_left"] == 1000
+
+
 def test_second_sign_in_same_user_does_not_re_grant(api):
     sign_in(api, sub="repeat.user")
     headers = sign_in(api, sub="repeat.user")

@@ -94,6 +94,7 @@ def auth_apple(body: AppleSignIn) -> Tokens:
             secret=rt.settings.jwt_secret,
             access_ttl_s=rt.settings.access_ttl_s,
             refresh_ttl_s=rt.settings.refresh_ttl_s,
+            signup_free_credits=rt.settings.signup_free_credits,
         )
     return issued.tokens
 
