@@ -21,10 +21,15 @@ final actor MockTransport: HTTPTransport {
         queue.append(.success(status: status, body: Data(json.utf8)))
     }
 
+    struct QueueExhausted: Error {}
+
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         recordedRequests.append(request)
         guard !queue.isEmpty else {
-            fatalError("MockTransport ran out of queued responses for \(request.url?.absoluteString ?? "?")")
+            // A test asserting "no more requests after cancel" can still race a
+            // background poll loop by one tick; throwing (rather than crashing the
+            // whole process) keeps that harmless.
+            throw QueueExhausted()
         }
         let next = queue.removeFirst()
         switch next {
