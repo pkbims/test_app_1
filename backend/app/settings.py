@@ -24,6 +24,9 @@ class Settings:
     # external services
     openai_api_key: str = ""
     apple_client_id: str = ""
+    # "openai" (real gpt-4.1 / gpt-image-2) or "fake" (deterministic, for local
+    # compose without a key and for integration tests)
+    vision_backend: str = "openai"
 
     # signed read URLs for photos / render images (ORCH-QUESTIONS Q1)
     public_base_url: str = "http://localhost:8000"
@@ -50,6 +53,7 @@ def load() -> Settings:
         app_env=app_env,
         openai_api_key=os.environ.get("OPENAI_API_KEY", ""),
         apple_client_id=os.environ.get("APPLE_CLIENT_ID", ""),
+        vision_backend=os.environ.get("VISION_BACKEND", "openai"),
         public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000"),
         file_url_secret=os.environ.get("FILE_URL_SECRET", "") or jwt_secret,
         queue_depth_degraded=int(os.environ.get("QUEUE_DEPTH_DEGRADED", "100")),

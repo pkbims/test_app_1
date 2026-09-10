@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from . import context, errors, health as health_mod, ratelimit, runtime
 from .auth import service as auth_service
 from .files_route import router as files_router
+from .inventory import service as inventory_service
 from .middleware import RequestMiddleware
 from .rooms import service as rooms_service
 from .schemas import (
@@ -170,13 +171,22 @@ def create_inventory(room_id: str = Path(...)) -> Inventory:
     """A vision call lists the room's fixed architecture and its moveable objects,
     labelled A, B, C. Architecture is always listed and never removable — it is what
     the generate step must preserve. Takes a few seconds; called once per room."""
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"inventory:{ctx.user_id}", 20, 3600)
+    with rt.pool.connection() as conn:
+        return inventory_service.create_inventory(
+            conn, rt.storage, rt.vision, room_id, ctx.user_id
+        )
 
 
 @app.get("/v1/rooms/{room_id}/inventory", response_model=Inventory, responses=E,
          tags=["inventory"], summary="Read the inventory")
 def get_inventory(room_id: str = Path(...)) -> Inventory:
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    with rt.pool.connection() as conn:
+        return inventory_service.get_inventory(conn, room_id, ctx.user_id)
 
 
 # ── renders ───────────────────────────────────────────────────────────────────

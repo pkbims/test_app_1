@@ -19,6 +19,7 @@ from .migrate import apply_all
 from .ratelimit import InProcessRateLimiter, RateLimiter
 from .settings import Settings, load
 from .storage import LocalDiskStorage, Storage
+from .vision import DisabledVision, FakeVision, OpenAIVision, Vision
 
 AppleVerifier = Callable[[str], AppleIdentity]
 
@@ -30,6 +31,7 @@ class Runtime:
     storage: Storage
     rate_limiter: RateLimiter
     apple_verifier: AppleVerifier
+    vision: Vision
 
 
 _rt: Runtime | None = None
@@ -53,6 +55,7 @@ def start(settings: Settings | None = None) -> Runtime:
         storage=LocalDiskStorage(settings.photo_dir),
         rate_limiter=InProcessRateLimiter(),
         apple_verifier=make_apple_verifier(settings),
+        vision=make_vision(settings),
     )
     return _rt
 
@@ -73,3 +76,13 @@ def make_apple_verifier(settings: Settings) -> AppleVerifier:
     if settings.app_env == "production":
         raise RuntimeError("APPLE_CLIENT_ID must be set when APP_ENV=production")
     return lambda token: verify_dev_token(token, secret=settings.jwt_secret)
+
+
+def make_vision(settings: Settings) -> Vision:
+    if settings.vision_backend == "fake":
+        return FakeVision()
+    if settings.openai_api_key:
+        return OpenAIVision(settings.openai_api_key)
+    if settings.app_env == "production":
+        raise RuntimeError("OPENAI_API_KEY must be set when APP_ENV=production")
+    return DisabledVision()

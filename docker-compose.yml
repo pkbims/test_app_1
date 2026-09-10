@@ -12,6 +12,8 @@ x-backend: &backend
     # The frozen contract, read-only. The backend builds against it and a test
     # asserts it has not drifted.
     - ./contract:/contract:ro
+    # Sample room photo, for the opt-in real-OpenAI end-to-end test.
+    - ./inputs:/inputs:ro
     - photos:/data/photos
   env_file:
     - compose.env

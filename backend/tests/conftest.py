@@ -19,6 +19,7 @@ def api(pg_url, tmp_path, monkeypatch):
     monkeypatch.setenv("APP_ENV", "dev")
     monkeypatch.setenv("APPLE_CLIENT_ID", "")
     monkeypatch.setenv("PUBLIC_BASE_URL", "http://testserver")
+    monkeypatch.setenv("VISION_BACKEND", "fake")
 
     from fastapi.testclient import TestClient
 

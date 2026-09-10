@@ -11,6 +11,7 @@ import uuid
 
 from ..errors import ApiError
 from ..files import signed_url
+from ..ids import parse_uuid
 from ..images import UnsupportedImage, inspect
 from ..schemas import ErrorCode, Photo, Room
 from ..storage import Storage
@@ -33,7 +34,7 @@ def create_room(conn, user_id: str, label: str | None) -> Room:
 
 
 def delete_room(conn, storage: Storage, room_id: str, user_id: str) -> None:
-    rid = _as_uuid(room_id)
+    rid = parse_uuid(room_id, _NOT_FOUND)
     with conn.transaction():
         photo = conn.execute("SELECT storage_key FROM photos WHERE room_id = %s", (rid,)).fetchone()
         deleted = conn.execute(
@@ -59,7 +60,7 @@ def upload_photo(
     url_secret: str,
     url_ttl_s: int,
 ) -> Photo:
-    rid = _as_uuid(room_id)
+    rid = parse_uuid(room_id, _NOT_FOUND)
     if len(data) > max_bytes:
         raise ApiError(ErrorCode.photo_too_large, "That photo is over 12 MB. Try a smaller one.")
     try:
@@ -96,10 +97,3 @@ def upload_photo(
         height=info.height,
         url=signed_url(public_base_url, "photos", key, url_secret, url_ttl_s),
     )
-
-
-def _as_uuid(raw: str) -> uuid.UUID:
-    try:
-        return uuid.UUID(raw)
-    except ValueError as exc:
-        raise ApiError(ErrorCode.not_found, _NOT_FOUND) from exc
