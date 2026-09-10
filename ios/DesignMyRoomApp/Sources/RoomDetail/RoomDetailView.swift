@@ -12,27 +12,37 @@ struct RoomDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                // Inline Fraunces title instead of the system `.navigationTitle` font,
+                // matching the other screens (HANDOFF §2) — the back chevron still
+                // comes from the NavigationStack push itself, not from this title.
+                Text(viewModel.room.label ?? "Room")
+                    .font(.fraunces(21, weight: .medium))
+                    .foregroundStyle(Color.ink)
+
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.warn)
                 }
 
                 if viewModel.renders.isEmpty, !viewModel.isLoading, viewModel.errorMessage == nil {
                     Text("No renders yet for this room.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.inkSoft)
                         .padding(.top, 40)
                 }
 
                 ForEach(viewModel.renders, id: \.renderId) { render in
                     RenderHistoryRow(render: render)
                     if render.renderId != viewModel.renders.last?.renderId {
-                        Divider()
+                        Rectangle()
+                            .fill(Color.line)
+                            .frame(height: 1)
                     }
                 }
             }
             .padding(20)
         }
-        .navigationTitle(viewModel.room.label ?? "Room")
+        .background(Color.paper.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
         .overlay {
             if viewModel.isLoading, viewModel.renders.isEmpty {
                 ProgressView()
@@ -54,11 +64,12 @@ private struct RenderHistoryRow: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(styleDisplayName)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.ink)
                 Spacer()
                 Text(render.createdAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.faint)
             }
 
             switch render.status {
@@ -66,12 +77,12 @@ private struct RenderHistoryRow: View {
                 RenderSummaryView(render: render)
             case .failed:
                 Text(ErrorCopy.message(for: .renderFailed))
-                    .font(.footnote)
-                    .foregroundStyle(.orange)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.warn)
             case .queued, .running:
                 Text("Still processing…")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.inkSoft)
             }
         }
     }

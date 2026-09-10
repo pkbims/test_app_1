@@ -21,6 +21,7 @@ struct CompareView: View {
                 ProgressView().padding(40)
             }
         }
+        .background(Color.paper.ignoresSafeArea())
     }
 
     @ViewBuilder
@@ -30,8 +31,8 @@ struct CompareView: View {
 
             if let creditsLeft = render.creditsLeft {
                 Text("\(creditsLeft) room\(creditsLeft == 1 ? "" : "s") left")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.faint)
             }
 
             // Per the product decision: an existing room becomes read-only history
@@ -40,10 +41,13 @@ struct CompareView: View {
             Button {
                 flow.finish()
             } label: {
-                Text("Done").frame(maxWidth: .infinity)
+                Text("Done")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .background(Color.accent, in: RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
             .padding(.top, 8)
         }
         .padding(20)
@@ -72,29 +76,45 @@ struct CompareView: View {
         }
     }
 
+    // HANDOFF §2 "Compare — edge states": container becomes a plain `surface` card,
+    // and "Try again" is a recovery action, not the primary flow — a ghost
+    // (outlined, not filled) button instead of a full-width filled one. Same
+    // three-way switch, same `ErrorCopy` messages as before.
     @ViewBuilder
     private func edgeState(symbol: String, message: String, detail: String?) -> some View {
         VStack(spacing: 16) {
             Image(systemName: symbol)
-                .font(.system(size: 44))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 40))
+                .foregroundStyle(Color.faint)
             Text(message)
-                .font(.title3.weight(.medium))
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(Color.ink)
                 .multilineTextAlignment(.center)
             if let detail {
                 Text(detail)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.inkSoft)
                     .multilineTextAlignment(.center)
             }
             Button {
                 flow.returnToStylePickerForRestyle()
             } label: {
-                Text("Try again").frame(maxWidth: .infinity)
+                Text("Try again")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
+                    .stroke(Color.accent, lineWidth: 1.5)
+            )
         }
-        .padding(40)
+        .padding(28)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.surface)
+        )
+        .padding(20)
     }
 }

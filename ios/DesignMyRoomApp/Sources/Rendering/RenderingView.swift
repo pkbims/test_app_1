@@ -11,16 +11,18 @@ struct RenderingView: View {
     var body: some View {
         VStack(spacing: 20) {
             Spacer()
-            ProgressView()
-                .controlSize(.large)
+            RenderingRing()
             Text(statusText)
-                .font(.title3.weight(.medium))
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(Color.ink)
             Text("This usually takes under a minute.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 14))
+                .foregroundStyle(Color.inkSoft)
             Spacer()
         }
         .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.paper.ignoresSafeArea())
     }
 
     private var statusText: String {
@@ -37,5 +39,26 @@ struct RenderingView: View {
         default:
             return "Working on it..."
         }
+    }
+}
+
+/// HANDOFF §2 "Rendering": a custom 88×88 ring replaces the system spinner — 5pt
+/// stroke, `accentSoft` track, `accent` animated arc, continuous rotation. Purely
+/// visual; `RenderStateMachine`'s polling/status logic is untouched.
+private struct RenderingRing: View {
+    @State private var isRotating = false
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.accentSoft, lineWidth: 5)
+            Circle()
+                .trim(from: 0, to: 0.25)
+                .stroke(Color.accent, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                .rotationEffect(.degrees(isRotating ? 360 : 0))
+                .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isRotating)
+        }
+        .frame(width: 88, height: 88)
+        .onAppear { isRotating = true }
     }
 }
