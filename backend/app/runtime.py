@@ -15,6 +15,7 @@ from psycopg_pool import ConnectionPool
 
 from .auth.apple import APPLE_JWKS_URL, AppleIdentity, verify_dev_token, verify_identity_token
 from .db import make_pool
+from .imagegen import DisabledImageEditor, FakeImageEditor, ImageEditor, OpenAIImageEditor
 from .migrate import apply_all
 from .ratelimit import InProcessRateLimiter, RateLimiter
 from .settings import Settings, load
@@ -32,6 +33,7 @@ class Runtime:
     rate_limiter: RateLimiter
     apple_verifier: AppleVerifier
     vision: Vision
+    image_editor: ImageEditor
 
 
 _rt: Runtime | None = None
@@ -56,6 +58,7 @@ def start(settings: Settings | None = None) -> Runtime:
         rate_limiter=InProcessRateLimiter(),
         apple_verifier=make_apple_verifier(settings),
         vision=make_vision(settings),
+        image_editor=make_image_editor(settings),
     )
     return _rt
 
@@ -86,3 +89,13 @@ def make_vision(settings: Settings) -> Vision:
     if settings.app_env == "production":
         raise RuntimeError("OPENAI_API_KEY must be set when APP_ENV=production")
     return DisabledVision()
+
+
+def make_image_editor(settings: Settings) -> ImageEditor:
+    if settings.vision_backend == "fake":
+        return FakeImageEditor()
+    if settings.openai_api_key:
+        return OpenAIImageEditor(settings.openai_api_key)
+    if settings.app_env == "production":
+        raise RuntimeError("OPENAI_API_KEY must be set when APP_ENV=production")
+    return DisabledImageEditor()

@@ -17,6 +17,8 @@ from .auth import service as auth_service
 from .files_route import router as files_router
 from .inventory import service as inventory_service
 from .middleware import RequestMiddleware
+from .render import service as render_service
+from .render.service import RenderUrls
 from .rooms import service as rooms_service
 from .schemas import (
     AppleSignIn, Error, Health, Inventory, Me, Photo, RefreshRequest,
@@ -63,6 +65,11 @@ app.add_middleware(
 
 def _todo():
     raise NotImplementedError("contract only — the backend agent implements this")
+
+
+def _render_urls() -> RenderUrls:
+    s = runtime.get().settings
+    return RenderUrls(s.public_base_url, s.file_url_secret, s.file_url_ttl_s)
 
 
 # ── auth ──────────────────────────────────────────────────────────────────────
@@ -200,19 +207,33 @@ def create_render(body: RenderCreate, room_id: str = Path(...)) -> Render:
 
     Spends one credit. Returns immediately with status `queued`; the client polls
     `GET /v1/renders/{id}` every 2 seconds. A failed render refunds its credit."""
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"renders:{ctx.user_id}", 30, 3600)
+    with rt.pool.connection() as conn:
+        return render_service.create_render(
+            conn, room_id=room_id, user_id=ctx.user_id, body=body, urls=_render_urls()
+        )
 
 
 @app.get("/v1/renders/{render_id}", response_model=Render, responses=E,
          tags=["renders"], summary="Poll a render")
 def get_render(render_id: str = Path(...)) -> Render:
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"render_poll:{ctx.user_id}", 120, 60)
+    with rt.pool.connection() as conn:
+        return render_service.get_render(conn, render_id, ctx.user_id, urls=_render_urls())
 
 
 @app.get("/v1/rooms/{room_id}/renders", response_model=List[Render], responses=E,
          tags=["renders"], summary="Renders for a room")
 def list_renders(room_id: str = Path(...)) -> List[Render]:
-    _todo()
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, f"render_list:{ctx.user_id}", 60, 60)
+    with rt.pool.connection() as conn:
+        return render_service.list_renders(conn, room_id, ctx.user_id, urls=_render_urls())
 
 
 # ── operations ────────────────────────────────────────────────────────────────

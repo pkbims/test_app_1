@@ -29,6 +29,35 @@ def api(pg_url, tmp_path, monkeypatch):
         yield client
 
 
+@pytest.fixture
+def run_worker(pg_url, tmp_path):
+    """Run one worker tick against the same scratch DB and photo dir as `api`.
+
+    `catch_up=True` first makes any backed-off job due, so tests don't wait out
+    the real retry backoff.
+    """
+    import psycopg
+
+    from app.imagegen import FakeImageEditor
+    from app.storage import LocalDiskStorage
+    from app.vision import FakeVision
+    from worker.runner import run_one
+
+    def _tick(*, editor=None, vision=None, catch_up=True, worker="test-worker"):
+        with psycopg.connect(pg_url, autocommit=True) as conn:
+            if catch_up:
+                conn.execute("UPDATE jobs SET run_after = now() WHERE status = 'queued'")
+            return run_one(
+                conn,
+                LocalDiskStorage(tmp_path),
+                vision or FakeVision(),
+                editor or FakeImageEditor(),
+                worker,
+            )
+
+    return _tick
+
+
 def sign_in(client, sub: str = "000111.aaa.222") -> dict[str, str]:
     """Sign in via the dev token path; return an Authorization header dict."""
     import jwt

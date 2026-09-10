@@ -32,11 +32,25 @@ _INVENTORY_PROMPT = (
 # ------------------------------------------------------------------------------
 
 
+_PRESERVATION_PROMPT = (
+    "This is a restyled photo of a room. The architectural features listed below "
+    "were in the original and MUST still be present, in the same place and shape. "
+    "For each id, decide whether it is still clearly there in this image. "
+    'Return JSON only: {"present":["A"],"missing":["B"]}.\n'
+)
+
+
 @dataclass(frozen=True)
 class RawItem:
     kind: str  # "architecture" | "object"
     name: str
     description: str
+
+
+@dataclass(frozen=True)
+class PreservationResult:
+    preservation_rate: float  # 0..1, share of architecture items still present
+    missing_ids: list[str]
 
 
 class VisionError(Exception):
@@ -45,6 +59,10 @@ class VisionError(Exception):
 
 class Vision(Protocol):
     def inventory(self, image_bytes: bytes, content_type: str) -> list[RawItem]: ...
+
+    def preservation_check(
+        self, after_bytes: bytes, architecture: list[tuple[str, str]]
+    ) -> PreservationResult: ...
 
 
 class OpenAIVision:
@@ -78,6 +96,43 @@ class OpenAIVision:
             raise VisionError(f"{type(exc).__name__}: {exc}") from exc
         return [_coerce(item) for item in items]
 
+    def preservation_check(
+        self, after_bytes: bytes, architecture: list[tuple[str, str]]
+    ) -> PreservationResult:
+        import openai
+
+        if not architecture:
+            return PreservationResult(1.0, [])
+        listing = "\n".join(f"{item_id}: {desc}" for item_id, desc in architecture)
+        data_uri = f"data:image/png;base64,{base64.b64encode(after_bytes).decode()}"
+        try:
+            resp = self._client.chat.completions.create(
+                model=self._model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": _PRESERVATION_PROMPT + listing},
+                            {"type": "image_url", "image_url": {"url": data_uri}},
+                        ],
+                    }
+                ],
+                response_format={"type": "json_object"},
+            )
+            parsed = json.loads(resp.choices[0].message.content or "")
+            present = {str(x).upper() for x in parsed.get("present", [])}
+        except (
+            openai.OpenAIError,
+            json.JSONDecodeError,
+            AttributeError,
+            IndexError,
+            TypeError,
+        ) as exc:
+            raise VisionError(f"{type(exc).__name__}: {exc}") from exc
+        ids = [item_id for item_id, _ in architecture]
+        missing = [item_id for item_id in ids if item_id not in present]
+        return PreservationResult((len(ids) - len(missing)) / len(ids), missing)
+
 
 class FakeVision:
     """Deterministic stand-in for local `docker compose` and integration tests
@@ -103,9 +158,19 @@ class FakeVision:
             RawItem("object", "floor lamp", "Slim black floor lamp in the right-hand corner."),
         ]
 
+    def preservation_check(
+        self, after_bytes: bytes, architecture: list[tuple[str, str]]
+    ) -> PreservationResult:
+        return PreservationResult(1.0, [])
+
 
 class DisabledVision:
     def inventory(self, image_bytes: bytes, content_type: str) -> list[RawItem]:
+        raise VisionError("vision not configured — set OPENAI_API_KEY or VISION_BACKEND=fake")
+
+    def preservation_check(
+        self, after_bytes: bytes, architecture: list[tuple[str, str]]
+    ) -> PreservationResult:
         raise VisionError("vision not configured — set OPENAI_API_KEY or VISION_BACKEND=fake")
 
 
