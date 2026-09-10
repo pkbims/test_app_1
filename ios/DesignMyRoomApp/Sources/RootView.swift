@@ -58,27 +58,18 @@ private struct HomeContainerView: View {
 
     var body: some View {
         NavigationStack {
-            HomeView(viewModel: homeViewModel, creditsLeft: me.creditsLeft) {
-                showingNewRoomFlow = true
-            }
+            HomeView(
+                viewModel: homeViewModel,
+                creditsLeft: me.creditsLeft,
+                onNewRoom: { showingNewRoomFlow = true },
+                onSignOut: { Task { await authManager.signOut() } }
+            )
             .navigationDestination(for: Room.self) { room in
                 RoomDetailView(viewModel: RoomDetailViewModel(
                     room: room,
                     rendersProvider: environment.apiClient,
                     crashReporter: environment.crashReporter
                 ))
-            }
-            .toolbar {
-                // Credits moved into the list header (below) rather than a toolbar
-                // item — a plain Text in a toolbar item picks up the system's pill
-                // chrome at a fixed width and truncates ("Sign out", an actual
-                // button, is fine with that same chrome).
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Sign out") {
-                        Task { await authManager.signOut() }
-                    }
-                    .font(.footnote)
-                }
             }
         }
         .fullScreenCover(isPresented: $showingNewRoomFlow) {

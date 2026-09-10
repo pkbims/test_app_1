@@ -10,15 +10,27 @@ public struct Room: Codable, Equatable, Hashable, Identifiable, Sendable {
     public let createdAt: Date
     public let hasPhoto: Bool
     public let hasInventory: Bool
+    /// Signed read URL for the latest done render's after-image, or the room's
+    /// original photo if no render has finished yet; nil if the room has no photo.
+    /// Same short-lived, never-cached `/files/...` scheme as `Photo.url`.
+    public let thumbnailUrl: String?
 
     public var id: String { roomId }
 
-    public init(roomId: String, label: String?, createdAt: Date, hasPhoto: Bool, hasInventory: Bool) {
+    public init(
+        roomId: String,
+        label: String?,
+        createdAt: Date,
+        hasPhoto: Bool,
+        hasInventory: Bool,
+        thumbnailUrl: String? = nil
+    ) {
         self.roomId = roomId
         self.label = label
         self.createdAt = createdAt
         self.hasPhoto = hasPhoto
         self.hasInventory = hasInventory
+        self.thumbnailUrl = thumbnailUrl
     }
 }
 

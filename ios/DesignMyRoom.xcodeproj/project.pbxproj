@@ -11,6 +11,7 @@
 		09CD007FBB5CE96F9C57936F /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E1066A38E159E25474D019 /* SignInView.swift */; };
 		19BED3C490333A935A03E3C5 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6677E08BE0384E089790FCC7 /* AuthManager.swift */; };
 		2308D1C59F5D6D5E0BA9D212 /* AddPhotoFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */; };
+		2671D7E92ABA4F9B4F8DCFBC /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6E2D7EDDF38FB39DA6821E1 /* DesignTokens.swift */; };
 		273EDF7442FE8F920451732C /* RoomDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C28D6E82B112C285FFEDFA /* RoomDetailViewModel.swift */; };
 		27781601B6DE4C0A8E70E16D /* StylePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A262FBAD0153DB53D27F8D32 /* StylePickerView.swift */; };
 		2D59C83A9DB64D21860ADD37 /* AddPhotoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 282558BC4B2FF93667B93D62 /* AddPhotoView.swift */; };
@@ -75,6 +76,7 @@
 		C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPhotoFlowUITests.swift; sourceTree = "<group>"; };
 		D6E1066A38E159E25474D019 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		DEA79348908101C2D6186BFD /* DesignMyRoomCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DesignMyRoomCore; path = DesignMyRoomCore; sourceTree = SOURCE_ROOT; };
+		E6E2D7EDDF38FB39DA6821E1 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		E783CFEE8BB0F25358FDF061 /* CompareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareView.swift; sourceTree = "<group>"; };
 		E80679EEFE72454F3E65D13F /* DesignMyRoom.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = DesignMyRoom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EAE3BD2AF1BA2C540E1911B5 /* DesignMyRoomAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DesignMyRoomAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -264,6 +266,7 @@
 		EF11BDA84E631F3A7BAE57CC /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				E6E2D7EDDF38FB39DA6821E1 /* DesignTokens.swift */,
 				688C4BED932E5928FB8E4D2B /* RenderSummaryView.swift */,
 			);
 			path = Shared;
@@ -334,15 +337,15 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					52BABD6254DCCB37262EA0F0 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = U73T325TMU;
 						ProvisioningStyle = Automatic;
 					};
 					670876AE26B15FD75D4018EE = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = U73T325TMU;
 						ProvisioningStyle = Automatic;
 					};
 					AC9CC88A3F8A2764897B5070 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = U73T325TMU;
 						ProvisioningStyle = Automatic;
 						TestTargetID = 670876AE26B15FD75D4018EE;
 					};
@@ -392,6 +395,7 @@
 				CE206251F9AAF39C2F4F8F21 /* CompareView.swift in Sources */,
 				EB1FCC23B7BE192A23A997A2 /* ConfirmView.swift in Sources */,
 				3B4E9D338DDD2E0D57DED3F6 /* DesignMyRoomApp.swift in Sources */,
+				2671D7E92ABA4F9B4F8DCFBC /* DesignTokens.swift in Sources */,
 				DBEA3A1F4FB91F2BBB3998A4 /* HomeView.swift in Sources */,
 				829E36B10C289E5EF79ACC16 /* HomeViewModel.swift in Sources */,
 				AAB678AB69E50EDA6E5D98C6 /* PhotoPicker.swift in Sources */,
@@ -495,7 +499,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = U73T325TMU;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -599,7 +603,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = U73T325TMU;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

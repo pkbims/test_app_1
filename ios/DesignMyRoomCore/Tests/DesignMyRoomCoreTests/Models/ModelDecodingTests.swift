@@ -60,6 +60,25 @@ final class ModelDecodingTests: XCTestCase {
         """.data(using: .utf8)!
         let room = try JSONCoding.decoder.decode(Room.self, from: json)
         XCTAssertNil(room.label)
+        XCTAssertNil(room.thumbnailUrl)
+    }
+
+    func testDecodeRoomWithThumbnailUrl() throws {
+        let json = """
+        {"room_id":"rm_1","label":"Living room","created_at":"2026-09-09T20:20:00Z","has_photo":true,
+         "has_inventory":true,"thumbnail_url":"https://example.com/files/renders/rd_1?exp=1&sig=x"}
+        """.data(using: .utf8)!
+        let room = try JSONCoding.decoder.decode(Room.self, from: json)
+        XCTAssertEqual(room.thumbnailUrl, "https://example.com/files/renders/rd_1?exp=1&sig=x")
+    }
+
+    func testDecodeRoomWithNullThumbnailUrl() throws {
+        let json = """
+        {"room_id":"rm_1","label":"Living room","created_at":"2026-09-09T20:20:00Z","has_photo":false,
+         "has_inventory":false,"thumbnail_url":null}
+        """.data(using: .utf8)!
+        let room = try JSONCoding.decoder.decode(Room.self, from: json)
+        XCTAssertNil(room.thumbnailUrl)
     }
 
     func testDecodePhoto() throws {
