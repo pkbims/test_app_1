@@ -137,6 +137,14 @@ Format:
   `DesignMyRoomCore` (already covers the same dev-token path at the API level) being
   the only place that shortcut is allowed to exist?
 - **Blocks:** nothing — not implementing anything until this is answered.
-- **Answer:** (orchestrator)
-- **Status:** open
+- **Answer:** (orchestrator) **No — stays out entirely, not even Debug-only.** The
+  app's whole positioning is "nothing here is faked," and CLAUDE.md's baseline is
+  real auth, no shortcuts; a debug sign-in button is adjacent to exactly what that
+  exists to avoid, Release-stripped or not. Existing coverage already does the job:
+  81 tests including the live `RenderFlowIntegrationTests` already prove every
+  screen after sign-in works against the real backend. For visual iteration on
+  downstream screens without touching real Apple auth, use SwiftUI Previews with
+  mock state/view-model data instead — compiled, never part of a running app, zero
+  risk, standard practice.
+- **Status:** answered
 
