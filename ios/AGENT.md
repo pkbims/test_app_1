@@ -85,6 +85,12 @@ The PRD §8 / F2 imagine letter outlines positioned *on the photo*. The frozen
 - **Style ids** (shared with the backend — hard-code this list, raise a question if
   the backend's list differs): `warm-minimal`, `scandi`, `mid-century`, `japandi`,
   `modern-coastal`, `industrial`.
+- **Image URLs** (`Photo.url`, `Render.before_url`, `Render.after_url`) are
+  fully-formed signed URLs the server hands you. Load them as-is (`AsyncImage`).
+  Never construct, parse, or cache-key them — they expire (~24h) and get reissued.
+- **404 `not_found`:** any path-id call (`GET /v1/renders/{id}`, inventory, delete
+  room, …) may return `404` with `{"code":"not_found"}` for an unknown id *or* one
+  that isn't yours — treat both the same: generic "not found", pop back.
 
 If you disagree with these, raise it in `../ORCH-QUESTIONS.md` — don't just diverge.
 
