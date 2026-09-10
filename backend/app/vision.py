@@ -48,9 +48,16 @@ class RawItem:
 
 
 @dataclass(frozen=True)
+class InventoryResult:
+    items: list[RawItem]
+    prompt: str  # exactly what was sent — stored so it can be reviewed later
+
+
+@dataclass(frozen=True)
 class PreservationResult:
     preservation_rate: float  # 0..1, share of architecture items still present
     missing_ids: list[str]
+    prompt: str  # exactly what was sent — "" when no call was made (no architecture)
 
 
 class VisionError(Exception):
@@ -58,11 +65,16 @@ class VisionError(Exception):
 
 
 class Vision(Protocol):
-    def inventory(self, image_bytes: bytes, content_type: str) -> list[RawItem]: ...
+    def inventory(self, image_bytes: bytes, content_type: str) -> InventoryResult: ...
 
     def preservation_check(
         self, after_bytes: bytes, architecture: list[tuple[str, str]]
     ) -> PreservationResult: ...
+
+
+def _preservation_prompt(architecture: list[tuple[str, str]]) -> str:
+    listing = "\n".join(f"{item_id}: {desc}" for item_id, desc in architecture)
+    return _PRESERVATION_PROMPT + listing
 
 
 class OpenAIVision:
@@ -72,7 +84,7 @@ class OpenAIVision:
         self._client = OpenAI(api_key=api_key, timeout=timeout, max_retries=1)
         self._model = model
 
-    def inventory(self, image_bytes: bytes, content_type: str) -> list[RawItem]:
+    def inventory(self, image_bytes: bytes, content_type: str) -> InventoryResult:
         import openai
 
         data_uri = f"data:{content_type};base64,{base64.b64encode(image_bytes).decode()}"
@@ -94,7 +106,7 @@ class OpenAIVision:
             items = json.loads(content)["items"]
         except (openai.OpenAIError, json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
             raise VisionError(f"{type(exc).__name__}: {exc}") from exc
-        return [_coerce(item) for item in items]
+        return InventoryResult(items=[_coerce(item) for item in items], prompt=_INVENTORY_PROMPT)
 
     def preservation_check(
         self, after_bytes: bytes, architecture: list[tuple[str, str]]
@@ -102,8 +114,8 @@ class OpenAIVision:
         import openai
 
         if not architecture:
-            return PreservationResult(1.0, [])
-        listing = "\n".join(f"{item_id}: {desc}" for item_id, desc in architecture)
+            return PreservationResult(1.0, [], prompt="")
+        prompt = _preservation_prompt(architecture)
         data_uri = f"data:image/png;base64,{base64.b64encode(after_bytes).decode()}"
         try:
             resp = self._client.chat.completions.create(
@@ -112,7 +124,7 @@ class OpenAIVision:
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": _PRESERVATION_PROMPT + listing},
+                            {"type": "text", "text": prompt},
                             {"type": "image_url", "image_url": {"url": data_uri}},
                         ],
                     }
@@ -131,15 +143,17 @@ class OpenAIVision:
             raise VisionError(f"{type(exc).__name__}: {exc}") from exc
         ids = [item_id for item_id, _ in architecture]
         missing = [item_id for item_id in ids if item_id not in present]
-        return PreservationResult((len(ids) - len(missing)) / len(ids), missing)
+        return PreservationResult((len(ids) - len(missing)) / len(ids), missing, prompt=prompt)
 
 
 class FakeVision:
     """Deterministic stand-in for local `docker compose` and integration tests
     (`VISION_BACKEND=fake`). Not a real inventory — just a plausible one."""
 
-    def inventory(self, image_bytes: bytes, content_type: str) -> list[RawItem]:
-        return [
+    def inventory(self, image_bytes: bytes, content_type: str) -> InventoryResult:
+        # Uses the real prompt constant even though no call is made, so the
+        # "what did we send" record is the same text the real backend would send.
+        items = [
             RawItem(
                 "architecture", "back wall", "White painted back wall spanning the whole frame."
             ),
@@ -157,15 +171,17 @@ class FakeVision:
             ),
             RawItem("object", "floor lamp", "Slim black floor lamp in the right-hand corner."),
         ]
+        return InventoryResult(items=items, prompt=_INVENTORY_PROMPT)
 
     def preservation_check(
         self, after_bytes: bytes, architecture: list[tuple[str, str]]
     ) -> PreservationResult:
-        return PreservationResult(1.0, [])
+        prompt = _preservation_prompt(architecture) if architecture else ""
+        return PreservationResult(1.0, [], prompt=prompt)
 
 
 class DisabledVision:
-    def inventory(self, image_bytes: bytes, content_type: str) -> list[RawItem]:
+    def inventory(self, image_bytes: bytes, content_type: str) -> InventoryResult:
         raise VisionError("vision not configured — set OPENAI_API_KEY or VISION_BACKEND=fake")
 
     def preservation_check(

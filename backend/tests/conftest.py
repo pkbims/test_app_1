@@ -20,6 +20,9 @@ def api(pg_url, tmp_path, monkeypatch):
     monkeypatch.setenv("APPLE_CLIENT_ID", "")
     monkeypatch.setenv("PUBLIC_BASE_URL", "http://testserver")
     monkeypatch.setenv("VISION_BACKEND", "fake")
+    # Pin explicitly — a dev .env may set SIGNUP_FREE_CREDITS for local manual
+    # testing; the test suite must not inherit that.
+    monkeypatch.setenv("SIGNUP_FREE_CREDITS", "1")
 
     from fastapi.testclient import TestClient
 

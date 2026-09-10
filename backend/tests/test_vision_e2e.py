@@ -36,6 +36,7 @@ def live(pg_url, tmp_path, monkeypatch):
     monkeypatch.setenv("APP_ENV", "dev")
     monkeypatch.setenv("APPLE_CLIENT_ID", "")
     monkeypatch.setenv("VISION_BACKEND", "openai")
+    monkeypatch.setenv("SIGNUP_FREE_CREDITS", "1")
 
     from fastapi.testclient import TestClient
 
