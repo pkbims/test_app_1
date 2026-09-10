@@ -1,0 +1,7 @@
+# Xcode/xcodegen: xcuserdata and local state are per-machine, never shared.
+# project.pbxproj IS tracked — see project.yml's note in README about the two.
+xcuserdata/
+*.xcuserstate
+.swiftpm/
+.build/
+DerivedData/

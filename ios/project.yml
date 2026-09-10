@@ -1,0 +1,59 @@
+name: DesignMyRoom
+options:
+  bundleIdPrefix: com.designmyroom
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_PREVIEWS: YES
+packages:
+  DesignMyRoomCore:
+    path: DesignMyRoomCore
+targets:
+  DesignMyRoom:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: DesignMyRoomApp/Sources
+    resources:
+      - path: DesignMyRoomApp/Resources
+    dependencies:
+      - package: DesignMyRoomCore
+    info:
+      path: DesignMyRoomApp/Info.plist
+      properties:
+        CFBundleDisplayName: DesignMyRoom
+        UILaunchScreen: {}
+        NSCameraUsageDescription: "Take a photo of your room to restyle it."
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: DesignMyRoomApp/DesignMyRoom.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.designmyroom.app
+        PRODUCT_NAME: DesignMyRoom
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+schemes:
+  # Unit tests for the core logic run via `swift test` in DesignMyRoomCore/ (see its
+  # own README note and ios/README.md) — that's a real SPM package with its own test
+  # target, not something an Xcode scheme's `test:` action can point at directly, so
+  # this scheme only builds and runs the app.
+  DesignMyRoom:
+    build:
+      targets:
+        DesignMyRoom: all
+    run:
+      config: Debug

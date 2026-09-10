@@ -93,3 +93,25 @@ Format:
   path. Keep the coded `Error` shape for application errors, the plain envelope for
   infra 503s.
 - **Status:** answered
+
+## Q5 — No Apple Developer team configured; Sign in with Apple can't be driven end-to-end
+- **From:** ios
+- **Date:** 2026-09-09
+- **Question:** The client's Sign in with Apple path is fully implemented with real
+  `AuthenticationServices` (`SignInWithAppleButton`, no fake/bypass login), and the
+  app builds and code-signs for the Simulator ("Sign to Run Locally" — no team
+  needed for that). But actually completing a sign-in needs one of: (a) an Apple ID
+  signed into the Simulator's Settings app, or (b) a real paid Apple Developer team
+  in Xcode with an App ID that has the Sign in with Apple capability registered, plus
+  the `com.apple.developer.applesignin` entitlement provisioned for it. Both are
+  Xcode-UI/Apple-account steps I can't do from here (`security find-identity` shows
+  0 signing identities; no team is configured) — confirmed by building and running
+  the app rather than assumed. This is the same gap the brief's "Known open items"
+  section already anticipated.
+- **Blocks:** manually exercising the sign-in screen past the button tap, in the
+  Simulator or on device. Does not block anything else — every other screen, and the
+  full backend flow (auth through render) is proven end-to-end against a dev-token
+  session in `RenderFlowIntegrationTests` (`DesignMyRoomCore`), bypassing only the
+  Apple-side handshake.
+- **Answer:** (orchestrator)
+- **Status:** open
