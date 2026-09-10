@@ -40,18 +40,19 @@ final class RenderFlowIntegrationTests: XCTestCase {
         return (client, tokenStore)
     }
 
-    /// Finds `inputs/room.jpg` by walking up from this source file, rather than
-    /// hardcoding a relative-path depth that would silently break on reorganization.
-    private func loadRoomPhotoJPEG() throws -> Data {
+    /// Finds a fixture under `inputs/` by walking up from this source file, rather
+    /// than hardcoding a relative-path depth that would silently break on
+    /// reorganization.
+    private func fixture(_ relativePath: String) throws -> Data {
         var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         for _ in 0..<10 {
-            let candidate = dir.appendingPathComponent("inputs/room.jpg")
+            let candidate = dir.appendingPathComponent("inputs/\(relativePath)")
             if FileManager.default.fileExists(atPath: candidate.path) {
                 return try Data(contentsOf: candidate)
             }
             dir = dir.deletingLastPathComponent()
         }
-        throw XCTSkip("inputs/room.jpg not found relative to test file; skipping photo-dependent test.")
+        throw XCTSkip("inputs/\(relativePath) not found relative to test file; skipping photo-dependent test.")
     }
 
     func testFullFlowSignInThroughRender() async throws {
@@ -64,7 +65,7 @@ final class RenderFlowIntegrationTests: XCTestCase {
         XCTAssertFalse(room.roomId.isEmpty)
         XCTAssertFalse(room.hasPhoto)
 
-        let photoData = try loadRoomPhotoJPEG()
+        let photoData = try fixture("room.jpg")
         let photo = try await client.uploadPhoto(
             roomId: room.roomId,
             data: photoData,
@@ -102,6 +103,27 @@ final class RenderFlowIntegrationTests: XCTestCase {
         try await client.deleteRoom(roomId: room.roomId)
     }
 
+    func testRealHEICPhotoConvertsAndUploadsSuccessfully() async throws {
+        // The full client-side path an iPhone photo actually takes: HEIC bytes from
+        // the picker -> PhotoFormatConverter -> upload. Confirms the server accepts
+        // what the converter produces, not just that ImageIO can decode it.
+        let (client, _) = try await makeSignedInClient()
+        let room = try await client.createRoom(label: nil)
+
+        let heicData = try fixture("IMG_1519.HEIC")
+        let jpegData = try PhotoFormatConverter.convertToAcceptedFormatIfNeeded(heicData)
+        XCTAssertTrue(PhotoValidation.isWithinSizeLimit(jpegData))
+
+        let photo = try await client.uploadPhoto(
+            roomId: room.roomId,
+            data: jpegData,
+            filename: "photo.jpg",
+            mimeType: "image/jpeg"
+        )
+        XCTAssertEqual(photo.roomId, room.roomId)
+        XCTAssertGreaterThan(photo.width, 0)
+    }
+
     func testCreateInventoryWithoutAPhotoReturnsNoPhotos() async throws {
         let (client, _) = try await makeSignedInClient()
         let room = try await client.createRoom(label: nil)
@@ -128,7 +150,7 @@ final class RenderFlowIntegrationTests: XCTestCase {
     func testRenderCreationIdempotencyKeyReturnsTheSameRenderOnRetry() async throws {
         let (client, _) = try await makeSignedInClient()
         let room = try await client.createRoom(label: nil)
-        let photoData = try loadRoomPhotoJPEG()
+        let photoData = try fixture("room.jpg")
         _ = try await client.uploadPhoto(roomId: room.roomId, data: photoData, filename: "room.jpg", mimeType: "image/jpeg")
         _ = try await client.createInventory(roomId: room.roomId)
 
