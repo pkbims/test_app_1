@@ -135,7 +135,13 @@ def list_rooms() -> List[Room]:
     ctx = context.current()
     ratelimit.enforce(rt.rate_limiter, "rooms_list", ctx.user_id)
     with rt.pool.connection() as conn:
-        return rooms_service.list_rooms(conn, ctx.user_id)
+        return rooms_service.list_rooms(
+            conn,
+            ctx.user_id,
+            public_base_url=rt.settings.public_base_url,
+            url_secret=rt.settings.file_url_secret,
+            url_ttl_s=rt.settings.file_url_ttl_s,
+        )
 
 
 @app.post("/v1/rooms", response_model=Room, status_code=status.HTTP_201_CREATED,
