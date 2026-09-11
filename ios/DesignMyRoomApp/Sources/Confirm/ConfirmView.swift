@@ -1,17 +1,22 @@
 import DesignMyRoomCore
 import SwiftUI
 
-/// Screen 3, as a labelled list rather than a photo overlay — the orchestrator's
+/// Screen 3, reworked per the options round (`options_review/HANDOFF.md` §5.1):
+/// retitled "Here's what we found", a new room-type chip row first, the
+/// architecture section relabelled with a single heading-level "locked" note
+/// instead of a per-row lock glyph, and a Keep | Remove segmented control per
+/// object row with a live count and a live summary sentence above Continue.
+///
+/// Still a labelled list rather than a photo overlay — the orchestrator's
 /// deviation decision (`ios/AGENT.md`): the frozen `InventoryItem` has no
-/// coordinates, so there is nothing to draw the outlines onto. The photo is shown for
-/// reference only; architecture rows are informational ("locked" — never
-/// removable); object rows toggle into `removeIds`. Everything not toggled is kept.
+/// coordinates, so there is nothing to draw outlines onto. The photo is shown for
+/// reference only.
 struct ConfirmView: View {
     @Bindable var flow: RoomFlowViewModel
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
                 if let url = flow.photo?.url, let imageURL = URL(string: url) {
                     AsyncImage(url: imageURL) { phase in
                         switch phase {
@@ -29,35 +34,89 @@ struct ConfirmView: View {
                     .cardShadow()
                 }
 
-                Text("What's in this room")
-                    .font(.fraunces(21, weight: .medium))
-                    .foregroundStyle(Color.ink)
-                Text("The architecture stays exactly where it is. Tap anything else you'd like removed — everything else is kept.")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.inkSoft)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Here's what we found")
+                        .font(.fraunces(22, weight: .medium))
+                        .foregroundStyle(Color.ink)
+                    Text("Check it before we restyle — nothing changes until you tap Continue")
+                        .font(.eyebrow)
+                        .foregroundStyle(Color.faint)
+                }
 
                 if let inventory = flow.inventory {
                     let architecture = inventory.items.filter { $0.kind == .architecture }
                     let objects = inventory.items.filter { $0.kind == .object }
+                    let kept = objects.filter { !flow.removeIds.contains($0.id) }
+                    let removed = objects.filter { flow.removeIds.contains($0.id) }
 
-                    if !architecture.isEmpty {
-                        SectionHeader(title: "Architecture — locked")
-                        ForEach(architecture) { item in
-                            InventoryRow(item: item, isRemoving: false, isLocked: true) {}
+                    VStack(alignment: .leading, spacing: 0) {
+                        OptionSection(
+                            icon: "🏠",
+                            title: "Room type",
+                            isFirst: true,
+                            helper: roomTypeHelper(detected: inventory.roomType)
+                        ) {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 7) {
+                                    ForEach(RoomType.allCases, id: \.self) { roomType in
+                                        OptionChip(
+                                            label: roomType.displayName,
+                                            isSelected: flow.selectedRoomType == roomType
+                                        ) {
+                                            flow.selectRoomType(roomType)
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 2)
+                            }
                         }
-                    }
-                    if !objects.isEmpty {
-                        SectionHeader(title: "Objects")
-                        ForEach(objects) { item in
-                            InventoryRow(
-                                item: item,
-                                isRemoving: flow.removeIds.contains(item.id),
-                                isLocked: false
+
+                        if !architecture.isEmpty {
+                            OptionSection(
+                                icon: "🔒",
+                                title: "The room itself",
+                                note: "locked",
+                                helper: "Walls, windows and features like these stay exactly where they are. That's the whole point."
                             ) {
-                                flow.toggleRemove(item)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    ForEach(architecture) { item in
+                                        LockedRow(item: item)
+                                    }
+                                }
+                            }
+                        }
+
+                        if !objects.isEmpty {
+                            OptionSection(
+                                icon: "🛋️",
+                                title: "Your things",
+                                note: ConfirmSummary.count(kept: kept.count, removed: removed.count),
+                                helper: "Everything here stays unless you say so. Tap Remove on anything you'd like gone."
+                            ) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    ForEach(objects) { item in
+                                        ObjectRow(
+                                            item: item,
+                                            isRemoving: Binding(
+                                                get: { flow.removeIds.contains(item.id) },
+                                                set: { newValue in
+                                                    if newValue != flow.removeIds.contains(item.id) {
+                                                        flow.toggleRemove(item)
+                                                    }
+                                                }
+                                            )
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
+
+                    Text(ConfirmSummary.sentence(kept: kept.map(\.name), removed: removed.map(\.name)))
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.inkSoft)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
                 } else {
                     ProgressView()
                         .frame(maxWidth: .infinity)
@@ -82,62 +141,46 @@ struct ConfirmView: View {
                 .background(Color.accent, in: RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
                 .disabled(flow.inventory == nil)
                 .opacity(flow.inventory == nil ? 0.5 : 1)
-                .padding(.top, 12)
+                .padding(.top, 4)
             }
             .padding(20)
         }
         .background(Color.paper.ignoresSafeArea())
     }
-}
 
-private struct SectionHeader: View {
-    let title: String
-    var body: some View {
-        Text(title.uppercased())
-            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-            .tracking(0.8)
-            .foregroundStyle(Color.faint)
-            .padding(.top, 8)
+    private func roomTypeHelper(detected: RoomType?) -> String {
+        if let detected {
+            "We think it's a \(detected.displayName.lowercased()). Tap another if we're wrong."
+        } else {
+            "What kind of room is this?"
+        }
     }
 }
 
-// HANDOFF §2 "What's in this room (Confirm)": architecture rows get a recessed
-// `surface2` background in addition to the lock glyph so "locked" reads as a
-// visual state, not just an icon; object rows stay on plain background so the two
-// groups read apart at a glance. The inventory letter moves from plain monospace
-// text into a small rounded badge; Remove/Removed becomes a pill chip instead of a
-// bordered button. `onToggle`/`removeIds` are unchanged — styling only.
-private struct InventoryRow: View {
+private extension Font {
+    static var eyebrow: Font { .system(size: 11, weight: .semibold, design: .monospaced) }
+}
+
+/// An architecture row — informational only, no per-row lock glyph (the section
+/// heading's "locked" note carries that now).
+private struct LockedRow: View {
     let item: InventoryItem
-    let isRemoving: Bool
-    let isLocked: Bool
-    let onToggle: () -> Void
 
     var body: some View {
         HStack(spacing: Spacing.m) {
             letterBadge
             Text(item.name)
                 .font(.system(size: 15))
-                .strikethrough(isRemoving)
-                .foregroundStyle(isRemoving ? Color.faint : Color.ink)
+                .foregroundStyle(Color.ink)
             Spacer()
-            if isLocked {
-                Image(systemName: "lock.fill")
-                    .foregroundStyle(Color.faint)
-                    .font(.system(size: 13))
-            } else {
-                removeChip
-            }
         }
         .padding(.vertical, Spacing.sm)
-        .padding(.horizontal, isLocked ? Spacing.m : 0)
-        .opacity(isLocked ? 0.85 : 1)
-        .background {
-            if isLocked {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.surface2)
-            }
-        }
+        .padding(.horizontal, Spacing.m)
+        .opacity(0.85)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.surface2)
+        )
     }
 
     private var letterBadge: some View {
@@ -154,16 +197,38 @@ private struct InventoryRow: View {
                     .stroke(Color.line, lineWidth: 1)
             )
     }
+}
 
-    private var removeChip: some View {
-        Button(action: onToggle) {
-            Text(isRemoving ? "Removed" : "Remove")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(isRemoving ? Color.inkSoft : Color.accentDeep)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(isRemoving ? Color.surface2 : Color.accentSoft))
+/// An object row — Keep | Remove segmented control, default Keep (HANDOFF §5.1).
+private struct ObjectRow: View {
+    let item: InventoryItem
+    @Binding var isRemoving: Bool
+
+    var body: some View {
+        HStack(spacing: Spacing.m) {
+            letterBadge
+            Text(item.name)
+                .font(.system(size: 15))
+                .strikethrough(isRemoving)
+                .foregroundStyle(isRemoving ? Color.faint : Color.ink)
+            Spacer()
+            KeepRemoveControl(isRemoving: $isRemoving)
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, Spacing.sm)
+    }
+
+    private var letterBadge: some View {
+        Text(item.id)
+            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+            .foregroundStyle(Color.inkSoft)
+            .frame(width: 24, height: 24)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.letterBadge, style: .continuous)
+                    .fill(Color.surface2)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.letterBadge, style: .continuous)
+                    .stroke(Color.line, lineWidth: 1)
+            )
     }
 }

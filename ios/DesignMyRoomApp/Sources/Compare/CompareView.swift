@@ -27,7 +27,10 @@ struct CompareView: View {
     @ViewBuilder
     private func doneContent(_ render: Render) -> some View {
         VStack(alignment: .leading, spacing: 16) {
+            CompareTitle(render: render)
             RenderSummaryView(render: render)
+
+            AskedForRow(render: render, inventory: flow.inventory)
 
             if let creditsLeft = render.creditsLeft {
                 Text("\(creditsLeft) room\(creditsLeft == 1 ? "" : "s") left")
@@ -117,4 +120,63 @@ struct CompareView: View {
         )
         .padding(20)
     }
+}
+
+/// "Your {room type}, {style}" — the compare screen's headline (HANDOFF §5.4).
+private struct CompareTitle: View {
+    let render: Render
+
+    var body: some View {
+        Text("Your \(roomTypeText), \(styleDisplayName)")
+            .font(.fraunces(22, weight: .medium))
+            .foregroundStyle(Color.ink)
+    }
+
+    private var roomTypeText: String {
+        render.roomType?.displayName.lowercased() ?? "room"
+    }
+
+    private var styleDisplayName: String {
+        Style.all.first { $0.id == render.style }?.displayName ?? render.style
+    }
+}
+
+/// The small, optional "What you asked for" readback row — faint chips, purely a
+/// read-back, no interaction (HANDOFF §5.4).
+private struct AskedForRow: View {
+    let render: Render
+    let inventory: Inventory?
+
+    var body: some View {
+        let chips = CompareAskedFor.chips(render: render, inventory: inventory)
+        if !chips.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("What you asked for")
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color.faint)
+                FlowChips(items: chips.indexedForDisplay) { chip in
+                    Text(chip.value)
+                        .font(.system(size: 11.5, weight: .medium))
+                        .foregroundStyle(Color.inkSoft)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.surface2))
+                        .overlay(Capsule().stroke(Color.line, lineWidth: 1))
+                }
+            }
+        }
+    }
+}
+
+private extension [String] {
+    /// `FlowChips` needs `Identifiable` items; chip text can repeat in principle, so
+    /// pair each with its index rather than assuming uniqueness.
+    var indexedForDisplay: [IndexedChip] {
+        enumerated().map { IndexedChip(id: $0.offset, value: $0.element) }
+    }
+}
+
+private struct IndexedChip: Identifiable {
+    let id: Int
+    let value: String
 }

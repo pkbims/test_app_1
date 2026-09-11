@@ -26,6 +26,19 @@ final class RoomFlowViewModel {
     private(set) var selectedStyleId: String?
     var prompt: String = ""
 
+    // MARK: - Options round (options_review/HANDOFF.md §3/§5)
+
+    /// Pre-selected from `inventory.roomType` once the inventory arrives; `nil` means
+    /// "ask, don't guess" (the vision call couldn't say) or the user hasn't confirmed
+    /// one yet. Sent as `RenderCreate.roomType`.
+    private(set) var selectedRoomType: RoomType?
+    private(set) var walls: WallsOption = .leave
+    private(set) var furniture: FurnitureOption = .keepOnly
+    private(set) var addFurniture: Set<String> = []
+    private(set) var decor: DecorLevel = .asStyle
+    private(set) var plants: Bool = false
+    private(set) var palette: PaletteOption = .asStyle
+
     private(set) var isBusy = false
     /// Set on any request failure that isn't the render-specific states below —
     /// shown as a banner/alert with `ErrorCopy`-mapped text.
@@ -73,6 +86,7 @@ final class RoomFlowViewModel {
             self.photo = photo
             let inventory = try await apiClient.createInventory(roomId: room.roomId)
             self.inventory = inventory
+            selectedRoomType = inventory.roomType
             step = .confirm
         } catch {
             handle(error)
@@ -95,10 +109,46 @@ final class RoomFlowViewModel {
         step = .style
     }
 
+    /// If the user changes the room type after already picking furniture, drop any
+    /// picks that aren't in the new room's list (HANDOFF §5.2, last line).
+    func selectRoomType(_ roomType: RoomType) {
+        selectedRoomType = roomType
+        let allowed = Set(FurnitureCatalog.items(for: roomType).map(\.id))
+        addFurniture.formIntersection(allowed)
+    }
+
     // MARK: - Style
 
     func selectStyle(_ style: Style) {
         selectedStyleId = style.id
+    }
+
+    func setWalls(_ value: WallsOption) {
+        walls = value
+    }
+
+    func setFurnitureOption(_ value: FurnitureOption) {
+        furniture = value
+    }
+
+    func toggleAddFurniture(_ id: String) {
+        if addFurniture.contains(id) {
+            addFurniture.remove(id)
+        } else {
+            addFurniture.insert(id)
+        }
+    }
+
+    func setDecor(_ value: DecorLevel) {
+        decor = value
+    }
+
+    func setPlants(_ value: Bool) {
+        plants = value
+    }
+
+    func setPalette(_ value: PaletteOption) {
+        palette = value
     }
 
     /// `restyle` reuses the same room/inventory/removeIds and only asks for a new
@@ -127,7 +177,14 @@ final class RoomFlowViewModel {
                 style: selectedStyleId,
                 prompt: trimmedPrompt.isEmpty ? nil : trimmedPrompt,
                 removeIds: Array(removeIds),
-                idempotencyKey: UUID().uuidString
+                idempotencyKey: UUID().uuidString,
+                roomType: selectedRoomType,
+                walls: walls,
+                furniture: furniture,
+                addFurniture: Array(addFurniture),
+                decor: decor,
+                plants: plants,
+                palette: palette
             )
         )
     }
