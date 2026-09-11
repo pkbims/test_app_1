@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.render.prompt import STYLES, build_prompt
+from app.render.prompt import FURNITURE_BY_ROOM_TYPE, ROOM_TYPES, STYLES, build_prompt
 from app.schemas import InventoryItem
 
 
@@ -87,6 +87,49 @@ def test_room_label_appears_only_in_the_inventory_header():
     )
     assert "This is a living room." in p
     assert not p.split("WHAT IS IN THE PHOTOGRAPH")[0].lower().count("living room")
+
+
+# ── room type (options round §3.4, §4.2) ────────────────────────────────────────
+def test_room_type_wins_over_room_label():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[],
+        room_label="Living Room", room_type="home_office",
+    )
+    assert "This is a home office." in p
+    assert "This is a living room." not in p
+
+
+def test_room_label_used_when_room_type_is_absent():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[],
+        room_label="Kids Den", room_type=None,
+    )
+    assert "This is a kids den." in p
+
+
+def test_falls_back_to_room_when_neither_is_known():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[],
+        room_label=None, room_type=None,
+    )
+    assert "This is a room." in p
+
+
+def test_unknown_room_type_id_falls_back_to_room_label():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[],
+        room_label="Den", room_type="garage",  # not one of the 12 ids
+    )
+    assert "This is a den." in p
+
+
+def test_every_room_type_id_has_a_display_name_and_a_furniture_list():
+    assert len(ROOM_TYPES) == 12
+    assert set(ROOM_TYPES) == set(FURNITURE_BY_ROOM_TYPE)
+
+
+def test_kids_room_display_name_has_the_apostrophe():
+    assert ROOM_TYPES["kids_room"] == "Kids' room"
 
 
 def test_architecture_verbatim_under_must_remain():

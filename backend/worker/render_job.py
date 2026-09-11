@@ -50,6 +50,13 @@ class _Job:
     before_key: str | None
     content_type: str | None
     items: list[dict] | None
+    room_type: str | None
+    walls: str
+    furniture: str
+    add_furniture: list[str]
+    decor: str
+    plants: bool
+    palette: str
 
 
 def run(conn, storage, vision: Vision, editor: ImageEditor, lease: Lease) -> str:
@@ -89,6 +96,13 @@ def _generate(storage, vision, editor, render_id, job: _Job, log) -> _Generated:
         items=inventory,
         remove_ids=job.remove_ids,
         room_label=job.room_label,
+        room_type=job.room_type,
+        walls=job.walls,
+        furniture=job.furniture,
+        add_furniture=job.add_furniture,
+        decor=job.decor,
+        plants=job.plants,
+        palette=job.palette,
     )
     image_bytes = storage.get(f"photos/{job.before_key}")
     after = editor.edit(image_bytes, job.content_type or "image/jpeg", generation_prompt)
@@ -132,7 +146,9 @@ def _load(conn, render_id: str) -> _Job | None:
     row = conn.execute(
         """
         SELECT r.status, r.style, r.prompt, r.remove_ids, ro.label,
-               r.before_key, p.content_type, i.items
+               r.before_key, p.content_type, i.items,
+               r.room_type, r.walls, r.furniture, r.add_furniture, r.decor,
+               r.plants, r.palette
         FROM renders r
         JOIN rooms ro ON ro.id = r.room_id
         LEFT JOIN photos p ON p.room_id = r.room_id
@@ -152,6 +168,13 @@ def _load(conn, render_id: str) -> _Job | None:
         before_key=row[5],
         content_type=row[6],
         items=row[7],
+        room_type=row[8],
+        walls=row[9],
+        furniture=row[10],
+        add_furniture=row[11] or [],
+        decor=row[12],
+        plants=row[13],
+        palette=row[14],
     )
 
 

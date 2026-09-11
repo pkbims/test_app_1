@@ -59,6 +59,89 @@ _DECOR = {
     "large": "add decorations of any size, including large freestanding ones",
 }
 
+# ── options round (options_review/HANDOFF.md §7) ────────────────────────────────
+ROOM_TYPES: dict[str, str] = {
+    "living_room": "Living room",
+    "bedroom": "Bedroom",
+    "kitchen": "Kitchen",
+    "dining_room": "Dining room",
+    "home_office": "Home office",
+    "kids_room": "Kids' room",
+    "nursery": "Nursery",
+    "bathroom": "Bathroom",
+    "hallway": "Hallway",
+    "studio": "Studio",
+    "workshop": "Workshop",
+    "server_room": "Server room",
+}
+
+# id -> {furniture id: display name}, HANDOFF §7.2. Backend validates
+# `add_furniture` ids against the list for the resolved room type; the prompt's
+# ADD TO THE ROOM block (§4.4) names them, lower-cased with an article.
+FURNITURE_BY_ROOM_TYPE: dict[str, dict[str, str]] = {
+    "living_room": {
+        "sofa": "Sofa", "armchair": "Armchair", "coffee_table": "Coffee table",
+        "side_table": "Side table", "tv_unit": "TV unit", "bookcase": "Bookcase",
+        "sideboard": "Sideboard",
+    },
+    "bedroom": {
+        "bed": "Bed", "bedside_table": "Bedside table", "wardrobe": "Wardrobe",
+        "chest_of_drawers": "Chest of drawers", "desk": "Desk", "armchair": "Armchair",
+        "dressing_table": "Dressing table",
+    },
+    "kitchen": {
+        "dining_table": "Dining table", "chairs": "Chairs", "bar_stools": "Bar stools",
+        "island": "Island", "open_shelving": "Open shelving",
+    },
+    "dining_room": {
+        "dining_table": "Dining table", "chairs": "Chairs", "sideboard": "Sideboard",
+        "bench": "Bench", "bar_cart": "Bar cart",
+    },
+    "home_office": {
+        "desk": "Desk", "office_chair": "Office chair", "bookcase": "Bookcase",
+        "storage_cabinet": "Storage cabinet", "armchair": "Armchair",
+    },
+    "kids_room": {
+        "bed": "Bed", "desk": "Desk", "wardrobe": "Wardrobe",
+        "toy_storage": "Toy storage", "bookcase": "Bookcase", "chair": "Chair",
+    },
+    "nursery": {
+        "cot": "Cot", "changing_table": "Changing table", "nursing_chair": "Nursing chair",
+        "wardrobe": "Wardrobe", "shelving": "Shelving",
+    },
+    "bathroom": {
+        "vanity": "Vanity", "storage_cabinet": "Storage cabinet", "stool": "Stool",
+        "shelving": "Shelving",
+    },
+    "hallway": {
+        "console_table": "Console table", "bench": "Bench", "coat_stand": "Coat stand",
+        "shoe_storage": "Shoe storage",
+    },
+    "studio": {
+        "sofa_bed": "Sofa bed", "desk": "Desk", "table": "Table", "chairs": "Chairs",
+        "shelving": "Shelving", "wardrobe": "Wardrobe",
+    },
+    "workshop": {
+        "workbench": "Workbench", "stool": "Stool", "shelving": "Shelving",
+        "tool_cabinet": "Tool cabinet",
+    },
+    "server_room": {
+        "rack": "Rack", "desk": "Desk", "chair": "Chair", "cabinet": "Cabinet",
+    },
+}
+
+
+def _where(room_type: str | None, room_label: str | None) -> str:
+    """The fallback chain in HANDOFF §3.4: resolved room type, else the room's
+    free-text label, else the generic word."""
+    if room_type:
+        display = ROOM_TYPES.get(room_type)
+        if display:
+            return display.lower()
+    if room_label and room_label.strip():
+        return room_label.strip().lower()
+    return "room"
+
 
 @dataclass(frozen=True)
 class Style:
@@ -373,10 +456,18 @@ def build_prompt(
     items: Iterable[InventoryItem],
     remove_ids: Iterable[str],
     room_label: str | None,
+    room_type: str | None = None,
+    walls: str = "leave",
+    furniture: str = "keep_only",
+    add_furniture: Iterable[str] = (),
+    decor: str = "as_style",
+    plants: bool = False,
+    palette: str = "as_style",
 ) -> str:
     items = list(items)
     remove = set(remove_ids)
-    where = room_label.strip().lower() if room_label and room_label.strip() else "room"
+    add_furniture = list(add_furniture)
+    where = _where(room_type, room_label)
 
     architecture = [i for i in items if i.kind == "architecture"]
     keep_objects = [i for i in items if i.kind != "architecture" and i.id not in remove]

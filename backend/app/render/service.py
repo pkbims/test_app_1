@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import uuid
 
+from fastapi import HTTPException
 from psycopg.types.json import Json
 
 from ..errors import ApiError
 from ..files import signed_url
 from ..ids import parse_uuid
 from ..schemas import ErrorCode, Render, RenderCreate, RenderStatus
+from .prompt import FURNITURE_BY_ROOM_TYPE
 
 _ROOM_NOT_FOUND = "We couldn't find that room."
 _RENDER_NOT_FOUND = "We couldn't find that render."
@@ -32,6 +34,13 @@ _COLS = (
     "missing_items",
     "error_code",
     "created_at",
+    "room_type",
+    "walls",
+    "furniture",
+    "add_furniture",
+    "decor",
+    "plants",
+    "palette",
 )
 _SELECT = f"SELECT {', '.join(_COLS)} FROM renders "
 
@@ -59,7 +68,7 @@ def create_render(
     with conn.transaction():
         conn.execute("SELECT id FROM users WHERE id = %s FOR UPDATE", (user_id,))
         room = conn.execute(
-            "SELECT p.storage_key, i.items "
+            "SELECT p.storage_key, i.items, i.room_type "
             "FROM rooms r "
             "LEFT JOIN photos p ON p.room_id = r.id "
             "LEFT JOIN inventories i ON i.room_id = r.id "
@@ -68,7 +77,7 @@ def create_render(
         ).fetchone()
         if room is None:
             raise ApiError(ErrorCode.not_found, _ROOM_NOT_FOUND)
-        photo_key, inventory_items = room
+        photo_key, inventory_items, detected_room_type = room
 
         existing = conn.execute(
             _SELECT + "WHERE user_id = %s AND idempotency_key = %s",
@@ -82,6 +91,9 @@ def create_render(
         if photo_key is None:
             raise ApiError(ErrorCode.no_photos, "Add a photo of this room first.")
 
+        room_type = body.room_type.value if body.room_type is not None else detected_room_type
+        _validate_add_furniture(body.add_furniture, room_type)
+
         balance = _balance(conn, user_id)
         if balance < 1:
             raise ApiError(ErrorCode.no_credits, "You've used your free room.")
@@ -92,8 +104,9 @@ def create_render(
         render_id = uuid.uuid4()
         conn.execute(
             "INSERT INTO renders (id, room_id, user_id, status, style, prompt, "
-            "remove_ids, idempotency_key, before_key) "
-            "VALUES (%s, %s, %s, 'queued', %s, %s, %s, %s, %s)",
+            "remove_ids, idempotency_key, before_key, room_type, walls, furniture, "
+            "add_furniture, decor, plants, palette) "
+            "VALUES (%s, %s, %s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 render_id,
                 rid,
@@ -103,6 +116,13 @@ def create_render(
                 Json(remove_ids),
                 body.idempotency_key,
                 photo_key,
+                room_type,
+                body.walls.value,
+                body.furniture.value,
+                Json(body.add_furniture),
+                body.decor.value,
+                body.plants,
+                body.palette.value,
             ),
         )
         conn.execute(
@@ -117,6 +137,21 @@ def create_render(
         row = conn.execute(_SELECT + "WHERE id = %s", (render_id,)).fetchone()
 
     return _to_render(row, credits_left=balance - 1, urls=urls)
+
+
+def _validate_add_furniture(add_furniture: list[str], room_type: str | None) -> None:
+    """HANDOFF §3.1: `add_furniture` ids are a closed list, per room type. Checked
+    whenever the list is non-empty — not only when `furniture == "add"` — since the
+    contract states the rule on the field itself, not conditioned on `furniture`."""
+    if not add_furniture:
+        return
+    catalog = FURNITURE_BY_ROOM_TYPE.get(room_type, {}) if room_type else {}
+    unknown = [fid for fid in add_furniture if fid not in catalog]
+    if unknown:
+        raise HTTPException(
+            status_code=422,
+            detail=f"add_furniture has ids not valid for this room type: {unknown}",
+        )
 
 
 def get_render(conn, render_id: str, user_id: str, *, urls: RenderUrls) -> Render:
@@ -163,6 +198,13 @@ def _to_render(row, *, credits_left: int, urls: RenderUrls) -> Render:
         missing_items,
         error_code,
         created_at,
+        room_type,
+        walls,
+        furniture,
+        add_furniture,
+        decor,
+        plants,
+        palette,
     ) = row
     return Render(
         render_id=str(rid),
@@ -177,4 +219,11 @@ def _to_render(row, *, credits_left: int, urls: RenderUrls) -> Render:
         error_code=error_code,
         created_at=created_at,
         credits_left=credits_left,
+        room_type=room_type,
+        walls=walls,
+        furniture=furniture,
+        add_furniture=list(add_furniture or []),
+        decor=decor,
+        plants=plants,
+        palette=palette,
     )
