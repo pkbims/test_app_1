@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		01834093A71A53DE7EAD7CE5 /* DesignMyRoomCore in Frameworks */ = {isa = PBXBuildFile; productRef = C926B4BDDACFC30E950B2A06 /* DesignMyRoomCore */; };
 		09CD007FBB5CE96F9C57936F /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E1066A38E159E25474D019 /* SignInView.swift */; };
+		0DFD84253FDF2239AE345461 /* StyleScreenFurniturePickerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D989016698AC4EEDB5104A7 /* StyleScreenFurniturePickerUITests.swift */; };
 		1772FAEC2EA43DC669E42AC4 /* OptionSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBA27461265DBF7353F6374 /* OptionSection.swift */; };
 		19910BB9676FFD4C2380AD58 /* ConfirmSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E260368D991D9F22CAA0FED /* ConfirmSummary.swift */; };
 		19BED3C490333A935A03E3C5 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6677E08BE0384E089790FCC7 /* AuthManager.swift */; };
@@ -78,6 +79,7 @@
 		688C4BED932E5928FB8E4D2B /* RenderSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderSummaryView.swift; sourceTree = "<group>"; };
 		6E260368D991D9F22CAA0FED /* ConfirmSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmSummary.swift; sourceTree = "<group>"; };
 		730512B379D0586A579AAAF9 /* PhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPicker.swift; sourceTree = "<group>"; };
+		7D989016698AC4EEDB5104A7 /* StyleScreenFurniturePickerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleScreenFurniturePickerUITests.swift; sourceTree = "<group>"; };
 		86B8E1849429C207D69E5426 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		8A0E8FEAEA9558281E656168 /* DesignMyRoomUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DesignMyRoomUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B521D179B03C08D7E20836D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 			isa = PBXGroup;
 			children = (
 				C6C3163FD3828B8125533841 /* AddPhotoFlowUITests.swift */,
+				7D989016698AC4EEDB5104A7 /* StyleScreenFurniturePickerUITests.swift */,
 			);
 			path = DesignMyRoomUITests;
 			sourceTree = "<group>";
@@ -461,6 +464,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2308D1C59F5D6D5E0BA9D212 /* AddPhotoFlowUITests.swift in Sources */,
+				0DFD84253FDF2239AE345461 /* StyleScreenFurniturePickerUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
