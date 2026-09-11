@@ -206,3 +206,68 @@ Format:
   still holds outside this narrow case.
 - **Status:** answered
 
+## Q8 — Three small gaps in the options-round handoff (options_review/HANDOFF.md)
+- **From:** backend
+- **Date:** 2026-09-11
+- **Question:** Three places where the handoff doesn't fully specify behaviour.
+  Not blocking — I made a call on each and am building accordingly; flagging so the
+  call is visible rather than buried in a diff.
+  1. **`add_furniture` id validation when `room_type` can't be resolved.** §3.1 says
+     ids are validated "against that room type's list," but `room_type` can itself
+     be null (request omits it *and* detection failed). There's no room type in
+     §7.2 to validate against in that case. I reject with 422 (can't validate a
+     closed list against no list) whenever `add_furniture` is non-empty and the
+     resolved room type (request, else detected) is null — regardless of
+     `furniture`'s value, not just when it's `"add"` — since §3.1 states the
+     validation rule without conditioning it on `furniture`, and rejecting bad
+     input early seemed better than silently ignoring it.
+  2. **§4.4's example furniture-block lines carry an indefinite article** (`- a
+     coffee table`, `- a sideboard`) that the surrounding prose ("Use the display
+     name from §7.2, lower-cased, one per line") doesn't mention. I'm treating the
+     code block as literal and generating `a`/`an` correctly for every §7.2 name
+     (`an armchair`, `an office chair`, `an island`, `an open shelving` — the four
+     that start with a vowel sound), rather than a fixed `a` that would misfire on
+     those four.
+  3. **§4.7's palette spike** ("spike one render per family on one room before
+     shipping") — I ran one real render (`bold`, against `warm-minimal`, the style
+     whose own guide most explicitly avoids strong contrast) rather than all four
+     families, as the fastest real proof that the override clause actually moves
+     the output away from the style's own muted palette. If the other three
+     families are wanted spiked too before this ships to users, say so.
+- **Blocks:** nothing — proceeding on all three as stated above.
+- **Status:** open
+
+## Q9 — Palette spike result: the override clause does not visibly beat the style's own palette
+- **From:** backend
+- **Date:** 2026-09-11
+- **Question:** Real result of the spike Q8.3 flagged, now run with actual credits
+  (`backend/tests/test_options_round_acceptance.py::test_palette_override_moves_the_real_output_away_from_the_muted_style`):
+  requested `palette="bold"` against `warm-minimal` (chosen because its own guide
+  most explicitly avoids strong contrast — the hardest case for the override to
+  win), on the real known room, twice. **Both times, a real gpt-4.1 vision check
+  said the output did not read as bold/saturated** — the style guide's own muted
+  palette won both times, exactly the failure mode HANDOFF §4.7 named as the
+  reason to spike before shipping: *"if it loses to the guide's own palette line,
+  switch."* The prompt mechanism itself is correct and unit-tested (the override
+  clause's exact text is in the real stored prompt both times); this is the model
+  not following it against a style guide's own strongly-worded palette
+  instructions.
+  Two paths from here, both real work: (a) switch to the doc's stated alternative
+  — a palette line per style (18 × 4 = 72 strings, "never decided" per §4.7), or
+  (b) strengthen the override clause's wording/position (e.g. move it later, or
+  make it more forceful) and re-spike before choosing (a). Not doing either
+  unilaterally — this is a product call, not an implementation detail.
+- **Blocks:** nothing for the rest of the options round — walls, furniture, decor,
+  plants and room type all passed their real render-level checks. Only the
+  `palette` control is affected: it ships with a prompt mechanism that is real
+  and tested but, on this evidence, unreliable against a style with a strong
+  palette of its own.
+- **Answer:** (user) **Accepted as a known limitation. Do not spend more time
+  re-spiking it.** The override clause works and is tested (its exact text is in
+  the real prompt on every request that sets a non-default palette); it is not
+  guaranteed to beat a strongly-worded style guide — documented here, not silently
+  hidden. Neither path in the question (per-style palette lines, or
+  strengthen-and-re-spike the override clause) is being taken right now. Revisit
+  only if this becomes a real product problem later.
+- **Status:** answered
+

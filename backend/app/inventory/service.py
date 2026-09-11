@@ -57,19 +57,20 @@ def create_inventory(conn, storage, vision: Vision, room_id: str, user_id: str) 
         for i, raw in enumerate(result.items)
     ]
     created_at = conn.execute(
-        "INSERT INTO inventories (room_id, items, prompt) VALUES (%s, %s, %s) "
+        "INSERT INTO inventories (room_id, items, prompt, room_type) VALUES (%s, %s, %s, %s) "
         "ON CONFLICT (room_id) DO UPDATE "
-        "SET items = EXCLUDED.items, prompt = EXCLUDED.prompt, created_at = now() "
+        "SET items = EXCLUDED.items, prompt = EXCLUDED.prompt, room_type = EXCLUDED.room_type, "
+        "    created_at = now() "
         "RETURNING created_at",
-        (rid, Json([it.model_dump() for it in items]), result.prompt),
+        (rid, Json([it.model_dump() for it in items]), result.prompt, result.room_type),
     ).fetchone()[0]
-    return Inventory(room_id=str(rid), items=items, created_at=created_at)
+    return Inventory(room_id=str(rid), items=items, created_at=created_at, room_type=result.room_type)
 
 
 def get_inventory(conn, room_id: str, user_id: str) -> Inventory:
     rid = parse_uuid(room_id, _ROOM_NOT_FOUND)
     row = conn.execute(
-        "SELECT i.items, i.created_at FROM inventories i "
+        "SELECT i.items, i.created_at, i.room_type FROM inventories i "
         "JOIN rooms r ON r.id = i.room_id "
         "WHERE i.room_id = %s AND r.user_id = %s",
         (rid, user_id),
@@ -77,7 +78,7 @@ def get_inventory(conn, room_id: str, user_id: str) -> Inventory:
     if row is None:
         raise ApiError(ErrorCode.not_found, "This room has no inventory yet.")
     items = [InventoryItem(**raw) for raw in row[0]]
-    return Inventory(room_id=str(rid), items=items, created_at=row[1])
+    return Inventory(room_id=str(rid), items=items, created_at=row[1], room_type=row[2])
 
 
 def _letter(index: int) -> str:

@@ -16,10 +16,21 @@ from typing import Protocol
 
 INVENTORY_MODEL = "gpt-4.1"
 
-# --- verbatim from spike/identify.py ---------------------------------------------
-_SCHEMA = """Return JSON only:
+ROOM_TYPES = (
+    "living_room", "bedroom", "kitchen", "dining_room", "home_office", "kids_room",
+    "nursery", "bathroom", "hallway", "studio", "workshop", "server_room",
+)
+
+# --- verbatim from spike/identify.py, except the room_type field (options round,
+# options_review/HANDOFF.md §4.2) — the item-inventory wording itself is untouched.
+_SCHEMA = (
+    """Return JSON only:
 {"items":[{"id":"A","kind":"architecture"|"object","name":"short name for a user",
-"description":"precise visual description with position, for an image model"}]}"""
+"description":"precise visual description with position, for an image model"}],
+"room_type":"""
+    + "|".join(f'"{t}"' for t in ROOM_TYPES)
+    + """|null}"""
+)
 
 _INVENTORY_PROMPT = (
     "Inventory this room photo. List every fixed architectural feature (walls, "
@@ -51,6 +62,7 @@ class RawItem:
 class InventoryResult:
     items: list[RawItem]
     prompt: str  # exactly what was sent — stored so it can be reviewed later
+    room_type: str | None = None  # one of ROOM_TYPES, or None if the model couldn't say
 
 
 @dataclass(frozen=True)
@@ -103,10 +115,15 @@ class OpenAIVision:
                 response_format={"type": "json_object"},
             )
             content = resp.choices[0].message.content or ""
-            items = json.loads(content)["items"]
+            parsed = json.loads(content)
+            items = parsed["items"]
         except (openai.OpenAIError, json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
             raise VisionError(f"{type(exc).__name__}: {exc}") from exc
-        return InventoryResult(items=[_coerce(item) for item in items], prompt=_INVENTORY_PROMPT)
+        return InventoryResult(
+            items=[_coerce(item) for item in items],
+            prompt=_INVENTORY_PROMPT,
+            room_type=_coerce_room_type(parsed.get("room_type")),
+        )
 
     def preservation_check(
         self, after_bytes: bytes, architecture: list[tuple[str, str]]
@@ -171,7 +188,7 @@ class FakeVision:
             ),
             RawItem("object", "floor lamp", "Slim black floor lamp in the right-hand corner."),
         ]
-        return InventoryResult(items=items, prompt=_INVENTORY_PROMPT)
+        return InventoryResult(items=items, prompt=_INVENTORY_PROMPT, room_type="living_room")
 
     def preservation_check(
         self, after_bytes: bytes, architecture: list[tuple[str, str]]
@@ -201,3 +218,10 @@ def _coerce(item: object) -> RawItem:
     if not name or not description:
         raise VisionError("item missing name or description")
     return RawItem(kind=kind, name=name, description=description)
+
+
+def _coerce_room_type(value: object) -> str | None:
+    """Never fails the whole inventory over this — a bad or missing guess just
+    degrades to `None`, the same as the model saying it doesn't know."""
+    text = str(value).strip().lower() if value is not None else ""
+    return text if text in ROOM_TYPES else None
