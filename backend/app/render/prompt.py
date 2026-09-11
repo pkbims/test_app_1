@@ -45,9 +45,11 @@ Their shape, size, silhouette and position stay exactly as they are."""
 _EMPTY_ROOM = """The customer has removed everything that was in this room: furnish it fully
 in this style, at a realistic scale for the room, leaving open floor space."""
 
-_RULES = """HOW TO DO THE WORK
-- You may change wall colour, textiles, rugs, and {decor}.
-- Anything listed as not in the room is gone. Do not draw it, and do not put a similar object in its place.
+_RULES_HEADER = "HOW TO DO THE WORK"
+
+# The tail is unaffected by any option — same six bullets as before the options
+# round, in the same order.
+_RULES_TAIL = """- Anything listed as not in the room is gone. Do not draw it, and do not put a similar object in its place.
 - Do not move the camera, change the framing, or change the angle of view.
 - Do not add or remove any wall, opening or ceiling feature.
 - Do not change the size, shape or proportions of the room.
@@ -55,8 +57,44 @@ _RULES = """HOW TO DO THE WORK
 - If you are unsure whether something is part of the building, leave it exactly as it is."""
 
 _DECOR = {
-    "small": "add small decor",
+    "small": "add small decor, including lamps",
     "large": "add decorations of any size, including large freestanding ones",
+}
+_DECOR_MINIMAL = (
+    "add only a few chosen pieces of decor — one artwork, one lamp, one object — and "
+    "leave most walls and surfaces clear"
+)
+_DECOR_PLENTY = (
+    "add decor generously — layered art, lamps, cushions and objects on the walls "
+    "and on every surface"
+)
+
+# ── walls (§4.3, D3) ─────────────────────────────────────────────────────────
+_RULE_WALLS_UNCHANGED = "- The wall colour stays exactly as it is."
+_RULE_SKIRTING = (
+    "- Skirting boards, door frames and window frames match the walls: repaint "
+    "them to suit if the walls are repainted, otherwise leave them. The ceiling "
+    "and the floor stay exactly as they are."
+)
+
+# ── furniture (§4.4) ─────────────────────────────────────────────────────────
+_HEADER_ADD = "ADD TO THE ROOM — the customer wants these pieces, which are not in the photograph:"
+_ADD_FOOTER = """Place them where such pieces would naturally go, at a realistic scale for the room,
+in the chosen style, without moving anything that is kept."""
+_RULE_ADD_ONLY_LISTED = (
+    "- Add only the pieces listed under ADD TO THE ROOM. Do not add any other furniture."
+)
+_RULE_NO_FURNITURE = "- Do not add any furniture."
+
+# ── plants (§4.6) ────────────────────────────────────────────────────────────
+_RULE_PLANTS = "- Add a few potted plants, placed where they would naturally sit."
+
+# ── palette (§4.7) ───────────────────────────────────────────────────────────
+_PALETTE_FAMILIES = {
+    "neutral": "whites, greys and beiges, with colour coming only from wood and texture",
+    "warm": "creams, terracotta, honey-toned wood and soft browns",
+    "cool": "blues, greens, slate greys and pale wood",
+    "bold": "strong, saturated colour on the walls or the largest pieces",
 }
 
 # ── options round (options_review/HANDOFF.md §7) ────────────────────────────────
@@ -141,6 +179,59 @@ def _where(room_type: str | None, room_label: str | None) -> str:
     if room_label and room_label.strip():
         return room_label.strip().lower()
     return "room"
+
+
+def _article(word: str) -> str:
+    return "an" if word[:1].lower() in "aeiou" else "a"
+
+
+def _add_furniture_block(ids: list[str], room_type: str | None) -> list[str]:
+    names = FURNITURE_BY_ROOM_TYPE.get(room_type, {}) if room_type else {}
+    lines = [_HEADER_ADD]
+    for fid in ids:
+        display = (names.get(fid) or fid.replace("_", " ")).lower()
+        lines.append(f"- {_article(display)} {display}")
+    lines.append(_ADD_FOOTER)
+    return lines
+
+
+def _palette_line(palette: str, walls: str) -> str:
+    family = _PALETTE_FAMILIES.get(palette, palette)
+    if walls == "leave":
+        return (
+            f"Override the palette above: use {family}, except the walls, which keep "
+            "their current colour. Keep the materials, forms and everything else in "
+            "the guide as described."
+        )
+    return (
+        f"Override the palette above: use {family}. Keep the materials, forms and "
+        "everything else in the guide as described."
+    )
+
+
+def _decor_phrase(decor: str, known: "Style | None") -> str:
+    if decor == "minimal":
+        return _DECOR_MINIMAL
+    if decor == "plenty":
+        return _DECOR_PLENTY
+    return _DECOR[known.decor_scale] if known is not None else _DECOR["small"]
+
+
+def _rules_block(*, walls: str, decor_phrase: str, add_active: bool, plants: bool) -> str:
+    if walls == "repaint":
+        first = f"- You may change wall colour, textiles, rugs, and {decor_phrase}."
+    else:
+        first = f"- You may change textiles, rugs, and {decor_phrase}."
+
+    lines = [_RULES_HEADER, first]
+    if walls != "repaint":
+        lines.append(_RULE_WALLS_UNCHANGED)
+    lines.append(_RULE_SKIRTING)
+    lines.append(_RULE_ADD_ONLY_LISTED if add_active else _RULE_NO_FURNITURE)
+    if plants:
+        lines.append(_RULE_PLANTS)
+    lines.append(_RULES_TAIL)
+    return "\n".join(lines)
 
 
 @dataclass(frozen=True)
@@ -476,15 +567,15 @@ def build_prompt(
     known = STYLES.get(style)
     if known is not None:
         header = f"THE STYLE THE CUSTOMER CHOSE — {known.name}: {known.summary}"
-        decor = _DECOR[known.decor_scale]
     else:
         phrase = style.replace("-", " ").replace("_", " ").strip() or "restyled"
         header = f"THE STYLE THE CUSTOMER CHOSE — {phrase}."
-        decor = _DECOR["small"]
 
     lines = [_PREAMBLE, "", header]
     if known is not None:
         lines.append(known.guide)
+    if palette != "as_style":
+        lines.append(_palette_line(palette, walls))
     if not keep_objects:
         lines.append(_EMPTY_ROOM)
     if user_prompt and user_prompt.strip():
@@ -504,7 +595,20 @@ def build_prompt(
         lines.append(_HEADER_GONE)
         lines += [f"- {i.name} — gone; the space it occupied is empty" for i in remove_objects]
 
-    lines += ["", _RULES.format(decor=decor)]
+    add_active = furniture == "add" and bool(add_furniture)
+    if add_active:
+        lines.append("")
+        lines += _add_furniture_block(add_furniture, room_type)
+
+    lines += [
+        "",
+        _rules_block(
+            walls=walls,
+            decor_phrase=_decor_phrase(decor, known),
+            add_active=add_active,
+            plants=plants,
+        ),
+    ]
     return "\n".join(lines)
 
 

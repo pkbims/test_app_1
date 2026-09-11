@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from app.render.prompt import FURNITURE_BY_ROOM_TYPE, ROOM_TYPES, STYLES, build_prompt
+import pytest
+
+from app.render.prompt import (
+    _PALETTE_FAMILIES,
+    FURNITURE_BY_ROOM_TYPE,
+    ROOM_TYPES,
+    STYLES,
+    build_prompt,
+)
 from app.schemas import InventoryItem
 
 
@@ -192,6 +200,210 @@ def test_removed_item_states_the_end_state():
 def test_not_in_the_room_rule_present_when_removal_section_present():
     p = build_prompt(style="s", user_prompt=None, items=ITEMS, remove_ids=["D"], room_label=None)
     assert "Anything listed as not in the room is gone" in p
+
+
+# ── walls (options round §4.3, D3) ──────────────────────────────────────────────
+def test_walls_leave_is_the_default():
+    p = build_prompt(style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None)
+    assert "- The wall colour stays exactly as it is." in p
+    assert "You may change wall colour" not in p
+    assert "- You may change textiles, rugs, and" in p
+
+
+def test_walls_repaint_allows_wall_colour():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None, walls="repaint"
+    )
+    assert "- You may change wall colour, textiles, rugs, and" in p
+    assert "The wall colour stays exactly as it is." not in p
+
+
+@pytest.mark.parametrize("walls", ["leave", "repaint"])
+def test_skirting_line_always_present(walls):
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None, walls=walls
+    )
+    assert (
+        "- Skirting boards, door frames and window frames match the walls: repaint "
+        "them to suit if the walls are repainted, otherwise leave them. The ceiling "
+        "and the floor stay exactly as they are."
+    ) in p
+
+
+# ── furniture / add_furniture (options round §4.4) ──────────────────────────────
+def test_furniture_keep_only_forbids_new_furniture():
+    p = build_prompt(style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None)
+    assert "- Do not add any furniture." in p
+    assert "ADD TO THE ROOM" not in p
+
+
+def test_furniture_add_with_items_produces_the_block():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None,
+        furniture="add", add_furniture=["sofa", "armchair"], room_type="living_room",
+    )
+    assert "ADD TO THE ROOM — the customer wants these pieces, which are not in the photograph:" in p
+    block = p.split("ADD TO THE ROOM")[1]
+    assert "- a sofa" in block
+    assert "- an armchair" in block
+    assert (
+        "Place them where such pieces would naturally go, at a realistic scale for "
+        "the room,\nin the chosen style, without moving anything that is kept."
+    ) in p
+    assert "- Add only the pieces listed under ADD TO THE ROOM. Do not add any other furniture." in p
+    assert "- Do not add any furniture." not in p
+
+
+def test_furniture_add_with_empty_list_behaves_as_keep_only():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None,
+        furniture="add", add_furniture=[], room_type="living_room",
+    )
+    assert "ADD TO THE ROOM" not in p
+    assert "- Do not add any furniture." in p
+
+
+def test_add_furniture_is_ignored_when_furniture_is_keep_only():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None,
+        furniture="keep_only", add_furniture=["sofa"], room_type="living_room",
+    )
+    assert "ADD TO THE ROOM" not in p
+    assert "a sofa" not in p
+
+
+@pytest.mark.parametrize(
+    "furniture_id,expected",
+    [
+        ("armchair", "- an armchair"),
+        ("office_chair", "- an office chair"),
+        ("island", "- an island"),
+        ("open_shelving", "- an open shelving"),
+        ("sideboard", "- a sideboard"),
+        ("coffee_table", "- a coffee table"),
+    ],
+)
+def test_add_furniture_article_is_grammatical(furniture_id, expected):
+    room_type = next(rt for rt, items in FURNITURE_BY_ROOM_TYPE.items() if furniture_id in items)
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None,
+        furniture="add", add_furniture=[furniture_id], room_type=room_type,
+    )
+    assert expected in p
+
+
+def test_add_furniture_unknown_room_type_falls_back_to_the_raw_id():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None,
+        furniture="add", add_furniture=["mystery_id"], room_type=None,
+    )
+    assert "- a mystery id" in p
+
+
+def test_add_furniture_block_sits_after_gone_and_before_rules():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=["D"], room_label=None,
+        furniture="add", add_furniture=["sofa"], room_type="living_room",
+    )
+    assert p.index("NOT IN THE ROOM") < p.index("ADD TO THE ROOM") < p.index("HOW TO DO THE WORK")
+
+
+# ── decor (options round §4.5) ───────────────────────────────────────────────────
+def test_decor_as_style_default_uses_the_small_style_scale():
+    p = build_prompt(style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None)
+    assert "add small decor, including lamps" in p
+
+
+def test_decor_as_style_seasonal_style_uses_the_large_scale():
+    p = build_prompt(style="christmas", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None)
+    assert "add decorations of any size, including large freestanding ones" in p
+
+
+def test_decor_as_style_unknown_style_falls_back_to_small():
+    p = build_prompt(style="not-a-style", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None)
+    assert "add small decor, including lamps" in p
+
+
+def test_decor_minimal():
+    p = build_prompt(
+        style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None, decor="minimal"
+    )
+    assert (
+        "add only a few chosen pieces of decor — one artwork, one lamp, one object — "
+        "and leave most walls and surfaces clear"
+    ) in p
+    assert "add small decor" not in p
+
+
+def test_decor_plenty():
+    p = build_prompt(
+        style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None, decor="plenty"
+    )
+    assert (
+        "add decor generously — layered art, lamps, cushions and objects on the "
+        "walls and on every surface"
+    ) in p
+
+
+# ── plants (options round §4.6) ──────────────────────────────────────────────────
+def test_plants_off_by_default():
+    p = build_prompt(style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None)
+    assert "plant" not in p.lower()
+
+
+def test_plants_on_adds_the_rule_line():
+    p = build_prompt(
+        style="s", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None, plants=True
+    )
+    assert "- Add a few potted plants, placed where they would naturally sit." in p
+
+
+# ── palette (options round §4.7) ─────────────────────────────────────────────────
+def test_palette_as_style_default_has_no_override_line():
+    p = build_prompt(style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None)
+    assert "Override the palette above" not in p
+
+
+def test_palette_override_with_walls_repaint():
+    p = build_prompt(
+        style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None,
+        palette="neutral", walls="repaint",
+    )
+    assert (
+        "Override the palette above: use whites, greys and beiges, with colour "
+        "coming only from wood and texture. Keep the materials, forms and "
+        "everything else in the guide as described."
+    ) in p
+    assert "except the walls" not in p
+
+
+def test_palette_override_with_walls_leave_notes_the_exception():
+    p = build_prompt(
+        style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None,
+        palette="warm",  # walls left at its default, "leave"
+    )
+    assert (
+        "Override the palette above: use creams, terracotta, honey-toned wood and "
+        "soft browns, except the walls, which keep their current colour. Keep the "
+        "materials, forms and everything else in the guide as described."
+    ) in p
+
+
+def test_palette_line_sits_right_after_the_style_guide():
+    p = build_prompt(
+        style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None, palette="bold"
+    )
+    assert p.index("- Avoid: ornate carving") < p.index("Override the palette above")
+    assert p.index("Override the palette above") < p.index("WHAT IS IN THE PHOTOGRAPH")
+
+
+@pytest.mark.parametrize("palette", ["neutral", "warm", "cool", "bold"])
+def test_every_palette_family_has_its_own_phrase(palette):
+    p = build_prompt(
+        style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None,
+        palette=palette, walls="repaint",
+    )
+    assert f"Override the palette above: use {_PALETTE_FAMILIES[palette]}." in p
 
 
 def test_user_prompt_is_included_after_the_style_guide():
