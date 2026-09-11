@@ -46,6 +46,17 @@ def test_create_and_read_inventory(api):
     assert read.json()["items"] == inv["items"]
 
 
+def test_inventory_carries_the_detected_room_type(api):
+    headers = sign_in(api)
+    room_id = _room_with_photo(api, headers)
+
+    created = api.post(f"/v1/rooms/{room_id}/inventory", headers=headers).json()
+    assert created["room_type"] == "living_room"  # FakeVision's fixed guess
+
+    read = api.get(f"/v1/rooms/{room_id}/inventory", headers=headers).json()
+    assert read["room_type"] == "living_room"
+
+
 def test_re_running_inventory_replaces_it(api):
     headers = sign_in(api)
     room_id = _room_with_photo(api, headers)

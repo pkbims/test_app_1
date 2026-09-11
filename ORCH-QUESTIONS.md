@@ -206,3 +206,34 @@ Format:
   still holds outside this narrow case.
 - **Status:** answered
 
+## Q8 — Three small gaps in the options-round handoff (options_review/HANDOFF.md)
+- **From:** backend
+- **Date:** 2026-09-11
+- **Question:** Three places where the handoff doesn't fully specify behaviour.
+  Not blocking — I made a call on each and am building accordingly; flagging so the
+  call is visible rather than buried in a diff.
+  1. **`add_furniture` id validation when `room_type` can't be resolved.** §3.1 says
+     ids are validated "against that room type's list," but `room_type` can itself
+     be null (request omits it *and* detection failed). There's no room type in
+     §7.2 to validate against in that case. I reject with 422 (can't validate a
+     closed list against no list) whenever `add_furniture` is non-empty and the
+     resolved room type (request, else detected) is null — regardless of
+     `furniture`'s value, not just when it's `"add"` — since §3.1 states the
+     validation rule without conditioning it on `furniture`, and rejecting bad
+     input early seemed better than silently ignoring it.
+  2. **§4.4's example furniture-block lines carry an indefinite article** (`- a
+     coffee table`, `- a sideboard`) that the surrounding prose ("Use the display
+     name from §7.2, lower-cased, one per line") doesn't mention. I'm treating the
+     code block as literal and generating `a`/`an` correctly for every §7.2 name
+     (`an armchair`, `an office chair`, `an island`, `an open shelving` — the four
+     that start with a vowel sound), rather than a fixed `a` that would misfire on
+     those four.
+  3. **§4.7's palette spike** ("spike one render per family on one room before
+     shipping") — I ran one real render (`bold`, against `warm-minimal`, the style
+     whose own guide most explicitly avoids strong contrast) rather than all four
+     families, as the fastest real proof that the override clause actually moves
+     the output away from the style's own muted palette. If the other three
+     families are wanted spiked too before this ships to users, say so.
+- **Blocks:** nothing — proceeding on all three as stated above.
+- **Status:** open
+
