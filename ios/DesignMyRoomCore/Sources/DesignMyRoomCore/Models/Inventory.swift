@@ -35,10 +35,16 @@ public struct Inventory: Codable, Equatable, Sendable {
     public let roomId: String
     public let items: [InventoryItem]
     public let createdAt: Date
+    /// The vision call's best guess from the 12 `RoomType` ids, or `nil` if it
+    /// couldn't say — the client then asks rather than pre-selecting (options-round
+    /// handoff §3.3). Optional, so a pre-options-round response (no key at all)
+    /// still decodes.
+    public let roomType: RoomType?
 
-    public init(roomId: String, items: [InventoryItem], createdAt: Date) {
+    public init(roomId: String, items: [InventoryItem], createdAt: Date, roomType: RoomType? = nil) {
         self.roomId = roomId
         self.items = items
         self.createdAt = createdAt
+        self.roomType = roomType
     }
 }
