@@ -237,3 +237,30 @@ Format:
 - **Blocks:** nothing — proceeding on all three as stated above.
 - **Status:** open
 
+## Q9 — Palette spike result: the override clause does not visibly beat the style's own palette
+- **From:** backend
+- **Date:** 2026-09-11
+- **Question:** Real result of the spike Q8.3 flagged, now run with actual credits
+  (`backend/tests/test_options_round_acceptance.py::test_palette_override_moves_the_real_output_away_from_the_muted_style`):
+  requested `palette="bold"` against `warm-minimal` (chosen because its own guide
+  most explicitly avoids strong contrast — the hardest case for the override to
+  win), on the real known room, twice. **Both times, a real gpt-4.1 vision check
+  said the output did not read as bold/saturated** — the style guide's own muted
+  palette won both times, exactly the failure mode HANDOFF §4.7 named as the
+  reason to spike before shipping: *"if it loses to the guide's own palette line,
+  switch."* The prompt mechanism itself is correct and unit-tested (the override
+  clause's exact text is in the real stored prompt both times); this is the model
+  not following it against a style guide's own strongly-worded palette
+  instructions.
+  Two paths from here, both real work: (a) switch to the doc's stated alternative
+  — a palette line per style (18 × 4 = 72 strings, "never decided" per §4.7), or
+  (b) strengthen the override clause's wording/position (e.g. move it later, or
+  make it more forceful) and re-spike before choosing (a). Not doing either
+  unilaterally — this is a product call, not an implementation detail.
+- **Blocks:** nothing for the rest of the options round — walls, furniture, decor,
+  plants and room type all passed their real render-level checks. Only the
+  `palette` control is affected: it ships with a prompt mechanism that is real
+  and tested but, on this evidence, unreliable against a style with a strong
+  palette of its own.
+- **Status:** open
+
