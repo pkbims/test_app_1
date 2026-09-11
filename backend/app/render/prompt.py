@@ -1,10 +1,13 @@
-"""Build the image-edit prompt (HANDOFF at `prompt_review/HANDOFF.md`).
+"""Build the image-edit prompt (`prompt_review/HANDOFF.md`, then the options
+round in `options_review/HANDOFF.md`).
 
 Structure: a role preamble, a per-style guide (attribute-shaped — palette,
 materials, forms, what to avoid — never scene-shaped, so it never names a sofa,
-chair or table and invites substitution of an item `KEEP` is holding), the room's
-inventory (architecture that must not move, kept objects that may be refinished,
-removed objects), then the rules.
+chair or table and invites substitution of an item `KEEP` is holding), an
+optional palette override, the room's inventory (architecture that must not
+move, kept objects that may be refinished, removed objects), an optional ADD TO
+THE ROOM block, then the rules — composed from the walls/furniture/decor/plants
+options, with a fixed tail unaffected by any of them.
 
 Removed items are rendered from `name`, never `description`. The spike proved that
 naming an item in precise visual detail makes an image-edit model render it in
@@ -12,7 +15,10 @@ place — that is the entire `KEEP` mechanism. Using that same detailed-descript
 channel to ask for the opposite (removal) fights itself: negation is weak in
 image-edit conditioning, detailed visual description is strong. `name` alone,
 paired with a stated end state ("gone; the space it occupied is empty") gives the
-model something positive to render instead of relying on suppression.
+model something positive to render instead of relying on suppression. Added
+furniture is named the same restrained way — a display name only, no built
+description — for the same reason: detail invites the model to redraw what is
+already being kept to match it.
 """
 
 from __future__ import annotations
