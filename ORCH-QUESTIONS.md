@@ -262,5 +262,12 @@ Format:
   `palette` control is affected: it ships with a prompt mechanism that is real
   and tested but, on this evidence, unreliable against a style with a strong
   palette of its own.
-- **Status:** open
+- **Answer:** (user) **Accepted as a known limitation. Do not spend more time
+  re-spiking it.** The override clause works and is tested (its exact text is in
+  the real prompt on every request that sets a non-default palette); it is not
+  guaranteed to beat a strongly-worded style guide — documented here, not silently
+  hidden. Neither path in the question (per-style palette lines, or
+  strengthen-and-re-spike the override clause) is being taken right now. Revisit
+  only if this becomes a real product problem later.
+- **Status:** answered
 
