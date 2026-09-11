@@ -1273,6 +1273,15 @@
         ],
         "title": "Body_upload_photo_v1_rooms__room_id__photos_post"
       },
+      "DecorLevel": {
+        "type": "string",
+        "enum": [
+          "minimal",
+          "as_style",
+          "plenty"
+        ],
+        "title": "DecorLevel"
+      },
       "Error": {
         "properties": {
           "code": {
@@ -1307,6 +1316,14 @@
           "not_found"
         ],
         "title": "ErrorCode"
+      },
+      "FurnitureOption": {
+        "type": "string",
+        "enum": [
+          "keep_only",
+          "add"
+        ],
+        "title": "FurnitureOption"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1396,6 +1413,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "room_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The vision call's best guess. Null if it could not say \u2014 the client then asks rather than pre-selecting."
           }
         },
         "type": "object",
@@ -1470,6 +1498,17 @@
           "credits_left"
         ],
         "title": "Me"
+      },
+      "PaletteOption": {
+        "type": "string",
+        "enum": [
+          "as_style",
+          "neutral",
+          "warm",
+          "cool",
+          "bold"
+        ],
+        "title": "PaletteOption"
       },
       "Photo": {
         "properties": {
@@ -1619,6 +1658,45 @@
               }
             ],
             "title": "Credits Left"
+          },
+          "room_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What was actually used for this render (request value, else detected, else null) \u2014 echoed so history is self-describing."
+          },
+          "walls": {
+            "$ref": "#/components/schemas/WallsOption",
+            "default": "leave"
+          },
+          "furniture": {
+            "$ref": "#/components/schemas/FurnitureOption",
+            "default": "keep_only"
+          },
+          "add_furniture": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Add Furniture"
+          },
+          "decor": {
+            "$ref": "#/components/schemas/DecorLevel",
+            "default": "as_style"
+          },
+          "plants": {
+            "type": "boolean",
+            "title": "Plants",
+            "default": false
+          },
+          "palette": {
+            "$ref": "#/components/schemas/PaletteOption",
+            "default": "as_style"
           }
         },
         "type": "object",
@@ -1664,6 +1742,52 @@
             "type": "string",
             "title": "Idempotency Key",
             "description": "Client-generated. A retry with the same key returns the existing render rather than spending a second credit."
+          },
+          "room_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The user's confirmed room type. Null means: use whatever the inventory detected, falling back to the room's label, falling back to the word 'room'."
+          },
+          "walls": {
+            "$ref": "#/components/schemas/WallsOption",
+            "description": "Whether the wall colour may change. Defaults to leaving it \u2014 the one field whose default is not today's behaviour (options_review/HANDOFF.md \u00a71.1).",
+            "default": "leave"
+          },
+          "furniture": {
+            "$ref": "#/components/schemas/FurnitureOption",
+            "description": "Whether new furniture may be introduced.",
+            "default": "keep_only"
+          },
+          "add_furniture": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Add Furniture",
+            "description": "Furniture-type ids to add, from the list for the room's `room_type` (options_review/HANDOFF.md \u00a77.2). Only read when furniture=='add'. The backend validates ids against that room type's list (422 if unknown)."
+          },
+          "decor": {
+            "$ref": "#/components/schemas/DecorLevel",
+            "description": "How much decor to add.",
+            "default": "as_style"
+          },
+          "plants": {
+            "type": "boolean",
+            "title": "Plants",
+            "description": "Add a few plants.",
+            "default": false
+          },
+          "palette": {
+            "$ref": "#/components/schemas/PaletteOption",
+            "description": "Colour family override. 'as_style' leaves the chosen style's own palette line as-is.",
+            "default": "as_style"
           }
         },
         "type": "object",
@@ -1754,6 +1878,25 @@
         "type": "object",
         "title": "RoomCreate"
       },
+      "RoomType": {
+        "type": "string",
+        "enum": [
+          "living_room",
+          "bedroom",
+          "kitchen",
+          "dining_room",
+          "home_office",
+          "kids_room",
+          "nursery",
+          "bathroom",
+          "hallway",
+          "studio",
+          "workshop",
+          "server_room"
+        ],
+        "title": "RoomType",
+        "description": "The 12 room types from the options-round handoff (options_review/HANDOFF.md\n\u00a77.1). Detected by the inventory vision call; the user may confirm or change it\non the render request. The wire value is also what the prompt names as `where`."
+      },
       "Tokens": {
         "properties": {
           "access_token": {
@@ -1825,6 +1968,14 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WallsOption": {
+        "type": "string",
+        "enum": [
+          "repaint",
+          "leave"
+        ],
+        "title": "WallsOption"
       }
     }
   }

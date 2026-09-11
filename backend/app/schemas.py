@@ -66,6 +66,24 @@ class ItemKind(str, Enum):
     object = "object"
 
 
+class RoomType(str, Enum):
+    """The 12 room types from the options-round handoff (options_review/HANDOFF.md
+    §7.1). Detected by the inventory vision call; the user may confirm or change it
+    on the render request. The wire value is also what the prompt names as `where`."""
+    living_room = "living_room"
+    bedroom = "bedroom"
+    kitchen = "kitchen"
+    dining_room = "dining_room"
+    home_office = "home_office"
+    kids_room = "kids_room"
+    nursery = "nursery"
+    bathroom = "bathroom"
+    hallway = "hallway"
+    studio = "studio"
+    workshop = "workshop"
+    server_room = "server_room"
+
+
 class InventoryItem(BaseModel):
     """One thing found in the room.
 
@@ -87,6 +105,10 @@ class Inventory(BaseModel):
     room_id: str
     items: List[InventoryItem]
     created_at: datetime
+    room_type: Optional[RoomType] = Field(
+        None, description="The vision call's best guess. Null if it could not say — "
+                          "the client then asks rather than pre-selecting."
+    )
 
 
 # ── renders ───────────────────────────────────────────────────────────────────
@@ -95,6 +117,30 @@ class RenderStatus(str, Enum):
     running = "running"
     done = "done"
     failed = "failed"
+
+
+class WallsOption(str, Enum):
+    repaint = "repaint"
+    leave = "leave"
+
+
+class FurnitureOption(str, Enum):
+    keep_only = "keep_only"
+    add = "add"
+
+
+class DecorLevel(str, Enum):
+    minimal = "minimal"
+    as_style = "as_style"
+    plenty = "plenty"
+
+
+class PaletteOption(str, Enum):
+    as_style = "as_style"
+    neutral = "neutral"
+    warm = "warm"
+    cool = "cool"
+    bold = "bold"
 
 
 class RenderCreate(BaseModel):
@@ -110,6 +156,31 @@ class RenderCreate(BaseModel):
         ...,
         description="Client-generated. A retry with the same key returns the existing "
                     "render rather than spending a second credit.",
+    )
+    room_type: Optional[RoomType] = Field(
+        None, description="The user's confirmed room type. Null means: use whatever "
+                          "the inventory detected, falling back to the room's label, "
+                          "falling back to the word 'room'."
+    )
+    walls: WallsOption = Field(
+        WallsOption.leave, description="Whether the wall colour may change. Defaults "
+                                       "to leaving it — the one field whose default is "
+                                       "not today's behaviour (options_review/HANDOFF.md §1.1)."
+    )
+    furniture: FurnitureOption = Field(
+        FurnitureOption.keep_only, description="Whether new furniture may be introduced."
+    )
+    add_furniture: List[str] = Field(
+        default_factory=list, max_length=8,
+        description="Furniture-type ids to add, from the list for the room's `room_type` "
+                    "(options_review/HANDOFF.md §7.2). Only read when furniture=='add'. "
+                    "The backend validates ids against that room type's list (422 if unknown)."
+    )
+    decor: DecorLevel = Field(DecorLevel.as_style, description="How much decor to add.")
+    plants: bool = Field(False, description="Add a few plants.")
+    palette: PaletteOption = Field(
+        PaletteOption.as_style, description="Colour family override. 'as_style' leaves "
+                                            "the chosen style's own palette line as-is."
     )
 
 
@@ -133,6 +204,16 @@ class Render(BaseModel):
     error_code: Optional[str] = None
     created_at: datetime
     credits_left: Optional[int] = None
+    room_type: Optional[RoomType] = Field(
+        None, description="What was actually used for this render (request value, else "
+                          "detected, else null) — echoed so history is self-describing."
+    )
+    walls: WallsOption = WallsOption.leave
+    furniture: FurnitureOption = FurnitureOption.keep_only
+    add_furniture: List[str] = Field(default_factory=list)
+    decor: DecorLevel = DecorLevel.as_style
+    plants: bool = False
+    palette: PaletteOption = PaletteOption.as_style
 
 
 # ── errors and health ─────────────────────────────────────────────────────────
