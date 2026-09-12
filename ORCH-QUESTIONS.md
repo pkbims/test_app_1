@@ -292,3 +292,58 @@ Format:
   entry.
 - **Status:** answered
 
+
+## Q11 — First real run of "shop your restyle" returned zero prices: render URL not reachable by SearchApi; plus the SearchApi key is in the worker logs
+- **From:** shopping-research session (analysis of the user's live run, 2026-09-12 15:04–15:24 UTC)
+- **Date:** 2026-09-12
+- **Finding 1 — why every item came back with no options.** Five shopping jobs
+  finished `ready` with 3–7 items each, `total_from` NULL on all of them, cost
+  matching "every item searched twice, nothing back" (7 items → 14 SearchApi
+  calls, 5.9¢, judge never reached). The worker log shows the URL handed to
+  SearchApi: `url=http://192.168.2.25:8000/files/renders/<id>.png?exp=…&sig=…`
+  — the laptop's LAN address. SearchApi/Google cannot fetch it, Lens answers "no
+  results", the item falls through to D2 and the app shows only the plain
+  "Search" links. The code did the right thing for the input it had; this is the
+  local-development gap flagged in `shopping_proto/HANDOFF.md` §7.3 (the
+  research runs worked because the render was on a public host, catbox.moe).
+- **Ask (backend), user's decision:** add a **temporary, dev-only** switch so
+  the user can test on the laptop without a tunnel:
+  `SHOPPING_DEV_IMAGE_HOST=catbox` (default `""`). When set, `pipeline.generate`
+  uploads `render_bytes` once per job to `https://catbox.moe/user/api.php`
+  (`reqtype=fileupload`, multipart `fileToUpload`, response body is the direct
+  URL) and passes that URL to SearchApi instead of `signed_url(...)`; log a
+  WARNING that the dev path is active. Plumb it as `Settings.shopping_dev_image_host`
+  → `runtime.make_shopping_config` → a `ShoppingConfig.dev_public_image_host: str = ""`
+  field (default keeps the existing test fixture valid). Mark every piece
+  TEMPORARY with a pointer to §7.3; it must never be on in production — no
+  deletion, no terms, breaks the TR4 promise. The user has explicitly accepted
+  this for local testing only and will remove it once a tunnel is in place.
+  Then set `SHOPPING_DEV_IMAGE_HOST=catbox` in the checkout `.env` and rebuild
+  the worker so the user can re-run the same room.
+- **Finding 2 — the SearchApi key is being logged, in full, on every call.**
+  The `httpx` logger's INFO line (`"HTTP Request: GET https://www.searchapi.io/…&api_key=…"`)
+  prints the complete request URL; 14 copies from the last run are in
+  `docker compose logs worker`. The earlier fix covered httpx's *error message*
+  (`RealSearchApi.search()`), not its request log. The signed render URLs (15-min)
+  are logged the same way. **Ask (backend):** silence it —
+  `logging.getLogger("httpx").setLevel(logging.WARNING)` in the worker's logging
+  setup (or an `event_hooks` client that logs status only) — and add a
+  regression test asserting the key never appears in captured log output,
+  next to the two existing `MockTransport` tests. **Ask (user):** rotate the
+  SearchApi key in their dashboard and update `.env`; treat the current one as
+  exposed.
+- **Blocks:** the user seeing any real prices locally (finding 1); a secrets
+  hygiene rule in HANDOFF §4.2/§6.2 ("never logged") currently violated
+  (finding 2).
+- **Answer:** (orchestrator) Both fixed by backend, merged to `main` (`d89bc70`).
+  Finding 2: `74bf818` raises the `httpx`/`httpcore` loggers to WARNING in the
+  shared `logs.configure()`; verified non-vacuous by hand (reverted, watched the
+  key reappear in the test's captured output, restored). Finding 1: `986775c`
+  adds `SHOPPING_DEV_IMAGE_HOST=catbox`, default off, every line marked
+  TEMPORARY with a pointer to HANDOFF §7.3, and `Settings.load()` hard-refuses to
+  start with it set under `APP_ENV=production`. User has explicitly accepted
+  this tradeoff for local testing and asked not to worry about rotating the
+  exposed key right now. Orchestrator is setting
+  `SHOPPING_DEV_IMAGE_HOST=catbox` in the checkout `.env` and restarting the
+  worker next so the user can retest.
+- **Status:** answered

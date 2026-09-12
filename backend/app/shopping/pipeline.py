@@ -221,6 +221,10 @@ class ShoppingConfig:
     search_url_ttl_s: int
     public_base_url: str
     file_url_secret: str
+    # TEMPORARY, dev-only (ORCH-QUESTIONS Q11, HANDOFF §7.3) — "uguu" or "".
+    # See the block comment on `_upload_to_uguu` below. Default keeps every
+    # existing ShoppingConfig(...) call (tests included) on today's behaviour.
+    dev_public_image_host: str = ""
 
 
 @dataclass(frozen=True)
@@ -264,6 +268,16 @@ def generate(storage, model: ShoppingModel, searchapi: SearchApi, render_id: str
         config.public_base_url, "renders", info.after_key,
         config.file_url_secret, config.search_url_ttl_s,
     )
+    if config.dev_public_image_host == "uguu":
+        # TEMPORARY, dev-only — see `_upload_to_uguu` below. Uploaded once per
+        # job, not once per item: every item's SearchApi call shares this URL.
+        log.warning(
+            "SHOPPING_DEV_IMAGE_HOST=uguu is active: uploading this render to "
+            "uguu.se, a public host outside our control, instead of using "
+            "our own signed URL. Dev-only — must never run in production "
+            "(HANDOFF §7.3, ORCH-QUESTIONS Q11)."
+        )
+        render_url = _upload_to_uguu(render_bytes)
 
     items_out: list[dict] = []
     searchapi_calls = 0
@@ -345,6 +359,57 @@ def _verify(matches: list[RawMatch], searchapi: SearchApi) -> list[Candidate]:
 
 def _thumb(candidate: Candidate, searchapi: SearchApi) -> str | None:
     return searchapi.fetch_thumbnail(candidate.thumbnail) if candidate.thumbnail else None
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TEMPORARY, DEV-ONLY — ORCH-QUESTIONS Q11, HANDOFF §7.3, shopping_proto/
+# DEV-IMAGE-HOST.md (catbox.moe was the first host tried here; it turned out
+# to silently rate-limit anonymous bursts — HTTP 200, empty body — so it was
+# swapped for uguu.se, real-tested at 18/18 and 21/21 successful uploads).
+#
+# A laptop's PUBLIC_BASE_URL is not reachable from the internet, so SearchApi
+# can never fetch the render and every local run returns zero prices — the
+# gap HANDOFF §7.3 named and deferred. This uploads the render, once per job,
+# to uguu.se (a public anonymous host we do not control) and hands SearchApi
+# *that* URL instead of our own signed one, purely so a developer can see
+# real prices without setting up a tunnel.
+#
+# MUST NEVER RUN IN PRODUCTION: no deletion guarantee on uguu.se's side (files
+# do expire after 3 hours there, but that is not a retention *policy* we
+# control or can rely on), no terms of service agreed with uguu.se for this
+# use, and it breaks the TR4 promise this whole feature was already
+# scrutinised against. `Settings.load()` refuses to start with this set when
+# APP_ENV=production. Only reachable via `ShoppingConfig.dev_public_image_host
+# == "uguu"`, itself only ever set from `SHOPPING_DEV_IMAGE_HOST` — never on
+# by default (empty string).
+#
+# Delete this function, the `if` block in `generate()` that calls it, the
+# `dev_public_image_host` field on `ShoppingConfig`, `Settings.
+# shopping_dev_image_host` and its `load()`/`make_shopping_config` wiring
+# together, once every developer has a tunnel (§7.3's actual fix). It should
+# never outlive that.
+_UGUU_UPLOAD_URL = "https://uguu.se/upload"
+
+
+def _upload_to_uguu(image_bytes: bytes) -> str:
+    import httpx
+
+    resp = httpx.post(
+        _UGUU_UPLOAD_URL,
+        files={"files[]": ("render.png", image_bytes, "image/png")},
+        timeout=60.0,
+    )
+    try:
+        data = resp.json() if resp.status_code == 200 else {}
+    except ValueError:
+        data = {}
+    url = (data.get("files") or [{}])[0].get("url") if data.get("success") else None
+    if not url:
+        raise SearchApiError(f"uguu upload failed: HTTP {resp.status_code}")
+    return url
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 
 
 def load_render_info(conn, render_id: str) -> RenderInfo | None:

@@ -170,3 +170,85 @@ def test_generate_dead_link_is_dropped(storage, config, info):
 def test_generate_cost_cents_scales_with_calls(storage, config, info):
     result = generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, config, _LOG)
     assert result.cost_cents > 0
+
+
+# ── TEMPORARY dev-only uguu.se path (ORCH-QUESTIONS Q11, HANDOFF §7.3,
+# shopping_proto/DEV-IMAGE-HOST.md) ─────────────────────────────────────────
+class _RecordingSearchApi(FakeSearchApi):
+    def __init__(self):
+        self.urls_seen: list[str] = []
+
+    def search(self, render_url, crop):
+        self.urls_seen.append(render_url)
+        return super().search(render_url, crop)
+
+
+def _uguu_config(**overrides):
+    kwargs = dict(
+        max_items=7, search_url_ttl_s=900,
+        public_base_url="http://localhost:8000", file_url_secret="secret",
+        dev_public_image_host="uguu",
+    )
+    kwargs.update(overrides)
+    return ShoppingConfig(**kwargs)
+
+
+def test_generate_default_config_never_touches_uguu(storage, config, info, monkeypatch):
+    def blow_up(*a, **kw):
+        raise AssertionError("httpx.post must not be called when dev_public_image_host is unset")
+
+    monkeypatch.setattr("httpx.post", blow_up)
+    assert config.dev_public_image_host == ""
+    generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, config, _LOG)
+
+
+def test_generate_uguu_uploads_once_and_every_item_searches_that_url(storage, info, monkeypatch, caplog):
+    import httpx
+
+    calls = []
+
+    def fake_post(url, *, files, timeout):
+        calls.append((url, files.get("files[]")))
+        return httpx.Response(
+            200,
+            json={"success": True, "files": [{"url": "https://n.uguu.se/dhTswTOV.png"}]},
+            request=httpx.Request("POST", url),
+        )
+
+    monkeypatch.setattr("httpx.post", fake_post)
+    searchapi = _RecordingSearchApi()
+
+    with caplog.at_level(logging.WARNING):
+        generate(storage, FakeShoppingModel(), searchapi, "render-1", info, _uguu_config(), _LOG)
+
+    assert len(calls) == 1  # once per job, not once per item — FakeShoppingModel gives 2 items
+    assert calls[0][0] == "https://uguu.se/upload"
+    assert calls[0][1][0] == "render.png"  # (filename, bytes, content_type)
+    assert searchapi.urls_seen == ["https://n.uguu.se/dhTswTOV.png"] * 2
+    assert any("uguu" in r.message and "production" in r.message for r in caplog.records)
+
+
+@pytest.mark.parametrize(
+    "response_kwargs",
+    [
+        {"status_code": 500, "text": "server error"},  # non-200
+        {"status_code": 200, "json": {"success": False}},  # success: false
+        {"status_code": 200, "json": {"success": True, "files": []}},  # missing url
+        {"status_code": 200, "json": {"success": True, "files": [{"name": "x"}]}},  # url absent
+        {"status_code": 200, "text": ""},  # empty body, not even JSON
+    ],
+)
+def test_generate_uguu_upload_failure_raises_searchapi_error(storage, info, monkeypatch, response_kwargs):
+    import httpx
+
+    from app.shopping.searchapi import SearchApiError
+
+    def fake_post(url, *, files, timeout):
+        kwargs = {k: v for k, v in response_kwargs.items() if k != "status_code"}
+        return httpx.Response(
+            response_kwargs["status_code"], request=httpx.Request("POST", url), **kwargs
+        )
+
+    monkeypatch.setattr("httpx.post", fake_post)
+    with pytest.raises(SearchApiError):
+        generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, _uguu_config(), _LOG)

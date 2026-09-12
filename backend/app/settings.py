@@ -60,12 +60,32 @@ class Settings:
     # after_url (shopping_proto/HANDOFF.md §6.3).
     shopping_search_url_ttl_s: int = 15 * 60
 
+    # ── TEMPORARY, dev-only (ORCH-QUESTIONS Q11, HANDOFF §7.3) ──────────────────
+    # A laptop's PUBLIC_BASE_URL is not reachable by SearchApi, so real prices
+    # never come back on local runs. Setting this to "uguu" makes the shopping
+    # pipeline upload the render to uguu.se (a public host we do not control,
+    # real-tested — see shopping_proto/DEV-IMAGE-HOST.md; catbox.moe was tried
+    # first and turned out to silently rate-limit anonymous bursts) and hand
+    # SearchApi *that* URL instead of our own signed one. Empty string (the
+    # default) is the only value load() allows in production — see the guard
+    # below. Delete this field, its Settings.load() wiring, its ShoppingConfig
+    # field, and pipeline.py's `_upload_to_uguu` once every developer has a
+    # tunnel set up; it should never outlive that.
+    shopping_dev_image_host: str = ""
+
 
 def load() -> Settings:
     jwt_secret = os.environ.get("JWT_SECRET", "dev-insecure")
     app_env = os.environ.get("APP_ENV", "dev")
     if app_env == "production" and len(jwt_secret) < 32:
         raise RuntimeError("JWT_SECRET must be at least 32 bytes in production")
+    shopping_dev_image_host = os.environ.get("SHOPPING_DEV_IMAGE_HOST", "")
+    if app_env == "production" and shopping_dev_image_host:
+        # TEMPORARY dev-only escape hatch (ORCH-QUESTIONS Q11) — never in
+        # production: no deletion guarantee on the upload host, no terms
+        # agreed, and it breaks the TR4 promise (the render would leave the
+        # system to a host we do not control, indefinitely retained).
+        raise RuntimeError("SHOPPING_DEV_IMAGE_HOST must not be set when APP_ENV=production")
     return Settings(
         database_url=os.environ.get("DATABASE_URL", "postgresql://app1:app1@db:5432/app1"),
         photo_dir=os.environ.get("PHOTO_DIR", "/data/photos"),
@@ -86,4 +106,5 @@ def load() -> Settings:
         shopping_max_items=int(os.environ.get("SHOPPING_MAX_ITEMS", "7")),
         shopping_judge_model=os.environ.get("SHOPPING_JUDGE_MODEL", "gpt-4.1"),
         shopping_describe_model=os.environ.get("SHOPPING_DESCRIBE_MODEL", "gpt-4.1-mini"),
+        shopping_dev_image_host=shopping_dev_image_host,
     )
