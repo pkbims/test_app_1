@@ -153,6 +153,17 @@ public actor APIClient {
         return try decodeOrThrow(data, response)
     }
 
+    // MARK: - Shopping
+
+    /// `GET /v1/renders/{id}/shopping` (`shopping_proto/HANDOFF.md` §4.1). Polled by
+    /// `RenderStateMachine` on the same 2s cadence as the render itself, starting
+    /// once the render is `done` and stopping on `ready`/`none`.
+    public func shopping(renderId: String) async throws -> Shopping {
+        let request = plainRequest(path: "v1/renders/\(renderId)/shopping", method: "GET")
+        let (data, response) = try await send(request, authorized: true, idempotent: true)
+        return try decodeOrThrow(data, response)
+    }
+
     // MARK: - Request building
 
     private func jsonRequest(path: String, method: String, body: some Encodable) throws -> URLRequest {

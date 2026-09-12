@@ -68,8 +68,12 @@ private struct HomeContainerView: View {
                 RoomDetailView(viewModel: RoomDetailViewModel(
                     room: room,
                     rendersProvider: environment.apiClient,
+                    shoppingProvider: environment.apiClient,
                     crashReporter: environment.crashReporter
                 ))
+            }
+            .navigationDestination(for: Shopping.self) { shopping in
+                ShoppingView(shopping: shopping)
             }
         }
         .fullScreenCover(isPresented: $showingNewRoomFlow) {
@@ -118,6 +122,9 @@ private struct NewRoomFlowView: View {
                 case .compare:
                     CompareView(flow: flow)
                 }
+            }
+            .navigationDestination(for: Shopping.self) { shopping in
+                ShoppingView(shopping: shopping)
             }
             .toolbar {
                 // Not shown once a render has actually finished — Compare's own

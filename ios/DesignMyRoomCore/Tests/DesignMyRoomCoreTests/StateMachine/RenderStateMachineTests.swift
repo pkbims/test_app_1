@@ -24,6 +24,21 @@ final class RenderStateMachineTests: XCTestCase {
         })
     }
 
+    private func shoppingJSON(
+        status: String,
+        renderId: String = "rd_1",
+        pricesAsOf: String? = nil,
+        totalFrom: Double? = nil,
+        items: String = "[]"
+    ) -> String {
+        func str(_ value: String?) -> String { value.map { "\"\($0)\"" } ?? "null" }
+        func num(_ value: Double?) -> String { value.map { String($0) } ?? "null" }
+        return """
+        {"render_id":"\(renderId)","status":"\(status)","prices_as_of":\(str(pricesAsOf)),
+         "total_from":\(num(totalFrom)),"currency":"CAD","items":\(items)}
+        """
+    }
+
     private func renderJSON(
         status: String,
         id: String = "rd_1",
@@ -88,6 +103,45 @@ final class RenderStateMachineTests: XCTestCase {
     }
 
     private func waitForStates(_ collector: StateCollector, count: Int) async -> [RenderStateMachine.State] {
+        let expectation = await collector.awaitCount(count)
+        await fulfillment(of: [expectation], timeout: 5)
+        return await collector.states
+    }
+
+    /// Same pattern as `StateCollector`, for the shopping sub-state.
+    private actor ShoppingStateCollector {
+        private(set) var states: [RenderStateMachine.ShoppingState] = []
+        private var expectation: XCTestExpectation?
+        private var target = Int.max
+
+        func awaitCount(_ count: Int) -> XCTestExpectation {
+            target = count
+            let expectation = XCTestExpectation(description: "collected \(count) shopping states")
+            self.expectation = states.count >= count ? nil : expectation
+            if states.count >= count {
+                expectation.fulfill()
+            }
+            return expectation
+        }
+
+        func record(_ state: RenderStateMachine.ShoppingState) {
+            states.append(state)
+            if states.count >= target {
+                expectation?.fulfill()
+                expectation = nil
+            }
+        }
+    }
+
+    private func makeShoppingCollector(on machine: RenderStateMachine) async -> ShoppingStateCollector {
+        let collector = ShoppingStateCollector()
+        await machine.onShoppingChange { state in
+            await collector.record(state)
+        }
+        return collector
+    }
+
+    private func waitForShoppingStates(_ collector: ShoppingStateCollector, count: Int) async -> [RenderStateMachine.ShoppingState] {
         let expectation = await collector.awaitCount(count)
         await fulfillment(of: [expectation], timeout: 5)
         return await collector.states
@@ -233,5 +287,131 @@ final class RenderStateMachineTests: XCTestCase {
         let request = await transport.recordedRequests[0]
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertEqual(request.url?.path, "/v1/renders/rd_1")
+    }
+
+    // MARK: - Shopping sub-state (shopping_proto/HANDOFF.md §4.3)
+
+    func testShoppingStartsPendingAssoonAsRenderIsDone() async throws {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 202, json: renderJSON(status: "done", beforeUrl: "https://x/b", afterUrl: "https://x/a"))
+        await transport.enqueueJSON(status: 200, json: shoppingJSON(status: "pending"))
+        let machine = makeMachine(transport: transport)
+
+        let shoppingCollector = await makeShoppingCollector(on: machine)
+        await machine.start(roomId: "rm_1", body: RenderCreate(style: "scandi", prompt: nil, removeIds: [], idempotencyKey: "k"))
+        let collected = await waitForShoppingStates(shoppingCollector, count: 1)
+
+        XCTAssertEqual(collected.first, .pending)
+    }
+
+    func testShoppingNeverStartsWhenRenderFails() async throws {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 202, json: renderJSON(status: "failed", errorCode: "render_failed"))
+        let machine = makeMachine(transport: transport)
+
+        let collector = await makeCollector(on: machine)
+        await machine.start(roomId: "rm_1", body: RenderCreate(style: "scandi", prompt: nil, removeIds: [], idempotencyKey: "k"))
+        _ = await waitForStates(collector, count: 2) // submitting, renderFailed
+
+        let shoppingState = await machine.shoppingState
+        XCTAssertEqual(shoppingState, .idle)
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let requestCount = await transport.requestCount
+        XCTAssertEqual(requestCount, 1, "only the render create call — no shopping request ever made")
+    }
+
+    func testShoppingPollsUntilReadyThenStops() async throws {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 202, json: renderJSON(status: "done", beforeUrl: "https://x/b", afterUrl: "https://x/a"))
+        await transport.enqueueJSON(status: 200, json: shoppingJSON(status: "pending"))
+        await transport.enqueueJSON(status: 200, json: shoppingJSON(status: "pending"))
+        await transport.enqueueJSON(status: 200, json: shoppingJSON(
+            status: "ready", pricesAsOf: "2026-09-12", totalFrom: 144.00,
+            items: #"[{"item_id":"a","name":"A","crop_url":"https://x/a.jpg","options":[{"store":"walmart.ca","title":"A1","price":70.0,"url":"https://x/1","verified":true}]}]"#
+        ))
+        let machine = makeMachine(transport: transport)
+
+        let shoppingCollector = await makeShoppingCollector(on: machine)
+        await machine.start(roomId: "rm_1", body: RenderCreate(style: "scandi", prompt: nil, removeIds: [], idempotencyKey: "k"))
+        // pending (immediate, on render done) · pending · pending · ready (one per queued response)
+        let collected = await waitForShoppingStates(shoppingCollector, count: 4)
+
+        XCTAssertEqual(collected[0], .pending)
+        XCTAssertEqual(collected[1], .pending)
+        XCTAssertEqual(collected[2], .pending)
+        guard case .ready(let shopping) = collected[3] else {
+            return XCTFail("expected .ready, got \(collected[3])")
+        }
+        XCTAssertEqual(shopping.totalFrom, 144.00)
+        XCTAssertEqual(shopping.items.first?.itemId, "a")
+
+        let countAtReady = await transport.requestCount
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let countLater = await transport.requestCount
+        XCTAssertEqual(countAtReady, countLater, "must stop polling shopping once ready")
+    }
+
+    func testShoppingPollsUntilNoneThenStops() async throws {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 202, json: renderJSON(status: "done", beforeUrl: "https://x/b", afterUrl: "https://x/a"))
+        await transport.enqueueJSON(status: 200, json: shoppingJSON(status: "pending"))
+        await transport.enqueueJSON(status: 200, json: shoppingJSON(status: "none"))
+        let machine = makeMachine(transport: transport)
+
+        let shoppingCollector = await makeShoppingCollector(on: machine)
+        await machine.start(roomId: "rm_1", body: RenderCreate(style: "scandi", prompt: nil, removeIds: [], idempotencyKey: "k"))
+        // pending (immediate, on render done) · pending · none (one per queued response)
+        let collected = await waitForShoppingStates(shoppingCollector, count: 3)
+
+        XCTAssertEqual(collected, [.pending, .pending, .none])
+
+        let countAtNone = await transport.requestCount
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let countLater = await transport.requestCount
+        XCTAssertEqual(countAtNone, countLater, "must stop polling shopping once none")
+    }
+
+    func testShoppingRequestFailureSurfacesAsNoneRatherThanRetryingForever() async throws {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 202, json: renderJSON(status: "done", beforeUrl: "https://x/b", afterUrl: "https://x/a"))
+        await transport.enqueue(.failure(URLError(.notConnectedToInternet)))
+        let machine = makeMachine(transport: transport)
+
+        let shoppingCollector = await makeShoppingCollector(on: machine)
+        await machine.start(roomId: "rm_1", body: RenderCreate(style: "scandi", prompt: nil, removeIds: [], idempotencyKey: "k"))
+        let collected = await waitForShoppingStates(shoppingCollector, count: 2) // pending, none
+
+        XCTAssertEqual(collected, [.pending, .none])
+    }
+
+    func testCancelStopsShoppingPollingToo() async throws {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 202, json: renderJSON(status: "done", beforeUrl: "https://x/b", afterUrl: "https://x/a"))
+        await transport.enqueueJSON(status: 200, json: shoppingJSON(status: "pending"))
+        let machine = makeMachine(transport: transport)
+
+        let shoppingCollector = await makeShoppingCollector(on: machine)
+        await machine.start(roomId: "rm_1", body: RenderCreate(style: "scandi", prompt: nil, removeIds: [], idempotencyKey: "k"))
+        _ = await waitForShoppingStates(shoppingCollector, count: 1) // pending
+        await machine.cancel()
+
+        let countAtCancel = await transport.requestCount
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let countLater = await transport.requestCount
+        XCTAssertEqual(countAtCancel, countLater, "no further shopping polls after cancel")
+    }
+
+    func testResumePollingAlsoStartsShoppingWhenRenderIsAlreadyDone() async throws {
+        let transport = MockTransport()
+        await transport.enqueueJSON(status: 200, json: renderJSON(status: "done", beforeUrl: "https://x/b", afterUrl: "https://x/a"))
+        await transport.enqueueJSON(status: 200, json: shoppingJSON(status: "none"))
+        let machine = makeMachine(transport: transport)
+
+        let shoppingCollector = await makeShoppingCollector(on: machine)
+        await machine.resumePolling(renderId: "rd_1")
+        // pending (immediate, on render done) · none (from the queued response)
+        let collected = await waitForShoppingStates(shoppingCollector, count: 2)
+
+        XCTAssertEqual(collected, [.pending, .none])
     }
 }
