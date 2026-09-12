@@ -6,14 +6,14 @@ import XCTest
 /// (no usable match) shows a Search button, and the total text reflects the
 /// backend's own `total_from`.
 ///
-/// **Needs the real `GET /v1/renders/{id}/shopping` endpoint running** (not yet
-/// merged to `main` as of this writing — the backend agent's work lives
-/// uncommitted in the `backend` worktree). Until then these will fail at the
-/// "wait for the Unlock card" step, the same way the rest of this file's sibling
-/// tests need `docker compose up`. Same setup as `AddPhotoFlowUITests`/
-/// `StyleScreenFurniturePickerUITests`: a photo in the Simulator's library and the
-/// backend running, ideally with `SHOPPING_BACKEND=fake` so the pipeline resolves
-/// in one poll tick instead of the real ~30s.
+/// Needs the real `GET /v1/renders/{id}/shopping` endpoint running — merged to
+/// `main` in commit f7989bc. Verified end-to-end against the real
+/// `SHOPPING_BACKEND=openai_searchapi` pipeline (contract shape matches these
+/// models exactly, no decode mismatches); with real SearchApi calls the pipeline
+/// took ~48s render-done-to-shopping-done in that run, hence the generous
+/// timeouts below — `SHOPPING_BACKEND=fake` resolves in one poll tick instead.
+/// Same setup as `AddPhotoFlowUITests`/`StyleScreenFurniturePickerUITests`: a
+/// photo in the Simulator's library and the backend running.
 final class ShoppingFlowUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -33,7 +33,7 @@ final class ShoppingFlowUITests: XCTestCase {
 
         // Shopping resolves after a few 2s poll ticks once ready/none; give it a
         // generous window (30s fake backend, longer for the real pipeline).
-        XCTAssertTrue(unlockCard.waitForExistence(timeout: 45), "expected the Unlock card once shopping is ready")
+        XCTAssertTrue(unlockCard.waitForExistence(timeout: 90), "expected the Unlock card once shopping is ready")
 
         let countLabel = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", "found in your restyle")).firstMatch
         XCTAssertTrue(countLabel.exists, "expected the '<n> new items found in your restyle' copy")
@@ -45,7 +45,7 @@ final class ShoppingFlowUITests: XCTestCase {
         try reachCompareAfterARender(app)
 
         let unlockCard = app.otherElements["UnlockShoppingCard"]
-        XCTAssertTrue(unlockCard.waitForExistence(timeout: 45))
+        XCTAssertTrue(unlockCard.waitForExistence(timeout: 90))
         unlockCard.tap()
 
         XCTAssertTrue(app.staticTexts["Shop your restyle"].waitForExistence(timeout: 5), "expected the pushed shopping screen")
@@ -57,7 +57,7 @@ final class ShoppingFlowUITests: XCTestCase {
         try reachCompareAfterARender(app)
 
         let unlockCard = app.otherElements["UnlockShoppingCard"]
-        XCTAssertTrue(unlockCard.waitForExistence(timeout: 45))
+        XCTAssertTrue(unlockCard.waitForExistence(timeout: 90))
         unlockCard.tap()
         XCTAssertTrue(app.staticTexts["Shop your restyle"].waitForExistence(timeout: 5))
 
@@ -75,7 +75,7 @@ final class ShoppingFlowUITests: XCTestCase {
         try reachCompareAfterARender(app)
 
         let unlockCard = app.otherElements["UnlockShoppingCard"]
-        XCTAssertTrue(unlockCard.waitForExistence(timeout: 45))
+        XCTAssertTrue(unlockCard.waitForExistence(timeout: 90))
         unlockCard.tap()
         XCTAssertTrue(app.staticTexts["Shop your restyle"].waitForExistence(timeout: 5))
 
