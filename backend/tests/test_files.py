@@ -41,3 +41,9 @@ def test_scope_is_bound_into_the_signature():
 
 def test_unknown_scope_is_rejected():
     assert not files.verify("secrets", "k", 9_999_999_999, "deadbeef", SECRET)
+
+
+def test_crops_scope_is_signable_like_photos_and_renders():
+    url = files.signed_url("http://x", "crops", "r1/olive_tree.jpg", SECRET, 10, now=1000)
+    exp, sig = _parts(url)
+    assert files.verify("crops", "r1/olive_tree.jpg", exp, sig, SECRET, now=1000)

@@ -262,12 +262,33 @@ Format:
   `palette` control is affected: it ships with a prompt mechanism that is real
   and tested but, on this evidence, unreliable against a style with a strong
   palette of its own.
-- **Answer:** (user) **Accepted as a known limitation. Do not spend more time
-  re-spiking it.** The override clause works and is tested (its exact text is in
-  the real prompt on every request that sets a non-default palette); it is not
-  guaranteed to beat a strongly-worded style guide — documented here, not silently
-  hidden. Neither path in the question (per-style palette lines, or
-  strengthen-and-re-spike the override clause) is being taken right now. Revisit
-  only if this becomes a real product problem later.
+
+## Q10 — TR4 and the privacy copy need updating for "shop your restyle" (out of my remit)
+- **From:** backend
+- **Date:** 2026-09-12
+- **Question:** shopping_proto/HANDOFF.md §6.3 is explicit: rendered images now
+  leave the system (SearchApi/Google fetch the after-image to run Lens on it), so
+  **TR4** ("Photos are deletable on request, never written to logs, never sent
+  anywhere not listed here") and whatever privacy copy the app shows need to name
+  SearchApi as a recipient of the *render* (never the original photo — the
+  pipeline only ever hands out a signed URL to `after_key`, on a short 15-minute
+  expiry, per §6.3). I'm not making this edit myself: TR4 lives in `PRD.md`,
+  which is generated from `spec/state.json` and which `backend/AGENT.md`
+  explicitly puts outside what I touch; "privacy copy" likely also means
+  something in `ios/` or a positioning doc, neither of which I own either.
+- **Blocks:** nothing on the backend build — the pipeline itself is built,
+  tested, and already follows the rule (short-TTL URL, render only, never the
+  original photo). This is purely the documentation/copy catching up to what
+  the backend now actually does.
+- **Answer:** (orchestrator) Correctly out of backend's and iOS's remit — done.
+  `spec/index.html`'s TR4 row now explicitly names the two vendors that ever
+  receive a photo: OpenAI (the original photo, for inventory and render
+  generation — pre-existing) and SearchApi (only a finished render, only for the
+  post-v1 shopping feature, on a 15-minute signed URL, never the original photo).
+  `PRD.md` was regenerated from that source via `spec/build_prd.py` so the two
+  cannot drift. Checked for an actual in-app privacy screen to update too —
+  there isn't one yet (no privacy/terms copy exists anywhere in `ios/` today), so
+  nothing there needed changing; when one is built, it should draw from this TR4
+  entry.
 - **Status:** answered
 

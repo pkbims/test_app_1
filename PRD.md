@@ -1,6 +1,6 @@
 # PRD — app_1
 
-Generated 2026-09-09 from `spec/index.html` and `spec/state.json`.
+Generated 2026-09-12 from `spec/index.html` and `spec/state.json`.
 10 review rounds · 42 decisions recorded · 23 decision points in the document.
 
 > Generated file — do not edit by hand. Change the page or the decisions and re-run
@@ -255,7 +255,7 @@ It is the right metric because it measures the promise directly rather than a pr
 | **TR1** | A render finishes in under 60 seconds at the 95th percentile. | People stare at a phone while it works. |
 | **TR2** | Cost per render is low enough that 1 free room × 3 restyles is affordable at 10,000 users. | R4 — free proof before payment. |
 | **TR3** | Structure detection must emit a numeric confidence, not just a result. | R5 and D11 are impossible without it. |
-| **TR4** | Photos are deletable on request, never written to logs, never sent anywhere not listed here. | These are pictures of where people live. |
+| **TR4** | Photos are deletable on request, never written to logs, never sent anywhere not listed here. The list, as of the shopping round: OpenAI (the original photo, for inventory and render generation) and, only for a finished render and only once the post-v1 shopping feature runs, SearchApi — on a short-lived (15-minute) signed URL, never the original photo. | These are pictures of where people live. |
 | **TR5** | Any dependency can fail without corrupting state or charging a user for nothing. | Series baseline: deliberate failure handling. |
 | **TR6** | The whole system runs on one laptop with `docker compose up`. | Series baseline: local deploy first. |
 | **TR7** | Structure fidelity is measurable automatically on every render. | It is the success metric; it cannot be hand-scored. |

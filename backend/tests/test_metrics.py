@@ -63,6 +63,43 @@ def test_a_completed_render_shows_up_in_metrics(api, run_worker):
     assert "app1_preservation_scored_renders 1.0" in body
 
 
+def test_shopping_metrics_are_present(api):
+    body = _scrape(api)
+    for name in (
+        "app1_shopping_jobs_total",
+        "app1_shopping_items_found_mean",
+        "app1_shopping_options_per_item_mean",
+        "app1_shopping_searchapi_calls_total",
+        "app1_shopping_cost_cents_mean",
+        "app1_shopping_duration_seconds",
+    ):
+        assert name in body
+
+
+def test_a_ready_shopping_job_shows_up_in_metrics(api, run_worker):
+    headers = sign_in(api)
+    room_id = api.post("/v1/rooms", json={}, headers=headers).json()["room_id"]
+    api.post(
+        f"/v1/rooms/{room_id}/photos",
+        files={"file": ("r.jpg", _jpeg(), "image/jpeg")},
+        headers=headers,
+    )
+    api.post(f"/v1/rooms/{room_id}/inventory", headers=headers)
+    api.post(
+        f"/v1/rooms/{room_id}/renders",
+        json={"style": "warm-minimal", "remove_ids": [], "idempotency_key": "shop-m1"},
+        headers=headers,
+    )
+    assert run_worker() == "done"  # the render
+    assert run_worker() == "done"  # its shopping job
+
+    body = _scrape(api)
+    assert 'app1_shopping_jobs_total{status="ready"} 1.0' in body
+    assert "app1_shopping_items_found_mean 2.0" in body
+    assert "app1_shopping_options_per_item_mean 2.0" in body
+    assert 'app1_shopping_searchapi_calls_total{outcome="ok"} 2.0' in body
+
+
 def test_rate_limit_rejections_are_counted(api):
     for _ in range(12):
         api.post("/v1/auth/apple", json={"identity_token": "x"})

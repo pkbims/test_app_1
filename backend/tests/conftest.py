@@ -37,16 +37,28 @@ def run_worker(pg_url, tmp_path):
     """Run one worker tick against the same scratch DB and photo dir as `api`.
 
     `catch_up=True` first makes any backed-off job due, so tests don't wait out
-    the real retry backoff.
+    the real retry backoff. Shopping deps default to the fake backend too — a
+    render's own `run_worker()` call is unaffected either way (it only decides
+    what happens when a *shopping* job is the one leased), and this makes
+    `run_worker()` a second time after a render naturally exercise the fake
+    shopping pipeline instead of silently no-op'ing to `off`.
     """
     import psycopg
 
     from app.imagegen import FakeImageEditor
+    from app.shopping.judge import FakeShoppingModel
+    from app.shopping.pipeline import ShoppingConfig
+    from app.shopping.searchapi import FakeSearchApi
     from app.storage import LocalDiskStorage
     from app.vision import FakeVision
     from worker.runner import run_one
 
-    def _tick(*, editor=None, vision=None, storage=None, catch_up=True, worker="test-worker"):
+    _unset = object()
+
+    def _tick(
+        *, editor=None, vision=None, storage=None, catch_up=True, worker="test-worker",
+        shopping_model=_unset, shopping_searchapi=_unset, shopping_config=None,
+    ):
         with psycopg.connect(pg_url, autocommit=True) as conn:
             if catch_up:
                 conn.execute("UPDATE jobs SET run_after = now() WHERE status = 'queued'")
@@ -56,6 +68,15 @@ def run_worker(pg_url, tmp_path):
                 vision or FakeVision(),
                 editor or FakeImageEditor(),
                 worker,
+                shopping_model=FakeShoppingModel() if shopping_model is _unset else shopping_model,
+                shopping_searchapi=(
+                    FakeSearchApi() if shopping_searchapi is _unset else shopping_searchapi
+                ),
+                shopping_config=shopping_config
+                or ShoppingConfig(
+                    max_items=7, search_url_ttl_s=900,
+                    public_base_url="http://testserver", file_url_secret="test-file-url-secret",
+                ),
             )
 
     return _tick
