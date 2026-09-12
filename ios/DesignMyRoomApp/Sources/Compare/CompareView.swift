@@ -8,8 +8,8 @@ import SwiftUI
 struct CompareView: View {
     @Bindable var flow: RoomFlowViewModel
 
-    private var shoppingIfReady: Shopping? {
-        if case .ready(let shopping) = flow.shoppingState { shopping } else { nil }
+    private var shoppingCardState: ShoppingCardState {
+        ShoppingCardState(machineState: flow.shoppingState)
     }
 
     var body: some View {
@@ -42,7 +42,7 @@ struct CompareView: View {
                     .foregroundStyle(Color.faint)
             }
 
-            UnlockShoppingCardLink(shopping: shoppingIfReady)
+            UnlockShoppingCardLink(state: shoppingCardState)
 
             // Per the product decision: an existing room becomes read-only history
             // once you leave it — a new render always starts a brand-new room via

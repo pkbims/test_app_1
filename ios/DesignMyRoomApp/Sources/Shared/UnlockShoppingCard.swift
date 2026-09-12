@@ -1,25 +1,109 @@
 import DesignMyRoomCore
 import SwiftUI
 
+/// What `UnlockShoppingCardLink` should show — collapses the two different places
+/// shopping data comes from (the live `RenderStateMachine` sub-state while polling,
+/// or a one-off `Shopping?` fetch for room history) into one shape, so the view
+/// itself only has three cases to handle. `ready` with zero items collapses to
+/// `.hidden`, same as `none` — HANDOFF §3: "insert the Unlock card when shopping is
+/// ready and at least one item was found."
+enum ShoppingCardState {
+    case hidden
+    case pending
+    case ready(Shopping)
+
+    init(machineState: RenderStateMachine.ShoppingState) {
+        switch machineState {
+        case .idle, .none:
+            self = .hidden
+        case .pending:
+            self = .pending
+        case .ready(let shopping):
+            self = shopping.items.isEmpty ? .hidden : .ready(shopping)
+        }
+    }
+
+    init(shopping: Shopping?) {
+        guard let shopping else {
+            self = .hidden
+            return
+        }
+        switch shopping.status {
+        case .pending:
+            self = .pending
+        case .ready:
+            self = shopping.items.isEmpty ? .hidden : .ready(shopping)
+        case .none:
+            self = .hidden
+        }
+    }
+}
+
 /// The one shared home for the shopping card (`shopping_proto/HANDOFF.md` §4.3:
 /// "put the card in one shared view") — both `CompareView` and `RoomDetailView`
-/// render this, passing whatever `Shopping?` they have (from live polling, or a
-/// one-off fetch for history). Renders nothing unless shopping is `ready` with at
-/// least one item — `none`, `pending`, and ready-with-zero-items all show nothing
-/// (HANDOFF §3). Each caller places this wherever its own layout calls for (the
-/// live Compare screen puts it between "rooms left" and Done, per the approved
+/// render this. Each caller places this wherever its own layout calls for (the live
+/// Compare screen puts it between "rooms left" and Done, per the approved
 /// prototype's element order).
 struct UnlockShoppingCardLink: View {
-    let shopping: Shopping?
+    let state: ShoppingCardState
 
     var body: some View {
-        if let shopping, shopping.status == .ready, !shopping.items.isEmpty {
+        switch state {
+        case .hidden:
+            EmptyView()
+        case .pending:
+            ShoppingPendingPill()
+        case .ready(let shopping):
             NavigationLink(value: shopping) {
                 UnlockShoppingCard(shopping: shopping)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("UnlockShoppingCard")
         }
+    }
+}
+
+/// While shopping is `pending` — a compact tinted pill with three bouncing dots,
+/// the lightest-weight of the four loading options reviewed in
+/// `shopping_proto/loading-states.html` (option C, approved 2026-09-12). Sits in
+/// the exact spot the Unlock card lands in once ready, so nothing shifts.
+private struct ShoppingPendingPill: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 4) {
+                BouncingDot(delay: 0)
+                BouncingDot(delay: 0.2)
+                BouncingDot(delay: 0.4)
+            }
+            Text("Finding where to buy this…")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.accentDeep)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(Capsule().fill(Color.accentSoft))
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("ShoppingPendingPill")
+    }
+}
+
+private struct BouncingDot: View {
+    let delay: Double
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var animateUp = false
+
+    var body: some View {
+        Circle()
+            .fill(Color.accentDeep)
+            .frame(width: 6, height: 6)
+            .scaleEffect(animateUp ? 1 : 0.7)
+            .opacity(animateUp ? 1 : 0.4)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true).delay(delay)) {
+                    animateUp = true
+                }
+            }
     }
 }
 

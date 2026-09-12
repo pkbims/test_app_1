@@ -1,10 +1,12 @@
 import XCTest
 
 /// End-to-end coverage for "Shop your restyle" (`shopping_proto/HANDOFF.md` §4.3's
-/// required UI tests): Compare shows no card while shopping is `pending`, shows it
-/// with the right count once `ready`, tapping it pushes the item list, a D2 item
-/// (no usable match) shows a Search button, and the total text reflects the
-/// backend's own `total_from`.
+/// required UI tests): Compare shows a pending indicator — not the Unlock card
+/// itself — while shopping is `pending` (`shopping_proto/loading-states.html`
+/// option C, approved 2026-09-12), swaps to the real card with the right count
+/// once `ready`, tapping it pushes the item list, a D2 item (no usable match)
+/// shows a Search button, and the total text reflects the backend's own
+/// `total_from`.
 ///
 /// Needs the real `GET /v1/renders/{id}/shopping` endpoint running — merged to
 /// `main` in commit f7989bc. Verified end-to-end against the real
@@ -19,21 +21,24 @@ final class ShoppingFlowUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testCompareShowsNoCardWhilePendingThenShowsItReadyWithTheRightCount() throws {
+    func testCompareShowsThePendingPillThenSwapsToTheUnlockCardWhenReady() throws {
         let app = XCUIApplication()
         app.launch()
         try reachCompareAfterARender(app)
 
         // Right as Compare appears, shopping has only just started polling —
         // `RenderStateMachine` sets `.pending` synchronously the moment the render
-        // itself is `.done`, before any network round trip, so the card must not
-        // exist yet (HANDOFF §3: "no spinner, no placeholder" while pending).
+        // itself is `.done`, before any network round trip — so the pending pill
+        // should already be there, and the real Unlock card must not be yet.
         let unlockCard = app.otherElements["UnlockShoppingCard"]
+        let pendingPill = app.otherElements["ShoppingPendingPill"]
+        XCTAssertTrue(pendingPill.exists, "expected the pending pill as soon as Compare appears")
         XCTAssertFalse(unlockCard.exists, "the Unlock card must not appear before shopping is ready")
 
         // Shopping resolves after a few 2s poll ticks once ready/none; give it a
         // generous window (30s fake backend, longer for the real pipeline).
         XCTAssertTrue(unlockCard.waitForExistence(timeout: 90), "expected the Unlock card once shopping is ready")
+        XCTAssertFalse(pendingPill.exists, "the pending pill should be gone once the real card is showing")
 
         let countLabel = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", "found in your restyle")).firstMatch
         XCTAssertTrue(countLabel.exists, "expected the '<n> new items found in your restyle' copy")

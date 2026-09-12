@@ -81,7 +81,7 @@ private struct RenderHistoryRow: View {
             switch render.status {
             case .done:
                 RenderSummaryView(render: render)
-                UnlockShoppingCardLink(shopping: shopping)
+                UnlockShoppingCardLink(state: ShoppingCardState(shopping: shopping))
             case .failed:
                 Text(ErrorCopy.message(for: .renderFailed))
                     .font(.system(size: 13))
