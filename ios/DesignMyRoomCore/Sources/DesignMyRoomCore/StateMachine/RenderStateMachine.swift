@@ -30,13 +30,30 @@ public actor RenderStateMachine {
         case other(String)
     }
 
+    /// Shopping's own lifecycle (`shopping_proto/HANDOFF.md` §4.3), independent of
+    /// `State` above — `Render` gains no field for this, so it can't just be another
+    /// case of `State`. Starts polling once `state` reaches `.done`, on the same
+    /// cadence as the render poll, and stops on `.ready`/`.none`. A request failure
+    /// resolves to `.none` rather than retrying forever or surfacing as a render
+    /// failure — shopping is a nice-to-have overlay, never something the render
+    /// result waits on.
+    public enum ShoppingState: Equatable, Sendable {
+        case idle
+        case pending
+        case ready(Shopping)
+        case none
+    }
+
     private let client: APIClient
     private let pollInterval: TimeInterval
     private let sleep: @Sendable (TimeInterval) async -> Void
     private var pollingTask: Task<Void, Never>?
     private var onChangeHandler: (@Sendable (State) async -> Void)?
+    private var shoppingPollingTask: Task<Void, Never>?
+    private var onShoppingChangeHandler: (@Sendable (ShoppingState) async -> Void)?
 
     public private(set) var state: State = .idle
+    public private(set) var shoppingState: ShoppingState = .idle
 
     public init(
         client: APIClient,
@@ -56,9 +73,17 @@ public actor RenderStateMachine {
         onChangeHandler = handler
     }
 
+    /// Called on every shopping sub-state transition. Same one-handler contract as
+    /// `onChange`.
+    public func onShoppingChange(_ handler: @escaping @Sendable (ShoppingState) async -> Void) {
+        onShoppingChangeHandler = handler
+    }
+
     /// `POST /v1/rooms/{id}/renders`, then poll until finished.
     public func start(roomId: String, body: RenderCreate) async {
         pollingTask?.cancel()
+        shoppingPollingTask?.cancel()
+        shoppingState = .idle
         await setState(.submitting)
         do {
             let render = try await client.createRender(roomId: roomId, body: body)
@@ -81,10 +106,13 @@ public actor RenderStateMachine {
     }
 
     /// Stops polling without changing `state` — e.g. the Compare screen was dismissed
-    /// mid-render. A later `resumePolling` picks the same render back up.
+    /// mid-render. A later `resumePolling` picks the same render back up. Also stops
+    /// shopping polling, if any is in flight.
     public func cancel() {
         pollingTask?.cancel()
         pollingTask = nil
+        shoppingPollingTask?.cancel()
+        shoppingPollingTask = nil
     }
 
     private func apply(_ render: Render, startPollingIfPending: Bool) async {
@@ -96,8 +124,59 @@ public actor RenderStateMachine {
             }
         case .done:
             await setState(.done(render))
+            await beginShoppingPollingIfIdle(renderId: render.renderId)
         case .failed:
             await setState(.renderFailed(render))
+        }
+    }
+
+    /// Starts shopping polling the first time (and only the first time) `state`
+    /// reaches `.done` for this render — guarded by `shoppingState == .idle` so a
+    /// later re-`apply` of the same terminal render (there isn't one today, but
+    /// `resumePolling` could in principle be called again) can't double-schedule.
+    private func beginShoppingPollingIfIdle(renderId: String) async {
+        guard shoppingState == .idle else { return }
+        await setShoppingState(.pending)
+        scheduleShoppingPolling(renderId: renderId)
+    }
+
+    /// Same shape as `schedulePolling`: a detached loop that sleeps, ticks, and
+    /// decides whether to continue — `shoppingTick` always reports `false` once it
+    /// reaches a terminal state so this loop stops itself.
+    private func scheduleShoppingPolling(renderId: String) {
+        let interval = pollInterval
+        let sleepFn = sleep
+        shoppingPollingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await sleepFn(interval)
+                if Task.isCancelled { return }
+                guard let self else { return }
+                let shouldContinue = await self.shoppingTick(renderId: renderId)
+                if !shouldContinue { return }
+            }
+        }
+    }
+
+    /// - Returns: whether the loop should keep polling.
+    private func shoppingTick(renderId: String) async -> Bool {
+        do {
+            let shopping = try await client.shopping(renderId: renderId)
+            switch shopping.status {
+            case .pending:
+                await setShoppingState(.pending)
+                return true
+            case .ready:
+                await setShoppingState(.ready(shopping))
+                return false
+            case .none:
+                await setShoppingState(.none)
+                return false
+            }
+        } catch {
+            // Shopping is a nice-to-have overlay on an already-shown render result —
+            // never retry indefinitely, and never surface this as a render failure.
+            await setShoppingState(.none)
+            return false
         }
     }
 
@@ -135,6 +214,11 @@ public actor RenderStateMachine {
     private func setState(_ newState: State) async {
         state = newState
         await onChangeHandler?(newState)
+    }
+
+    private func setShoppingState(_ newState: ShoppingState) async {
+        shoppingState = newState
+        await onShoppingChangeHandler?(newState)
     }
 
     private static func classify(_ error: Error) -> RequestFailure {
