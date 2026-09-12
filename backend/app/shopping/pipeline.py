@@ -221,6 +221,10 @@ class ShoppingConfig:
     search_url_ttl_s: int
     public_base_url: str
     file_url_secret: str
+    # TEMPORARY, dev-only (ORCH-QUESTIONS Q11, HANDOFF §7.3) — "catbox" or "".
+    # See the block comment on `_upload_to_catbox` below. Default keeps every
+    # existing ShoppingConfig(...) call (tests included) on today's behaviour.
+    dev_public_image_host: str = ""
 
 
 @dataclass(frozen=True)
@@ -264,6 +268,16 @@ def generate(storage, model: ShoppingModel, searchapi: SearchApi, render_id: str
         config.public_base_url, "renders", info.after_key,
         config.file_url_secret, config.search_url_ttl_s,
     )
+    if config.dev_public_image_host == "catbox":
+        # TEMPORARY, dev-only — see `_upload_to_catbox` below. Uploaded once per
+        # job, not once per item: every item's SearchApi call shares this URL.
+        log.warning(
+            "SHOPPING_DEV_IMAGE_HOST=catbox is active: uploading this render to "
+            "catbox.moe, a public host outside our control, instead of using "
+            "our own signed URL. Dev-only — must never run in production "
+            "(HANDOFF §7.3, ORCH-QUESTIONS Q11)."
+        )
+        render_url = _upload_to_catbox(render_bytes)
 
     items_out: list[dict] = []
     searchapi_calls = 0
@@ -345,6 +359,52 @@ def _verify(matches: list[RawMatch], searchapi: SearchApi) -> list[Candidate]:
 
 def _thumb(candidate: Candidate, searchapi: SearchApi) -> str | None:
     return searchapi.fetch_thumbnail(candidate.thumbnail) if candidate.thumbnail else None
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TEMPORARY, DEV-ONLY — ORCH-QUESTIONS Q11, HANDOFF §7.3.
+#
+# A laptop's PUBLIC_BASE_URL is not reachable from the internet, so SearchApi
+# can never fetch the render and every local run returns zero prices — the
+# gap HANDOFF §7.3 named and deferred. This uploads the render, once per job,
+# to catbox.moe (a public anonymous host we do not control) and hands
+# SearchApi *that* URL instead of our own signed one, purely so a developer
+# can see real prices without setting up a tunnel.
+#
+# MUST NEVER RUN IN PRODUCTION: no deletion guarantee on catbox's side (the
+# render — a picture of someone's home — stays there indefinitely, outside
+# our retention rules), no terms of service agreed with catbox for this use,
+# and it breaks the TR4 promise this whole feature was already scrutinised
+# against. `Settings.load()` refuses to start with this set when
+# APP_ENV=production. Only reachable via `ShoppingConfig.dev_public_image_host
+# == "catbox"`, itself only ever set from `SHOPPING_DEV_IMAGE_HOST` — never on
+# by default (empty string).
+#
+# Delete this function, the `if` block in `generate()` that calls it, the
+# `dev_public_image_host` field on `ShoppingConfig`, `Settings.
+# shopping_dev_image_host` and its `load()`/`make_shopping_config` wiring
+# together, once every developer has a tunnel (§7.3's actual fix). It should
+# never outlive that.
+_CATBOX_UPLOAD_URL = "https://catbox.moe/user/api.php"
+
+
+def _upload_to_catbox(image_bytes: bytes) -> str:
+    import httpx
+
+    resp = httpx.post(
+        _CATBOX_UPLOAD_URL,
+        data={"reqtype": "fileupload"},
+        files={"fileToUpload": ("render.png", image_bytes, "image/png")},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    url = resp.text.strip()
+    if not url.startswith("https://"):
+        raise SearchApiError(f"catbox upload did not return a URL: {url[:200]!r}")
+    return url
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 
 
 def load_render_info(conn, render_id: str) -> RenderInfo | None:

@@ -170,3 +170,69 @@ def test_generate_dead_link_is_dropped(storage, config, info):
 def test_generate_cost_cents_scales_with_calls(storage, config, info):
     result = generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, config, _LOG)
     assert result.cost_cents > 0
+
+
+# ── TEMPORARY dev-only catbox path (ORCH-QUESTIONS Q11, HANDOFF §7.3) ───────────
+class _RecordingSearchApi(FakeSearchApi):
+    def __init__(self):
+        self.urls_seen: list[str] = []
+
+    def search(self, render_url, crop):
+        self.urls_seen.append(render_url)
+        return super().search(render_url, crop)
+
+
+def test_generate_default_config_never_touches_catbox(storage, config, info, monkeypatch):
+    def blow_up(*a, **kw):
+        raise AssertionError("httpx.post must not be called when dev_public_image_host is unset")
+
+    monkeypatch.setattr("httpx.post", blow_up)
+    assert config.dev_public_image_host == ""
+    generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, config, _LOG)
+
+
+def test_generate_catbox_uploads_once_and_every_item_searches_that_url(storage, info, monkeypatch, caplog):
+    import httpx
+
+    catbox_config = ShoppingConfig(
+        max_items=7, search_url_ttl_s=900,
+        public_base_url="http://localhost:8000", file_url_secret="secret",
+        dev_public_image_host="catbox",
+    )
+    calls = []
+
+    def fake_post(url, *, data, files, timeout):
+        calls.append((url, data, files.get("fileToUpload")))
+        return httpx.Response(
+            200, text="https://files.catbox.moe/abc123.png", request=httpx.Request("POST", url)
+        )
+
+    monkeypatch.setattr("httpx.post", fake_post)
+    searchapi = _RecordingSearchApi()
+
+    with caplog.at_level(logging.WARNING):
+        generate(storage, FakeShoppingModel(), searchapi, "render-1", info, catbox_config, _LOG)
+
+    assert len(calls) == 1  # once per job, not once per item — FakeShoppingModel gives 2 items
+    assert calls[0][0] == "https://catbox.moe/user/api.php"
+    assert calls[0][1] == {"reqtype": "fileupload"}
+    assert searchapi.urls_seen == ["https://files.catbox.moe/abc123.png"] * 2
+    assert any("catbox" in r.message and "production" in r.message for r in caplog.records)
+
+
+def test_generate_catbox_upload_failure_raises_searchapi_error(storage, info, monkeypatch):
+    import httpx
+
+    from app.shopping.searchapi import SearchApiError
+
+    catbox_config = ShoppingConfig(
+        max_items=7, search_url_ttl_s=900,
+        public_base_url="http://localhost:8000", file_url_secret="secret",
+        dev_public_image_host="catbox",
+    )
+    monkeypatch.setattr(
+        "httpx.post",
+        lambda url, **kw: httpx.Response(200, text="not a url at all", request=httpx.Request("POST", url)),
+    )
+    with pytest.raises(SearchApiError):
+        generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, catbox_config, _LOG)
