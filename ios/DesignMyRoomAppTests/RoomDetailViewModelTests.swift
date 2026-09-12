@@ -13,6 +13,22 @@ final class RoomDetailViewModelTests: XCTestCase {
         func listRenders(roomId: String) async throws -> [Render] { try result.get() }
     }
 
+    private struct StubShoppingProvider: ShoppingProviding {
+        var result: Result<Shopping, Error>
+        func shopping(renderId: String) async throws -> Shopping { try result.get() }
+    }
+
+    private func makeShopping(renderId: String = "rd_1", status: ShoppingStatus = .ready, itemCount: Int = 1) -> Shopping {
+        Shopping(
+            renderId: renderId, status: status, pricesAsOf: "2026-09-12", totalFrom: 70.00, currency: "CAD",
+            items: (0..<itemCount).map { i in
+                ShoppingItem(itemId: "item_\(i)", name: "Item \(i)", cropUrl: "https://x/\(i).jpg", options: [
+                    ShoppingOption(store: "walmart.ca", title: "Option", price: 70.00, url: "https://x/opt", verified: true),
+                ])
+            }
+        )
+    }
+
     private func makeRoom() -> Room {
         Room(roomId: "rm_1", label: "Bedroom", createdAt: Date(), hasPhoto: true, hasInventory: true)
     }
@@ -32,6 +48,7 @@ final class RoomDetailViewModelTests: XCTestCase {
         let viewModel = RoomDetailViewModel(
             room: makeRoom(),
             rendersProvider: StubRenderListProvider(result: .success(renders)),
+            shoppingProvider: StubShoppingProvider(result: .failure(ApiError(code: .notFound, message: "n/a"))),
             crashReporter: CrashReporter(sink: NoOpCrashLogSink())
         )
 
@@ -52,7 +69,12 @@ final class RoomDetailViewModelTests: XCTestCase {
             }
         }
         let recorder = RecordingProvider()
-        let viewModel = RoomDetailViewModel(room: makeRoom(), rendersProvider: recorder, crashReporter: CrashReporter(sink: NoOpCrashLogSink()))
+        let viewModel = RoomDetailViewModel(
+            room: makeRoom(),
+            rendersProvider: recorder,
+            shoppingProvider: StubShoppingProvider(result: .failure(ApiError(code: .notFound, message: "n/a"))),
+            crashReporter: CrashReporter(sink: NoOpCrashLogSink())
+        )
 
         await viewModel.loadRenders()
 
@@ -64,6 +86,7 @@ final class RoomDetailViewModelTests: XCTestCase {
         let viewModel = RoomDetailViewModel(
             room: makeRoom(),
             rendersProvider: StubRenderListProvider(result: .failure(ApiError(code: .notFound, message: "We couldn't find that."))),
+            shoppingProvider: StubShoppingProvider(result: .failure(ApiError(code: .notFound, message: "n/a"))),
             crashReporter: CrashReporter(sink: NoOpCrashLogSink())
         )
 
@@ -87,11 +110,67 @@ final class RoomDetailViewModelTests: XCTestCase {
         let viewModel = RoomDetailViewModel(
             room: makeRoom(),
             rendersProvider: StubRenderListProvider(result: .success(renders)),
+            shoppingProvider: StubShoppingProvider(result: .failure(ApiError(code: .notFound, message: "n/a"))),
             crashReporter: CrashReporter(sink: NoOpCrashLogSink())
         )
 
         await viewModel.loadRenders()
 
         XCTAssertEqual(viewModel.renders.count, 3, "history shows every render it's told about, in whatever order the server returned")
+    }
+
+    @MainActor
+    func testLoadShoppingPopulatesShoppingByRenderId() async {
+        let shopping = makeShopping(renderId: "rd_1")
+        let viewModel = RoomDetailViewModel(
+            room: makeRoom(),
+            rendersProvider: StubRenderListProvider(result: .success([])),
+            shoppingProvider: StubShoppingProvider(result: .success(shopping)),
+            crashReporter: CrashReporter(sink: NoOpCrashLogSink())
+        )
+
+        await viewModel.loadShopping(for: "rd_1")
+
+        XCTAssertEqual(viewModel.shoppingByRenderId["rd_1"], shopping)
+    }
+
+    @MainActor
+    func testLoadShoppingDoesNotRefetchOnceCached() async {
+        final class CountingProvider: ShoppingProviding {
+            private(set) var callCount = 0
+            let shopping: Shopping
+            init(shopping: Shopping) { self.shopping = shopping }
+            func shopping(renderId: String) async throws -> Shopping {
+                callCount += 1
+                return shopping
+            }
+        }
+        let provider = CountingProvider(shopping: makeShopping())
+        let viewModel = RoomDetailViewModel(
+            room: makeRoom(),
+            rendersProvider: StubRenderListProvider(result: .success([])),
+            shoppingProvider: provider,
+            crashReporter: CrashReporter(sink: NoOpCrashLogSink())
+        )
+
+        await viewModel.loadShopping(for: "rd_1")
+        await viewModel.loadShopping(for: "rd_1")
+
+        XCTAssertEqual(provider.callCount, 1)
+    }
+
+    @MainActor
+    func testLoadShoppingFailureLeavesNoEntryRatherThanShowingAnError() async {
+        let viewModel = RoomDetailViewModel(
+            room: makeRoom(),
+            rendersProvider: StubRenderListProvider(result: .success([])),
+            shoppingProvider: StubShoppingProvider(result: .failure(ApiError(code: .notFound, message: "n/a"))),
+            crashReporter: CrashReporter(sink: NoOpCrashLogSink())
+        )
+
+        await viewModel.loadShopping(for: "rd_1")
+
+        XCTAssertNil(viewModel.shoppingByRenderId["rd_1"])
+        XCTAssertNil(viewModel.errorMessage, "a failed shopping fetch must never surface as a room-history error")
     }
 }

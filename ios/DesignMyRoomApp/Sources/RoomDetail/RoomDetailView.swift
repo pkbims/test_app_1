@@ -31,7 +31,12 @@ struct RoomDetailView: View {
                 }
 
                 ForEach(viewModel.renders, id: \.renderId) { render in
-                    RenderHistoryRow(render: render)
+                    RenderHistoryRow(render: render, shopping: viewModel.shoppingByRenderId[render.renderId])
+                        .task {
+                            if render.status == .done {
+                                await viewModel.loadShopping(for: render.renderId)
+                            }
+                        }
                     if render.renderId != viewModel.renders.last?.renderId {
                         Rectangle()
                             .fill(Color.line)
@@ -59,6 +64,7 @@ struct RoomDetailView: View {
 
 private struct RenderHistoryRow: View {
     let render: Render
+    let shopping: Shopping?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -75,6 +81,7 @@ private struct RenderHistoryRow: View {
             switch render.status {
             case .done:
                 RenderSummaryView(render: render)
+                UnlockShoppingCardLink(shopping: shopping)
             case .failed:
                 Text(ErrorCopy.message(for: .renderFailed))
                     .font(.system(size: 13))
