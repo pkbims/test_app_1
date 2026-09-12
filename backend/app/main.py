@@ -23,8 +23,9 @@ from .render.service import RenderUrls
 from .rooms import service as rooms_service
 from .schemas import (
     AppleSignIn, Error, Health, Inventory, Me, Photo, RefreshRequest,
-    Render, RenderCreate, Room, RoomCreate, Tokens,
+    Render, RenderCreate, Room, RoomCreate, Shopping, Tokens,
 )
+from .shopping import service as shopping_service
 
 
 @asynccontextmanager
@@ -259,6 +260,23 @@ def list_renders(room_id: str = Path(...)) -> List[Render]:
     ratelimit.enforce(rt.rate_limiter, "render_list", ctx.user_id)
     with rt.pool.connection() as conn:
         return render_service.list_renders(conn, room_id, ctx.user_id, urls=_render_urls())
+
+
+# ── shopping ("shop your restyle", post-v1) ──────────────────────────────────────
+@app.get("/v1/renders/{render_id}/shopping", response_model=Shopping, responses=E,
+         tags=["renders"], summary="Where to buy what the restyle added")
+def get_shopping(render_id: str = Path(...)) -> Shopping:
+    """Polls the shopping pipeline that runs after a render finishes: `pending` while
+    that job hasn't completed, `ready` once it has (even with zero items), `none` if
+    shopping wasn't attempted or failed, or the render predates this feature. Same
+    poll cadence and rate limit as `GET /v1/renders/{id}`."""
+    rt = runtime.get()
+    ctx = context.current()
+    ratelimit.enforce(rt.rate_limiter, "render_poll", ctx.user_id)
+    with rt.pool.connection() as conn:
+        return shopping_service.get_shopping(
+            conn, render_id, ctx.user_id, urls=_render_urls()
+        )
 
 
 # ── operations ────────────────────────────────────────────────────────────────

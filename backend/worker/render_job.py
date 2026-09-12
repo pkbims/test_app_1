@@ -80,7 +80,7 @@ def run(conn, storage, vision: Vision, editor: ImageEditor, lease: Lease) -> str
     try:
         _set_running(conn, lease.render_id)
         generated = _generate(storage, vision, editor, lease.render_id, job, log)
-        _finish(conn, lease.render_id, generated)
+        _finish(conn, lease.render_id, generated, lease.request_id)
         mark_done(conn, lease.job_id)
         log.info("render done", extra={"preservation_rate": generated.preservation_rate})
         return "done"
@@ -186,7 +186,7 @@ def _set_running(conn, render_id: str) -> None:
         )
 
 
-def _finish(conn, render_id: str, generated: _Generated) -> None:
+def _finish(conn, render_id: str, generated: _Generated, request_id: str | None) -> None:
     missing = generated.missing_ids
     with conn.transaction():
         conn.execute(
@@ -201,6 +201,17 @@ def _finish(conn, render_id: str, generated: _Generated) -> None:
                 generated.preservation_prompt,
                 render_id,
             ),
+        )
+        # "Shop your restyle" (post-v1, shopping_proto/HANDOFF.md §4.2): enqueue
+        # the shopping job the moment the render itself is done. One row per
+        # render, `pending` until the worker picks it up — a render that
+        # predates this feature simply never gets one (GET .../shopping reads
+        # that as `none`).
+        conn.execute("INSERT INTO shopping (render_id) VALUES (%s)", (render_id,))
+        conn.execute(
+            "INSERT INTO jobs (kind, render_id, status, request_id) "
+            "VALUES ('shopping', %s, 'queued', %s)",
+            (render_id, request_id),
         )
 
 

@@ -14,6 +14,8 @@ x-backend: &backend
     - ./contract:/contract:ro
     # Sample room photo, for the opt-in real-OpenAI end-to-end test.
     - ./inputs:/inputs:ro
+    # A real proven render, for the opt-in shopping-pipeline acceptance test.
+    - ./prompt_review:/prompt_review:ro
     - photos:/data/photos
   env_file:
     - compose.env

@@ -19,6 +19,9 @@ from .imagegen import DisabledImageEditor, FakeImageEditor, ImageEditor, OpenAII
 from .migrate import apply_all
 from .ratelimit import InProcessRateLimiter, RateLimiter
 from .settings import Settings, load
+from .shopping.judge import FakeShoppingModel, OpenAIShoppingModel, ShoppingModel
+from .shopping.pipeline import ShoppingConfig
+from .shopping.searchapi import FakeSearchApi, RealSearchApi, SearchApi
 from .storage import LocalDiskStorage, Storage
 from .vision import DisabledVision, FakeVision, OpenAIVision, Vision
 
@@ -99,3 +102,41 @@ def make_image_editor(settings: Settings) -> ImageEditor:
     if settings.app_env == "production":
         raise RuntimeError("OPENAI_API_KEY must be set when APP_ENV=production")
     return DisabledImageEditor()
+
+
+# ── shopping ("shop your restyle", post-v1) — worker-only, not part of Runtime;
+# nothing in the API process runs the pipeline synchronously (shopping_proto/
+# HANDOFF.md §4.2). `None` means "skip the pipeline, write `none`" — used for
+# both SHOPPING_BACKEND=off and (outside production) a backend with no key
+# configured, since a job that would only ever fail isn't worth retrying twice.
+def make_shopping_model(settings: Settings) -> ShoppingModel | None:
+    if settings.shopping_backend == "fake":
+        return FakeShoppingModel()
+    if settings.shopping_backend == "openai_searchapi" and settings.openai_api_key:
+        return OpenAIShoppingModel(
+            settings.openai_api_key,
+            describe_model=settings.shopping_describe_model,
+            judge_model=settings.shopping_judge_model,
+        )
+    if settings.app_env == "production" and settings.shopping_backend != "off":
+        raise RuntimeError("OPENAI_API_KEY must be set when SHOPPING_BACKEND=openai_searchapi in production")
+    return None
+
+
+def make_shopping_searchapi(settings: Settings) -> SearchApi | None:
+    if settings.shopping_backend == "fake":
+        return FakeSearchApi()
+    if settings.shopping_backend == "openai_searchapi" and settings.searchapi_key:
+        return RealSearchApi(settings.searchapi_key)
+    if settings.app_env == "production" and settings.shopping_backend != "off":
+        raise RuntimeError("SEARCHAPI_KEY must be set when SHOPPING_BACKEND=openai_searchapi in production")
+    return None
+
+
+def make_shopping_config(settings: Settings) -> ShoppingConfig:
+    return ShoppingConfig(
+        max_items=settings.shopping_max_items,
+        search_url_ttl_s=settings.shopping_search_url_ttl_s,
+        public_base_url=settings.public_base_url,
+        file_url_secret=settings.file_url_secret,
+    )

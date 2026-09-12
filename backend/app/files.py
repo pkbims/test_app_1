@@ -16,7 +16,7 @@ import hmac
 import time
 from urllib.parse import urlencode
 
-SCOPES = ("photos", "renders")
+SCOPES = ("photos", "renders", "crops")
 
 
 def _signature(scope: str, key: str, exp: int, secret: str) -> str:

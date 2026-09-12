@@ -19,6 +19,7 @@ class Lease:
     render_id: str
     attempts: int  # including this one
     request_id: str | None  # the API request that enqueued this job
+    kind: str  # 'render' | 'shopping' — the worker dispatches on this
 
 
 def lease_one(conn, worker: str, *, lease_seconds: int = LEASE_SECONDS) -> Lease | None:
@@ -39,13 +40,13 @@ def lease_one(conn, worker: str, *, lease_seconds: int = LEASE_SECONDS) -> Lease
             FOR UPDATE SKIP LOCKED
             LIMIT 1
         )
-        RETURNING id, render_id, attempts, request_id
+        RETURNING id, render_id, attempts, request_id, kind
         """,
         (worker, lease_seconds),
     ).fetchone()
     if row is None:
         return None
-    return Lease(job_id=row[0], render_id=str(row[1]), attempts=row[2], request_id=row[3])
+    return Lease(job_id=row[0], render_id=str(row[1]), attempts=row[2], request_id=row[3], kind=row[4])
 
 
 def mark_done(conn, job_id: int) -> None:

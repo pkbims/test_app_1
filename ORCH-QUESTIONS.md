@@ -262,6 +262,25 @@ Format:
   `palette` control is affected: it ships with a prompt mechanism that is real
   and tested but, on this evidence, unreliable against a style with a strong
   palette of its own.
+
+## Q10 — TR4 and the privacy copy need updating for "shop your restyle" (out of my remit)
+- **From:** backend
+- **Date:** 2026-09-12
+- **Question:** shopping_proto/HANDOFF.md §6.3 is explicit: rendered images now
+  leave the system (SearchApi/Google fetch the after-image to run Lens on it), so
+  **TR4** ("Photos are deletable on request, never written to logs, never sent
+  anywhere not listed here") and whatever privacy copy the app shows need to name
+  SearchApi as a recipient of the *render* (never the original photo — the
+  pipeline only ever hands out a signed URL to `after_key`, on a short 15-minute
+  expiry, per §6.3). I'm not making this edit myself: TR4 lives in `PRD.md`,
+  which is generated from `spec/state.json` and which `backend/AGENT.md`
+  explicitly puts outside what I touch; "privacy copy" likely also means
+  something in `ios/` or a positioning doc, neither of which I own either.
+- **Blocks:** nothing on the backend build — the pipeline itself is built,
+  tested, and already follows the rule (short-TTL URL, render only, never the
+  original photo). This is purely the documentation/copy catching up to what
+  the backend now actually does.
+- **Status:** open
 - **Answer:** (user) **Accepted as a known limitation. Do not spend more time
   re-spiking it.** The override clause works and is tested (its exact text is in
   the real prompt on every request that sets a non-default palette); it is not

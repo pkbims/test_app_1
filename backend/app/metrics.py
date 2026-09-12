@@ -99,6 +99,70 @@ class _DatabaseMetrics:
             value=total * _EST_COST_PER_RENDER_USD,
         )
 
+        yield from self._collect_shopping(conn)
+
+    def _collect_shopping(self, conn):
+        """'Shop your restyle' (shopping_proto/HANDOFF.md §4.2). Same DB-scrape
+        approach as the render metrics above, for the same reason: the pipeline
+        runs in the worker process, a separate process from whatever serves
+        /metrics, so an in-process counter incremented there would never be
+        seen here."""
+        by_status = CounterMetricFamily(
+            "app1_shopping_jobs", "Shopping jobs by status", labels=["status"]
+        )
+        for status, count in conn.execute("SELECT status, count(*) FROM shopping GROUP BY status"):
+            by_status.add_metric([status], count)
+        yield by_status
+
+        items_mean, items_p50 = conn.execute(
+            "SELECT avg(jsonb_array_length(items)), "
+            "percentile_cont(0.5) WITHIN GROUP (ORDER BY jsonb_array_length(items)) "
+            "FROM shopping WHERE status = 'ready'"
+        ).fetchone()
+        yield _gauge("app1_shopping_items_found_mean", "Mean items found per ready render", items_mean)
+        yield _gauge(
+            "app1_shopping_items_found_p50", "Median items found per ready render", items_p50
+        )
+
+        options_mean = conn.execute(
+            "SELECT avg(jsonb_array_length(item -> 'options')) "
+            "FROM shopping s, jsonb_array_elements(s.items) AS item "
+            "WHERE s.status = 'ready'"
+        ).fetchone()[0]
+        yield _gauge(
+            "app1_shopping_options_per_item_mean", "Mean options per found item", options_mean
+        )
+
+        calls, errors = conn.execute(
+            "SELECT coalesce(sum(searchapi_calls), 0), coalesce(sum(searchapi_errors), 0) "
+            "FROM shopping WHERE status IN ('ready', 'none')"
+        ).fetchone()
+        searchapi_calls = CounterMetricFamily(
+            "app1_shopping_searchapi_calls", "SearchApi calls by outcome", labels=["outcome"]
+        )
+        searchapi_calls.add_metric(["error"], errors)
+        searchapi_calls.add_metric(["ok"], max(0, calls - errors))
+        yield searchapi_calls
+
+        cost_mean = conn.execute(
+            "SELECT avg(cost_cents) FROM shopping WHERE status = 'ready'"
+        ).fetchone()[0]
+        yield _gauge("app1_shopping_cost_cents_mean", "Mean estimated cost per ready render", cost_mean)
+
+        d50, d95 = conn.execute(
+            "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY secs), "
+            "       percentile_cont(0.95) WITHIN GROUP (ORDER BY secs) "
+            "FROM (SELECT extract(epoch FROM updated_at - created_at) AS secs "
+            "      FROM shopping WHERE status = 'ready') d"
+        ).fetchone()
+        duration = GaugeMetricFamily(
+            "app1_shopping_duration_seconds", "Enqueue-to-ready shopping duration",
+            labels=["quantile"],
+        )
+        duration.add_metric(["0.5"], _num(d50))
+        duration.add_metric(["0.95"], _num(d95))
+        yield duration
+
 
 _installed: _DatabaseMetrics | None = None
 
