@@ -18,6 +18,7 @@ struct UnlockShoppingCardLink: View {
                 UnlockShoppingCard(shopping: shopping)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("UnlockShoppingCard")
         }
     }
 }

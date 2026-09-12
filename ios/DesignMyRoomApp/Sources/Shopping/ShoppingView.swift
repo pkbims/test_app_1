@@ -212,6 +212,7 @@ private struct TotalCard: View {
             Text(ShoppingCurrency.string(amount: totalFrom, currency: currency))
                 .font(.fraunces(30, weight: .semibold))
                 .foregroundStyle(Color.accentDeep)
+                .accessibilityIdentifier("ShoppingTotal")
             Text(fineText)
                 .font(.system(size: 13))
                 .foregroundStyle(Color.inkSoft)
