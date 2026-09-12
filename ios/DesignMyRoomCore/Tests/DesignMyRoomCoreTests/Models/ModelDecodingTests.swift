@@ -333,6 +333,92 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(obj?["identity_token"] as? String, "tok")
     }
 
+    func testDecodeShoppingReady() throws {
+        let json = """
+        {"render_id":"r_1","status":"ready","prices_as_of":"2026-09-12","total_from":609.00,
+         "currency":"CAD","items":[
+           {"item_id":"olive_tree","name":"Olive tree in a woven basket","crop_url":"https://x/crop1.jpg",
+            "options":[
+              {"store":"walmart.ca","title":"Lolsea Artificial Olive Tree","price":70.00,"url":"https://x/1","verified":true},
+              {"store":"vevor.ca","title":"Olive Tree Indoor","price":74.00,"url":"https://x/2","verified":true}
+            ]},
+           {"item_id":"books","name":"Stack of decorative books","crop_url":"https://x/crop2.jpg","options":[]}
+         ]}
+        """.data(using: .utf8)!
+        let shopping = try JSONCoding.decoder.decode(Shopping.self, from: json)
+        XCTAssertEqual(shopping.renderId, "r_1")
+        XCTAssertEqual(shopping.status, .ready)
+        XCTAssertEqual(shopping.pricesAsOf, "2026-09-12")
+        XCTAssertEqual(shopping.totalFrom, 609.00)
+        XCTAssertEqual(shopping.currency, "CAD")
+        XCTAssertEqual(shopping.items.count, 2)
+        XCTAssertEqual(shopping.items[0].options.count, 2)
+        XCTAssertEqual(shopping.items[0].options[0].store, "walmart.ca")
+        XCTAssertTrue(shopping.items[0].options[0].verified)
+        XCTAssertEqual(shopping.items[1].options, [])
+    }
+
+    func testDecodeShoppingPendingHasNullPricingFields() throws {
+        let json = """
+        {"render_id":"r_1","status":"pending","prices_as_of":null,"total_from":null,
+         "currency":"CAD","items":[]}
+        """.data(using: .utf8)!
+        let shopping = try JSONCoding.decoder.decode(Shopping.self, from: json)
+        XCTAssertEqual(shopping.status, .pending)
+        XCTAssertNil(shopping.pricesAsOf)
+        XCTAssertNil(shopping.totalFrom)
+        XCTAssertEqual(shopping.items, [])
+    }
+
+    func testDecodeShoppingNone() throws {
+        let json = """
+        {"render_id":"r_1","status":"none","prices_as_of":null,"total_from":null,
+         "currency":"CAD","items":[]}
+        """.data(using: .utf8)!
+        let shopping = try JSONCoding.decoder.decode(Shopping.self, from: json)
+        XCTAssertEqual(shopping.status, .none)
+        XCTAssertEqual(shopping.items, [])
+    }
+
+    func testDecodeShoppingOptionUnverified() throws {
+        let json = """
+        {"render_id":"r_1","status":"ready","prices_as_of":"2026-09-12","total_from":199.99,
+         "currency":"CAD","items":[
+           {"item_id":"rug","name":"Area rug","crop_url":"https://x/crop.jpg","options":[
+             {"store":"wayfair.ca","title":"Jute Area Rug","price":199.99,"url":"https://x/1","verified":false}
+           ]}
+         ]}
+        """.data(using: .utf8)!
+        let shopping = try JSONCoding.decoder.decode(Shopping.self, from: json)
+        XCTAssertFalse(shopping.items[0].options[0].verified)
+    }
+
+    func testRecomputedTotalFromMatchesCheapestOptionPerItem() {
+        let shopping = Shopping(
+            renderId: "r_1", status: .ready, pricesAsOf: "2026-09-12", totalFrom: 144.00, currency: "CAD",
+            items: [
+                ShoppingItem(itemId: "a", name: "A", cropUrl: "https://x/a.jpg", options: [
+                    ShoppingOption(store: "walmart.ca", title: "A1", price: 70.00, url: "https://x/1", verified: true),
+                    ShoppingOption(store: "vevor.ca", title: "A2", price: 74.00, url: "https://x/2", verified: true),
+                ]),
+                ShoppingItem(itemId: "b", name: "B", cropUrl: "https://x/b.jpg", options: [
+                    ShoppingOption(store: "amazon.ca", title: "B1", price: 74.00, url: "https://x/3", verified: true),
+                ]),
+                ShoppingItem(itemId: "c", name: "C — no match", cropUrl: "https://x/c.jpg", options: []),
+            ]
+        )
+        XCTAssertEqual(shopping.recomputedTotalFrom, 144.00)
+        XCTAssertEqual(shopping.recomputedTotalFrom, shopping.totalFrom)
+    }
+
+    func testRecomputedTotalFromIsNilWhenNoItemHasAnOption() {
+        let shopping = Shopping(
+            renderId: "r_1", status: .ready, pricesAsOf: "2026-09-12", totalFrom: nil, currency: "CAD",
+            items: [ShoppingItem(itemId: "a", name: "A", cropUrl: "https://x/a.jpg", options: [])]
+        )
+        XCTAssertNil(shopping.recomputedTotalFrom)
+    }
+
     func testEncodeRoomCreate() throws {
         let body = RoomCreate(label: "Living room")
         let data = try JSONCoding.encoder.encode(body)
