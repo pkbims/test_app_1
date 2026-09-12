@@ -172,7 +172,8 @@ def test_generate_cost_cents_scales_with_calls(storage, config, info):
     assert result.cost_cents > 0
 
 
-# ── TEMPORARY dev-only catbox path (ORCH-QUESTIONS Q11, HANDOFF §7.3) ───────────
+# ── TEMPORARY dev-only uguu.se path (ORCH-QUESTIONS Q11, HANDOFF §7.3,
+# shopping_proto/DEV-IMAGE-HOST.md) ─────────────────────────────────────────
 class _RecordingSearchApi(FakeSearchApi):
     def __init__(self):
         self.urls_seen: list[str] = []
@@ -182,7 +183,17 @@ class _RecordingSearchApi(FakeSearchApi):
         return super().search(render_url, crop)
 
 
-def test_generate_default_config_never_touches_catbox(storage, config, info, monkeypatch):
+def _uguu_config(**overrides):
+    kwargs = dict(
+        max_items=7, search_url_ttl_s=900,
+        public_base_url="http://localhost:8000", file_url_secret="secret",
+        dev_public_image_host="uguu",
+    )
+    kwargs.update(overrides)
+    return ShoppingConfig(**kwargs)
+
+
+def test_generate_default_config_never_touches_uguu(storage, config, info, monkeypatch):
     def blow_up(*a, **kw):
         raise AssertionError("httpx.post must not be called when dev_public_image_host is unset")
 
@@ -191,48 +202,53 @@ def test_generate_default_config_never_touches_catbox(storage, config, info, mon
     generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, config, _LOG)
 
 
-def test_generate_catbox_uploads_once_and_every_item_searches_that_url(storage, info, monkeypatch, caplog):
+def test_generate_uguu_uploads_once_and_every_item_searches_that_url(storage, info, monkeypatch, caplog):
     import httpx
 
-    catbox_config = ShoppingConfig(
-        max_items=7, search_url_ttl_s=900,
-        public_base_url="http://localhost:8000", file_url_secret="secret",
-        dev_public_image_host="catbox",
-    )
     calls = []
 
-    def fake_post(url, *, data, files, timeout):
-        calls.append((url, data, files.get("fileToUpload")))
+    def fake_post(url, *, files, timeout):
+        calls.append((url, files.get("files[]")))
         return httpx.Response(
-            200, text="https://files.catbox.moe/abc123.png", request=httpx.Request("POST", url)
+            200,
+            json={"success": True, "files": [{"url": "https://n.uguu.se/dhTswTOV.png"}]},
+            request=httpx.Request("POST", url),
         )
 
     monkeypatch.setattr("httpx.post", fake_post)
     searchapi = _RecordingSearchApi()
 
     with caplog.at_level(logging.WARNING):
-        generate(storage, FakeShoppingModel(), searchapi, "render-1", info, catbox_config, _LOG)
+        generate(storage, FakeShoppingModel(), searchapi, "render-1", info, _uguu_config(), _LOG)
 
     assert len(calls) == 1  # once per job, not once per item — FakeShoppingModel gives 2 items
-    assert calls[0][0] == "https://catbox.moe/user/api.php"
-    assert calls[0][1] == {"reqtype": "fileupload"}
-    assert searchapi.urls_seen == ["https://files.catbox.moe/abc123.png"] * 2
-    assert any("catbox" in r.message and "production" in r.message for r in caplog.records)
+    assert calls[0][0] == "https://uguu.se/upload"
+    assert calls[0][1][0] == "render.png"  # (filename, bytes, content_type)
+    assert searchapi.urls_seen == ["https://n.uguu.se/dhTswTOV.png"] * 2
+    assert any("uguu" in r.message and "production" in r.message for r in caplog.records)
 
 
-def test_generate_catbox_upload_failure_raises_searchapi_error(storage, info, monkeypatch):
+@pytest.mark.parametrize(
+    "response_kwargs",
+    [
+        {"status_code": 500, "text": "server error"},  # non-200
+        {"status_code": 200, "json": {"success": False}},  # success: false
+        {"status_code": 200, "json": {"success": True, "files": []}},  # missing url
+        {"status_code": 200, "json": {"success": True, "files": [{"name": "x"}]}},  # url absent
+        {"status_code": 200, "text": ""},  # empty body, not even JSON
+    ],
+)
+def test_generate_uguu_upload_failure_raises_searchapi_error(storage, info, monkeypatch, response_kwargs):
     import httpx
 
     from app.shopping.searchapi import SearchApiError
 
-    catbox_config = ShoppingConfig(
-        max_items=7, search_url_ttl_s=900,
-        public_base_url="http://localhost:8000", file_url_secret="secret",
-        dev_public_image_host="catbox",
-    )
-    monkeypatch.setattr(
-        "httpx.post",
-        lambda url, **kw: httpx.Response(200, text="not a url at all", request=httpx.Request("POST", url)),
-    )
+    def fake_post(url, *, files, timeout):
+        kwargs = {k: v for k, v in response_kwargs.items() if k != "status_code"}
+        return httpx.Response(
+            response_kwargs["status_code"], request=httpx.Request("POST", url), **kwargs
+        )
+
+    monkeypatch.setattr("httpx.post", fake_post)
     with pytest.raises(SearchApiError):
-        generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, catbox_config, _LOG)
+        generate(storage, FakeShoppingModel(), FakeSearchApi(), "render-1", info, _uguu_config(), _LOG)

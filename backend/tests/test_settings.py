@@ -1,5 +1,5 @@
 """Settings.load() — just the pieces worth a direct test: env wiring and the
-production safety guards (ORCH-QUESTIONS Q11's dev-only catbox escape hatch)."""
+production safety guards (ORCH-QUESTIONS Q11's dev-only uguu escape hatch)."""
 
 from __future__ import annotations
 
@@ -28,8 +28,8 @@ def test_shopping_dev_image_host_defaults_to_empty(monkeypatch):
 
 def test_shopping_dev_image_host_reads_from_env(monkeypatch):
     _base_env(monkeypatch)
-    monkeypatch.setenv("SHOPPING_DEV_IMAGE_HOST", "catbox")
-    assert load().shopping_dev_image_host == "catbox"
+    monkeypatch.setenv("SHOPPING_DEV_IMAGE_HOST", "uguu")
+    assert load().shopping_dev_image_host == "uguu"
 
 
 def test_shopping_dev_image_host_is_refused_in_production(monkeypatch):
@@ -37,7 +37,7 @@ def test_shopping_dev_image_host_is_refused_in_production(monkeypatch):
         monkeypatch,
         APP_ENV="production",
         JWT_SECRET="x" * 32,
-        SHOPPING_DEV_IMAGE_HOST="catbox",
+        SHOPPING_DEV_IMAGE_HOST="uguu",
     )
     with pytest.raises(RuntimeError, match="SHOPPING_DEV_IMAGE_HOST"):
         load()

@@ -61,14 +61,15 @@ Without a tunnel, leave `SHOPPING_BACKEND=fake` — this is also what CI and the
 default integration tests use. `SHOPPING_BACKEND=off` writes `none` without
 calling anything, for a deliberate kill switch.
 
-**`SHOPPING_DEV_IMAGE_HOST=catbox` is a TEMPORARY, dev-only escape hatch from
-step 1 above** (ORCH-QUESTIONS Q11) — set it instead of tunnelling and the
-pipeline uploads the render to catbox.moe (a public host we do not control)
-and hands SearchApi that URL. **Never set this in production** —
-`Settings.load()` refuses to start if it is — no deletion guarantee on
-catbox's side, no terms agreed, and it breaks the TR4 promise. Delete it (see
-the block comment on `_upload_to_catbox` in `app/shopping/pipeline.py`) once
-tunnelling is everyone's normal path.
+**`SHOPPING_DEV_IMAGE_HOST=uguu` is a TEMPORARY, dev-only escape hatch from
+step 1 above** (ORCH-QUESTIONS Q11, `shopping_proto/DEV-IMAGE-HOST.md`) — set
+it instead of tunnelling and the pipeline uploads the render to uguu.se (a
+public host we do not control, real-tested there after catbox.moe turned out
+to silently rate-limit anonymous bursts) and hands SearchApi that URL.
+**Never set this in production** — `Settings.load()` refuses to start if it
+is — no deletion guarantee on uguu's side, no terms agreed, and it breaks the
+TR4 promise. Delete it (see the block comment on `_upload_to_uguu` in
+`app/shopping/pipeline.py`) once tunnelling is everyone's normal path.
 
 ## The flow
 

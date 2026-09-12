@@ -62,13 +62,15 @@ class Settings:
 
     # ── TEMPORARY, dev-only (ORCH-QUESTIONS Q11, HANDOFF §7.3) ──────────────────
     # A laptop's PUBLIC_BASE_URL is not reachable by SearchApi, so real prices
-    # never come back on local runs. Setting this to "catbox" makes the shopping
-    # pipeline upload the render to catbox.moe (a public host we do not control)
-    # and hand SearchApi *that* URL instead of our own signed one. Empty string
-    # (the default) is the only value load() allows in production — see the
-    # guard below. Delete this field, its Settings.load() wiring, its
-    # ShoppingConfig field, and pipeline.py's `_upload_to_catbox` once every
-    # developer has a tunnel set up; it should never outlive that.
+    # never come back on local runs. Setting this to "uguu" makes the shopping
+    # pipeline upload the render to uguu.se (a public host we do not control,
+    # real-tested — see shopping_proto/DEV-IMAGE-HOST.md; catbox.moe was tried
+    # first and turned out to silently rate-limit anonymous bursts) and hand
+    # SearchApi *that* URL instead of our own signed one. Empty string (the
+    # default) is the only value load() allows in production — see the guard
+    # below. Delete this field, its Settings.load() wiring, its ShoppingConfig
+    # field, and pipeline.py's `_upload_to_uguu` once every developer has a
+    # tunnel set up; it should never outlive that.
     shopping_dev_image_host: str = ""
 
 
