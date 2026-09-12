@@ -54,8 +54,10 @@ def run(
             "shopping done",
             extra={
                 "items_found": len(result.items),
+                "option_count": sum(len(it["options"]) for it in result.items),
                 "cost_cents": result.cost_cents,
                 "searchapi_calls": result.searchapi_calls,
+                "searchapi_errors": result.searchapi_errors,
                 "duration_s": round(time.monotonic() - t0, 1),
             },
         )
