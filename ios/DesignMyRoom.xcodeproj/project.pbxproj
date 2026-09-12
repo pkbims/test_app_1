@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01834093A71A53DE7EAD7CE5 /* DesignMyRoomCore in Frameworks */ = {isa = PBXBuildFile; productRef = C926B4BDDACFC30E950B2A06 /* DesignMyRoomCore */; };
+		0952C323936372EDAFF2A98D /* AppEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4266F03B9326EBE4A4F15D57 /* AppEnvironmentTests.swift */; };
 		09CD007FBB5CE96F9C57936F /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E1066A38E159E25474D019 /* SignInView.swift */; };
 		0DFD84253FDF2239AE345461 /* StyleScreenFurniturePickerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D989016698AC4EEDB5104A7 /* StyleScreenFurniturePickerUITests.swift */; };
 		1772FAEC2EA43DC669E42AC4 /* OptionSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBA27461265DBF7353F6374 /* OptionSection.swift */; };
@@ -80,6 +81,7 @@
 		2B9FFA2D651F7DC04E89AAB2 /* DesignMyRoomApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignMyRoomApp.swift; sourceTree = "<group>"; };
 		32FE370534756CC513D6A083 /* RoomDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailView.swift; sourceTree = "<group>"; };
 		39B7725F1E3264A67440C468 /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
+		4266F03B9326EBE4A4F15D57 /* AppEnvironmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironmentTests.swift; sourceTree = "<group>"; };
 		494743C2B7F675E85EA429B4 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		51BD2F48D30C73F6BD80CB92 /* ShoppingDateFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingDateFormat.swift; sourceTree = "<group>"; };
 		5504BC6A9DEF9FFF8142FF3E /* RoomDetailViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailViewModelTests.swift; sourceTree = "<group>"; };
@@ -161,6 +163,7 @@
 		2650FEB1F9940A9EA3BDA7F0 /* DesignMyRoomAppTests */ = {
 			isa = PBXGroup;
 			children = (
+				4266F03B9326EBE4A4F15D57 /* AppEnvironmentTests.swift */,
 				96715D0A200E2B26D1EED840 /* CompareAskedForTests.swift */,
 				01721D77C890ACF43285DA3B /* ConfirmSummaryTests.swift */,
 				05048C1EAC0B93E3DB4165DA /* FurnitureCatalogTests.swift */,
@@ -507,6 +510,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0952C323936372EDAFF2A98D /* AppEnvironmentTests.swift in Sources */,
 				C6E8E54C86B693FF38A1C6DA /* CompareAskedForTests.swift in Sources */,
 				C8B40DB925D7B0629A93304E /* ConfirmSummaryTests.swift in Sources */,
 				74B3B6394E8A183B8873C8A1 /* FurnitureCatalogTests.swift in Sources */,
