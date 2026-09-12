@@ -39,6 +39,28 @@ model calls, so `docker compose up` works with **no OpenAI key**. Set
 `test_vision_e2e.py` makes one real `gpt-4.1` call against `inputs/room.jpg` and is
 skipped without a key.
 
+## Shopping backend ("shop your restyle", post-v1)
+
+`SHOPPING_BACKEND=fake` (the committed default) is a deterministic two-item
+result, no network calls at all — `docker compose up` works with no SearchApi
+key. Set `SHOPPING_BACKEND=openai_searchapi` with `OPENAI_API_KEY=...` and
+`SEARCHAPI_KEY=...` in `.env` for the real pipeline.
+
+**Local dev needs a tunnel.** Step 3 of the pipeline hands SearchApi a URL to the
+render and SearchApi (Google) fetches it — `PUBLIC_BASE_URL=http://localhost:8000`
+is not reachable from the internet, so the real backend cannot work against a
+plain local `docker compose up`. To exercise it locally:
+
+1. Tunnel port 8000 (e.g. `ngrok http 8000`, or any equivalent) and note the
+   public HTTPS URL it gives you.
+2. Set `PUBLIC_BASE_URL=<that URL>` in `.env` (overrides `compose.env`'s
+   localhost default) and restart `api`/`worker` so signed URLs use it.
+3. Set `SHOPPING_BACKEND=openai_searchapi`, `OPENAI_API_KEY`, `SEARCHAPI_KEY`.
+
+Without a tunnel, leave `SHOPPING_BACKEND=fake` — this is also what CI and the
+default integration tests use. `SHOPPING_BACKEND=off` writes `none` without
+calling anything, for a deliberate kill switch.
+
 ## The flow
 
 ```
@@ -146,8 +168,10 @@ backend/
     imagegen.py   gpt-image-2: the edit call (+ Fake/Disabled)
     runtime.py    process-wide handles
     auth/  rooms/  inventory/  render/   — one package per area, service.py each
+    shopping/     "shop your restyle" (post-v1): searchapi.py (vendor client),
+                  judge.py (the model calls), pipeline.py (the steps), service.py (reads)
   migrations/     NNN_name.sql, applied in order
-  worker/         leasing + the render pipeline + the loop
+  worker/         leasing + the render pipeline + the shopping pipeline + the loop
   dashboard/      the status page
   tests/
 ```

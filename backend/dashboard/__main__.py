@@ -72,6 +72,18 @@ def _render() -> str:
             ("est. OpenAI cost", f"${m.get('app1_render_cost_usd_estimate_total', 0.0):.2f}"),
         ]
     )
+    sa_ok = m.get('app1_shopping_searchapi_calls_total{outcome="ok"}', 0.0)
+    sa_err = m.get('app1_shopping_searchapi_calls_total{outcome="error"}', 0.0)
+    shopping_cards = "".join(
+        _card(label, value)
+        for label, value in [
+            ("items found — p50", _int(m.get("app1_shopping_items_found_p50"))),
+            ("options per item — mean", f"{m.get('app1_shopping_options_per_item_mean', 0.0):.1f}"),
+            ("SearchApi failure rate", _ratio(sa_err, sa_ok + sa_err)),
+            ("cost per render — mean", f"{m.get('app1_shopping_cost_cents_mean', 0.0):.1f}¢"),
+        ]
+    )
+
     raw = (
         f"<details><summary>raw /metrics</summary><pre>{html.escape(m_body)}</pre></details>"
         if m_status == 200
@@ -104,6 +116,9 @@ def _render() -> str:
 
 <h2>Is the promise holding?</h2>
 <div class="cards">{cards}</div>
+
+<h2>Shop your restyle</h2>
+<div class="cards">{shopping_cards}</div>
 
 <h2>Health checks</h2>
 <table>
