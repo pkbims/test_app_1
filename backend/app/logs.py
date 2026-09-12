@@ -49,3 +49,10 @@ def configure(level: str = "info") -> None:
     access.handlers[:] = []
     access.propagate = False
     access.disabled = True
+    # httpx logs its own "HTTP Request: GET https://...?...&api_key=..." line at
+    # INFO — every query-string secret we ever send (SearchApi's api_key; the
+    # worker also hands httpx our own short-lived signed render URLs) would
+    # otherwise land in the log verbatim regardless of what our own code logs.
+    # ORCH-QUESTIONS Q11 finding 2: this was a real leak, in production logs.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
