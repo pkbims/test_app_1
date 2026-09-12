@@ -139,4 +139,7 @@ def make_shopping_config(settings: Settings) -> ShoppingConfig:
         search_url_ttl_s=settings.shopping_search_url_ttl_s,
         public_base_url=settings.public_base_url,
         file_url_secret=settings.file_url_secret,
+        # TEMPORARY, dev-only (ORCH-QUESTIONS Q11, HANDOFF §7.3) — Settings.load()
+        # already refuses this when APP_ENV=production.
+        dev_public_image_host=settings.shopping_dev_image_host,
     )
