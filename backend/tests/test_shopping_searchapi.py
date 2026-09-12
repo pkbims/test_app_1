@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from app.shopping.searchapi import FakeSearchApi, RawMatch, _crop_param, _parse
+import httpx
+import pytest
+
+from app.shopping.searchapi import FakeSearchApi, RawMatch, RealSearchApi, SearchApiError, _crop_param, _parse
 
 
 def test_crop_param_formats_as_semicolon_joined_three_decimals():
@@ -69,3 +72,36 @@ def test_fake_search_api_check_link_and_thumbnail_touch_no_network():
     fake = FakeSearchApi()
     assert fake.check_link("https://anything") is True
     assert fake.fetch_thumbnail("https://anything") is None
+
+
+# ── the API key must never leak into a raised error's message (§4.2 logging rule) ──
+def _mock_client(handler):
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+def test_search_error_message_never_contains_the_api_key(monkeypatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert "api_key=super-secret-key" in str(request.url)  # sanity: it really was sent
+        return httpx.Response(403, request=request)
+
+    monkeypatch.setattr(httpx, "get", lambda url, params, timeout: _mock_client(handler).get(
+        url, params=params, timeout=timeout
+    ))
+
+    with pytest.raises(SearchApiError) as exc_info:
+        RealSearchApi("super-secret-key").search("https://example/render.png", (0.0, 0.0, 1.0, 1.0))
+    assert "super-secret-key" not in str(exc_info.value)
+    assert "403" in str(exc_info.value)
+
+
+def test_search_network_error_message_never_contains_the_api_key(monkeypatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("boom", request=request)
+
+    monkeypatch.setattr(httpx, "get", lambda url, params, timeout: _mock_client(handler).get(
+        url, params=params, timeout=timeout
+    ))
+
+    with pytest.raises(SearchApiError) as exc_info:
+        RealSearchApi("super-secret-key").search("https://example/render.png", (0.0, 0.0, 1.0, 1.0))
+    assert "super-secret-key" not in str(exc_info.value)

@@ -105,8 +105,13 @@ class RealSearchApi:
             resp = httpx.get(_ENDPOINT, params=params, timeout=self._timeout)
             resp.raise_for_status()
             return _parse(resp.json())
+        except httpx.HTTPStatusError as exc:
+            # Deliberately not `f"...{exc}"` — httpx's default message embeds the
+            # full request URL, which carries `api_key=...` in the query string
+            # (HANDOFF §4.2: never log the SearchApi key).
+            raise SearchApiError(f"HTTP {exc.response.status_code}") from exc
         except httpx.HTTPError as exc:
-            raise SearchApiError(f"{type(exc).__name__}: {exc}") from exc
+            raise SearchApiError(type(exc).__name__) from exc
 
     def check_link(self, url: str) -> bool:
         import httpx
