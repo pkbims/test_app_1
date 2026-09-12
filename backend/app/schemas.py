@@ -5,7 +5,7 @@ it is the only thing they share, and a unilateral edit silently forks the system
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -214,6 +214,56 @@ class Render(BaseModel):
     decor: DecorLevel = DecorLevel.as_style
     plants: bool = False
     palette: PaletteOption = PaletteOption.as_style
+
+
+# ── shopping: "shop your restyle" (post-v1, shopping_proto/HANDOFF.md §4.1) ────
+class ShoppingStatus(str, Enum):
+    pending = "pending"
+    ready = "ready"
+    none = "none"
+
+
+class ShoppingOption(BaseModel):
+    store: str = Field(..., description="Registrable domain, lowercase, e.g. 'walmart.ca'.")
+    title: str
+    price: float = Field(..., ge=0, description="CAD.")
+    url: str
+    verified: bool = Field(
+        ..., description="False when the store blocks automated link checks — still shown, "
+                          "marked 'link not checked' on screen, never dropped."
+    )
+
+
+class ShoppingItem(BaseModel):
+    item_id: str = Field(..., description="Stable within this render.")
+    name: str
+    crop_url: str = Field(
+        ..., description="Signed URL for the item's crop from the render. Same expiry rules "
+                          "as before_url/after_url."
+    )
+    options: List[ShoppingOption] = Field(
+        default_factory=list,
+        max_length=2,
+        description="0, 1 or 2 entries, cheapest first. Empty means no usable match was found.",
+    )
+
+
+class Shopping(BaseModel):
+    render_id: str
+    status: ShoppingStatus = Field(
+        ..., description="'pending' while the job hasn't finished; 'ready' once it has, even "
+                          "with zero items; 'none' when shopping was not attempted or failed. "
+                          "A render that predates this feature also returns 'none'."
+    )
+    prices_as_of: Optional[date] = Field(None, description="Date only. Null unless ready.")
+    total_from: Optional[float] = Field(
+        None, ge=0,
+        description="CAD. The sum of the cheapest option's price over items with at least "
+                    "one option, rounded to cents. Null unless ready and at least one item "
+                    "has a priced option.",
+    )
+    currency: str = "CAD"
+    items: List[ShoppingItem] = Field(default_factory=list)
 
 
 # ── errors and health ─────────────────────────────────────────────────────────

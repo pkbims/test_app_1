@@ -1205,6 +1205,109 @@
         }
       }
     },
+    "/v1/renders/{render_id}/shopping": {
+      "get": {
+        "tags": [
+          "renders"
+        ],
+        "summary": "Where to buy what the restyle added",
+        "description": "Polls the shopping pipeline that runs after a render finishes: `pending` while\nthat job hasn't completed, `ready` once it has (even with zero items), `none` if\nshopping wasn't attempted or failed, or the render predates this feature. Same\npoll cadence and rate limit as `GET /v1/renders/{id}`.",
+        "operationId": "get_shopping_v1_renders__render_id__shopping_get",
+        "parameters": [
+          {
+            "name": "render_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Render Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shopping"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Payment Required"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -1896,6 +1999,142 @@
         ],
         "title": "RoomType",
         "description": "The 12 room types from the options-round handoff (options_review/HANDOFF.md\n\u00a77.1). Detected by the inventory vision call; the user may confirm or change it\non the render request. The wire value is also what the prompt names as `where`."
+      },
+      "Shopping": {
+        "properties": {
+          "render_id": {
+            "type": "string",
+            "title": "Render Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ShoppingStatus",
+            "description": "'pending' while the job hasn't finished; 'ready' once it has, even with zero items; 'none' when shopping was not attempted or failed. A render that predates this feature also returns 'none'."
+          },
+          "prices_as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prices As Of",
+            "description": "Date only. Null unless ready."
+          },
+          "total_from": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total From",
+            "description": "CAD. The sum of the cheapest option's price over items with at least one option, rounded to cents. Null unless ready and at least one item has a priced option."
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "CAD"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ShoppingItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "render_id",
+          "status"
+        ],
+        "title": "Shopping"
+      },
+      "ShoppingItem": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id",
+            "description": "Stable within this render."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "crop_url": {
+            "type": "string",
+            "title": "Crop Url",
+            "description": "Signed URL for the item's crop from the render. Same expiry rules as before_url/after_url."
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/ShoppingOption"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "title": "Options",
+            "description": "0, 1 or 2 entries, cheapest first. Empty means no usable match was found."
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "name",
+          "crop_url"
+        ],
+        "title": "ShoppingItem"
+      },
+      "ShoppingOption": {
+        "properties": {
+          "store": {
+            "type": "string",
+            "title": "Store",
+            "description": "Registrable domain, lowercase, e.g. 'walmart.ca'."
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Price",
+            "description": "CAD."
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "verified": {
+            "type": "boolean",
+            "title": "Verified",
+            "description": "False when the store blocks automated link checks \u2014 still shown, marked 'link not checked' on screen, never dropped."
+          }
+        },
+        "type": "object",
+        "required": [
+          "store",
+          "title",
+          "price",
+          "url",
+          "verified"
+        ],
+        "title": "ShoppingOption"
+      },
+      "ShoppingStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "ready",
+          "none"
+        ],
+        "title": "ShoppingStatus"
       },
       "Tokens": {
         "properties": {

@@ -47,6 +47,19 @@ class Settings:
     queue_depth_degraded: int = 100
     worker_heartbeat_timeout_s: int = 60
 
+    # "shop your restyle" (post-v1, shopping_proto/HANDOFF.md §4.2)
+    searchapi_key: str = ""  # secret, .env only, never logged
+    # "openai_searchapi" (real), "fake" (deterministic two-item result, for local
+    # compose and integration tests), or "off" (writes `none`, calls nothing)
+    shopping_backend: str = "openai_searchapi"
+    shopping_max_items: int = 7
+    shopping_judge_model: str = "gpt-4.1"
+    shopping_describe_model: str = "gpt-4.1-mini"
+    # The render leaves our system for this call (SearchApi/Google fetch it) —
+    # shortest expiry that survives one job, never the long-lived client-facing
+    # after_url (shopping_proto/HANDOFF.md §6.3).
+    shopping_search_url_ttl_s: int = 15 * 60
+
 
 def load() -> Settings:
     jwt_secret = os.environ.get("JWT_SECRET", "dev-insecure")
@@ -68,4 +81,9 @@ def load() -> Settings:
         queue_depth_degraded=int(os.environ.get("QUEUE_DEPTH_DEGRADED", "100")),
         signup_free_credits=int(os.environ.get("SIGNUP_FREE_CREDITS", "1")),
         worker_heartbeat_timeout_s=int(os.environ.get("WORKER_HEARTBEAT_TIMEOUT_S", "60")),
+        searchapi_key=os.environ.get("SEARCHAPI_KEY", ""),
+        shopping_backend=os.environ.get("SHOPPING_BACKEND", "openai_searchapi"),
+        shopping_max_items=int(os.environ.get("SHOPPING_MAX_ITEMS", "7")),
+        shopping_judge_model=os.environ.get("SHOPPING_JUDGE_MODEL", "gpt-4.1"),
+        shopping_describe_model=os.environ.get("SHOPPING_DESCRIBE_MODEL", "gpt-4.1-mini"),
     )

@@ -41,6 +41,13 @@ def test_leases_a_queued_job_and_bumps_attempts(conn):
     assert row == ("running", "w1", True)
 
 
+def test_lease_carries_the_jobs_kind(conn):
+    _enqueue(conn)
+    _enqueue(conn, kind="shopping")
+    kinds = {leasing.lease_one(conn, "w1").kind, leasing.lease_one(conn, "w1").kind}
+    assert kinds == {"render", "shopping"}
+
+
 def test_nothing_to_lease_returns_none(conn):
     assert leasing.lease_one(conn, "w1") is None
 
