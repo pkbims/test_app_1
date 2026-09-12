@@ -40,7 +40,7 @@ def test_preamble_opens_the_prompt():
 
 def test_known_style_uses_the_guide_table():
     p = build_prompt(style="scandi", user_prompt=None, items=ITEMS, remove_ids=[], room_label=None)
-    assert "THE STYLE THE CUSTOMER CHOSE — Scandi: bright, warm and uncluttered" in p
+    assert "THE STYLE THE CUSTOMER CHOSE — Scandinavian: bright, warm and uncluttered" in p
     assert "- Palette: white and chalky off-white walls" in p
     assert "- Avoid: ornate carving" in p
 
@@ -55,15 +55,85 @@ def test_unknown_style_falls_back_without_erroring():
     assert "add small decor" in p
 
 
-def test_all_18_styles_are_in_the_table():
-    assert len(STYLES) == 18
+# ── STYLES table completeness (18 original + 44 DecorAI-parity batch) ──────────
+_ORIGINAL_18_IDS = [
+    "warm-minimal", "scandi", "japandi", "modern-coastal", "mid-century", "industrial",
+    "traditional", "art-deco", "dark-academia", "maximalism", "moroccan", "cottagecore",
+    "rustic-farmhouse", "mediterranean", "cyberpunk", "memphis", "christmas", "valentines",
+]
+
+_DECORAI_44_NAMES = [
+    "Minimalistic", "Modern", "Transitional", "Contemporary", "Japanese", "Eclectic",
+    "Rustic", "Bohemian", "Farmhouse", "Vintage", "Victorian", "Retro", "Zen",
+    "Biophilic", "Solarpunk", "Tropical", "Parisian", "Brutalist", "Vaporwave",
+    "Hollywood Regency", "Art Nouveau", "Korean Hanok", "Southwestern",
+    "Nordic Hygge", "Baroque", "Bauhaus", "Futuristic", "Colonial", "Tudor",
+    "Shaker", "Rococo", "Deconstructivism", "Wabi-Sabi", "Organic Modern",
+    "Quiet Luxury", "French Country", "English Country", "Neoclassical",
+    "Alpine Chalet", "Hacienda", "Chinoiserie", "Shabby Chic", "Gothic",
+    "Steampunk",
+]
 
 
-def test_every_style_guide_has_exactly_four_bullets():
+def test_all_62_styles_are_in_the_table():
+    assert len(STYLES) == 18 + 44 == 62
+
+
+def test_original_18_ids_are_all_still_present_unrenamed():
+    # render history references ids directly — these must never move.
+    for style_id in _ORIGINAL_18_IDS:
+        assert style_id in STYLES, style_id
+
+
+def test_the_two_cosmetic_renames_landed_on_the_right_ids():
+    assert STYLES["scandi"].name == "Scandinavian"
+    assert STYLES["mid-century"].name == "Mid-Century Modern"
+
+
+def test_warm_minimal_and_rustic_farmhouse_keep_their_original_names():
+    # not DecorAI names; kept as extras, explicitly not touched by the rename.
+    assert STYLES["warm-minimal"].name == "Warm minimal"
+    assert STYLES["rustic-farmhouse"].name == "Rustic Farmhouse"
+
+
+def test_every_decorai_name_is_present_exactly():
+    names_present = {s.name for s in STYLES.values()}
+    for name in _DECORAI_44_NAMES:
+        assert name in names_present, name
+
+
+def test_no_duplicate_display_names():
+    names = [s.name for s in STYLES.values()]
+    assert len(names) == len(set(names))
+
+
+def test_every_style_guide_has_exactly_four_labelled_bullets():
+    expected_prefixes = ("- Palette:", "- Materials:", "- Forms and pieces:", "- Avoid:")
     for style_id, style in STYLES.items():
         bullets = style.guide.splitlines()
         assert len(bullets) == 4, style_id
-        assert all(b.startswith("- ") for b in bullets), style_id
+        for bullet, prefix in zip(bullets, expected_prefixes):
+            assert bullet.startswith(prefix), (style_id, bullet[:40])
+
+
+def test_every_style_has_a_valid_decor_scale():
+    for style_id, style in STYLES.items():
+        assert style.decor_scale in ("small", "large"), style_id
+
+
+def test_every_style_summary_is_a_non_empty_sentence():
+    for style_id, style in STYLES.items():
+        assert style.summary.strip(), style_id
+        assert style.summary.strip().endswith("."), style_id
+
+
+def test_rustic_and_farmhouse_and_rustic_farmhouse_are_three_distinct_entries():
+    # DecorAI treats these as separate styles — explicitly not merged or deduped.
+    assert STYLES["rustic"].name == "Rustic"
+    assert STYLES["farmhouse"].name == "Farmhouse"
+    assert STYLES["rustic-farmhouse"].name == "Rustic Farmhouse"
+    guides = {STYLES["rustic"].guide, STYLES["farmhouse"].guide, STYLES["rustic-farmhouse"].guide}
+    assert len(guides) == 3
 
 
 def test_decor_scale_small_renders_small_decor_rule():

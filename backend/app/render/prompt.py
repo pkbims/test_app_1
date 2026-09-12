@@ -242,7 +242,7 @@ def _rules_block(*, walls: str, decor_phrase: str, add_active: bool, plants: boo
 
 @dataclass(frozen=True)
 class Style:
-    name: str  # display name, e.g. "Scandi"
+    name: str  # display name, e.g. "Scandinavian"
     summary: str  # the clause after the colon in the header line
     guide: str  # the four "- ..." lines, verbatim, newline-joined
     decor_scale: str  # "small" | "large"
@@ -266,7 +266,7 @@ STYLES: dict[str, Style] = {
         decor_scale="small",
     ),
     "scandi": Style(
-        name="Scandi",
+        name="Scandinavian",
         summary="bright, warm and uncluttered, in soft natural daylight.",
         guide="\n".join([
             "- Palette: white and chalky off-white walls; pale oak, ash and birch wood; light grey "
@@ -316,7 +316,7 @@ STYLES: dict[str, Style] = {
         decor_scale="small",
     ),
     "mid-century": Style(
-        name="Mid-century",
+        name="Mid-Century Modern",
         summary="warm walnut and confident colour, in even daylight.",
         guide="\n".join([
             "- Palette: walnut and teak browns with mustard, burnt orange, olive and teal; warm "
@@ -542,6 +542,691 @@ STYLES: dict[str, Style] = {
             "decorates the room, it does not restyle it.",
         ]),
         decor_scale="large",
+    ),
+    # ── DecorAI parity batch (60-style picker) — ids are ours, names match DecorAI
+    # exactly. Existing 18 ids/names are unchanged except two cosmetic renames
+    # (scandi -> "Scandinavian", mid-century -> "Mid-Century Modern") noted above;
+    # warm-minimal and rustic-farmhouse are not DecorAI names and stay as extras.
+    "minimalistic": Style(
+        name="Minimalistic",
+        summary="pared to essentials, calm and uncluttered, in even daylight.",
+        guide="\n".join([
+            "- Palette: white, off-white and one soft neutral; no more than one accent colour, "
+            "used sparingly; nothing saturated.",
+            "- Materials: matte painted surfaces, plain oak or ash, frosted or clear glass, "
+            "unpolished concrete, plain cotton and wool.",
+            "- Forms and pieces: low-slung furniture with clean rectilinear lines; a single "
+            "freestanding sculptural object; open shelving left mostly empty; one plain floor "
+            "lamp; a rug with no pattern, if any.",
+            "- Avoid: ornament of any kind, more than one pattern, visible clutter, warm wood "
+            "tones in excess, anything decorative without a function.",
+        ]),
+        decor_scale="small",
+    ),
+    "modern": Style(
+        name="Modern",
+        summary="clean-lined and confident, with high-contrast materials, in bright even light.",
+        guide="\n".join([
+            "- Palette: white and warm grey with black, walnut brown and one saturated accent "
+            "(deep blue or rust); contrast used deliberately.",
+            "- Materials: polished chrome and matte black metal, tempered glass, walnut veneer, "
+            "leather, poured concrete.",
+            "- Forms and pieces: low modular seating with sharp rectilinear edges; a glass or "
+            "marble-topped coffee table; a sculptural pendant light; a large abstract canvas; a "
+            "geometric-pattern rug in neutral tones.",
+            "- Avoid: ornate carving, floral pattern, distressed or rustic finishes, pastel "
+            "colour, clutter on surfaces.",
+        ]),
+        decor_scale="small",
+    ),
+    "transitional": Style(
+        name="Transitional",
+        summary="traditional shapes softened into a simplified, neutral palette, in soft daylight.",
+        guide="\n".join([
+            "- Palette: warm greige, oatmeal and soft white, with navy or charcoal as the only "
+            "deep accent.",
+            "- Materials: matte-finish oak, linen and plain performance-weave upholstery, "
+            "brushed nickel, honed marble.",
+            "- Forms and pieces: rolled-arm upholstery in a plain fabric; simple turned or "
+            "tapered wood legs; a drum-shade lamp; a bordered but low-contrast rug; furniture "
+            "arranged in understated symmetrical pairs.",
+            "- Avoid: heavy ornate carving, high-gloss finishes, bold pattern, anything that "
+            "reads as strictly period or strictly ultra-modern.",
+        ]),
+        decor_scale="small",
+    ),
+    "contemporary": Style(
+        name="Contemporary",
+        summary="of-the-moment and curated, softly curved, in bright natural light.",
+        guide="\n".join([
+            "- Palette: warm white and taupe with one current accent (sage, terracotta or dusty "
+            "blue); tonal layering over hard contrast.",
+            "- Materials: matte metal, engineered stone, bouclé, blonde or ashy wood, natural "
+            "undyed textiles.",
+            "- Forms and pieces: curved-arm upholstered seating; an organic free-form coffee "
+            "table; a sculptural floor lamp; oversized understated art; a jute or low-pile "
+            "plain rug.",
+            "- Avoid: heavy period ornament, dated 1980s-1990s motifs, dark wood-heavy schemes, "
+            "busy pattern mixing.",
+        ]),
+        decor_scale="small",
+    ),
+    "japanese": Style(
+        name="Japanese",
+        summary="spare, natural and ordered around light and shadow, in soft filtered daylight.",
+        guide="\n".join([
+            "- Palette: unbleached tatami gold, warm wood brown, charcoal and paper white; no "
+            "bright colour.",
+            "- Materials: hinoki and cedar wood, washi paper, tatami rush matting, bamboo, "
+            "black iron, unglazed ceramic.",
+            "- Forms and pieces: a low table for floor seating; a shoji lattice screen or door; "
+            "a single alcove-style display of one scroll or ikebana arrangement; floor cushions "
+            "in place of raised furniture; exposed wood beam detailing.",
+            "- Avoid: upholstered Western furniture, bright colour, clutter, synthetic "
+            "materials, ornament that breaks the room's quiet symmetry.",
+        ]),
+        decor_scale="small",
+    ),
+    "eclectic": Style(
+        name="Eclectic",
+        summary="confidently mixed, personal and layered, in warm daylight.",
+        guide="\n".join([
+            "- Palette: a curated mix of two or three unrelated colour families, tied together "
+            "by one repeated accent tone.",
+            "- Materials: mixed woods, vintage brass, woven natural fibre, velvet and printed "
+            "cotton together.",
+            "- Forms and pieces: furniture from different eras placed together; a gallery wall "
+            "of mismatched frames; one bold vintage statement piece; layered rugs; objects that "
+            "look collected rather than matched.",
+            "- Avoid: a single matching furniture set, monochrome schemes, anything that reads "
+            "as a showroom, empty walls.",
+        ]),
+        decor_scale="small",
+    ),
+    "rustic": Style(
+        name="Rustic",
+        summary="rough-hewn, heavy and close to the material, in warm low light.",
+        guide="\n".join([
+            "- Palette: bark brown, oatmeal, forest green and charcoal; nothing polished or "
+            "bright.",
+            "- Materials: rough-sawn and log-hewn timber, stacked stone, cast iron, cowhide, "
+            "heavy wool.",
+            "- Forms and pieces: a chunky exposed-joinery table; a stone or brick fireplace "
+            "surround; wrought-iron light fixtures; a cowhide or heavy wool rug; carved-wood or "
+            "antler accents.",
+            "- Avoid: high gloss, glass and chrome, pastel colour, delicate or spindly forms, "
+            "anything that reads as manufactured.",
+        ]),
+        decor_scale="small",
+    ),
+    "bohemian": Style(
+        name="Bohemian",
+        summary="layered, global and free-spirited, in warm golden light.",
+        guide="\n".join([
+            "- Palette: terracotta, mustard, deep burgundy and jewel tones over a warm neutral "
+            "base.",
+            "- Materials: macrame, rattan, kilim and ikat textiles, unlacquered brass, raw wood.",
+            "- Forms and pieces: floor cushions and a low platform for seating; heavily layered "
+            "rugs; a macrame wall hanging; trailing plants on plant stands at several heights; a "
+            "rattan peacock-style chair.",
+            "- Avoid: matching furniture sets, cool greys, hard minimalism, rigid symmetry, "
+            "empty walls.",
+        ]),
+        decor_scale="small",
+    ),
+    "farmhouse": Style(
+        name="Farmhouse",
+        summary="crisp white and black-accented, practical and bright, in clear daylight.",
+        guide="\n".join([
+            "- Palette: white and warm white walls with black metal accents and one soft "
+            "neutral (greige or sage).",
+            "- Materials: shiplap-look panelling, painted wood, galvanised and matte black "
+            "metal, cotton canvas, stoneware.",
+            "- Forms and pieces: a trestle-leg table; open shelving with plain white dishware; "
+            "a black metal cage or lantern pendant; a woven or jute rug; slipcovered seating.",
+            "- Avoid: dark heavy wood, ornate carving, saturated colour, glossy finishes, "
+            "clutter of small decor.",
+        ]),
+        decor_scale="small",
+    ),
+    "vintage": Style(
+        name="Vintage",
+        summary="gently worn and time-collected, in warm lamplight.",
+        guide="\n".join([
+            "- Palette: faded rose, sage, mustard and cream, softened as if sun-aged.",
+            "- Materials: worn leather, aged brass, walnut and mahogany veneer, chintz and "
+            "lace, milk glass.",
+            "- Forms and pieces: a curved-arm upholstered piece in a period silhouette; a "
+            "mirrored or marquetry side table; framed vintage prints; a fringed lampshade; "
+            "mismatched dining chairs around a shared table.",
+            "- Avoid: anything glossy or obviously new, minimalist forms, cool industrial "
+            "materials, stark white.",
+        ]),
+        decor_scale="small",
+    ),
+    "victorian": Style(
+        name="Victorian",
+        summary="ornate, layered and richly coloured, in a warm gaslight-like glow.",
+        guide="\n".join([
+            "- Palette: deep burgundy, forest green and navy with gold accents; patterned "
+            "wallpaper tones.",
+            "- Materials: dark mahogany and walnut, velvet and damask upholstery, wrought iron, "
+            "stained glass, brass.",
+            "- Forms and pieces: a tufted chesterfield or fainting couch; a marble-topped "
+            "console on carved legs; heavy tasseled drapery; an ornate gilt-framed mirror; a "
+            "patterned Persian-style rug.",
+            "- Avoid: minimalism, bare walls, industrial or raw materials, pale or cool colour, "
+            "anything sparse.",
+        ]),
+        decor_scale="small",
+    ),
+    "retro": Style(
+        name="Retro",
+        summary="playful and boldly coloured, evoking the 1960s-70s, in warm even light.",
+        guide="\n".join([
+            "- Palette: avocado green, burnt orange, mustard yellow and brown, with an "
+            "occasional shot of hot pink.",
+            "- Materials: shag-pile textiles, moulded plastic, chrome, laminate, cork.",
+            "- Forms and pieces: a bubble or egg-shaped hanging seat; a sunburst clock; a lava "
+            "lamp; a shag rug; bold geometric or psychedelic-pattern textiles.",
+            "- Avoid: muted neutrals, minimalism, matte natural materials, anything that reads "
+            "as restrained or corporate.",
+        ]),
+        decor_scale="small",
+    ),
+    "zen": Style(
+        name="Zen",
+        summary="quiet, spare and meditative, in soft diffuse light.",
+        guide="\n".join([
+            "- Palette: sand, stone grey, moss green and unbleached white; nothing saturated.",
+            "- Materials: smooth river stone, bamboo, unglazed ceramic, raw linen, light "
+            "unfinished wood.",
+            "- Forms and pieces: a low platform seating area; a small tabletop water feature or "
+            "single stone arrangement; one bonsai or single-stem arrangement; a plain floor "
+            "cushion; wide open, uncluttered floor space.",
+            "- Avoid: pattern, clutter, bright colour, ornate furniture, more than a few "
+            "objects visible at once.",
+        ]),
+        decor_scale="small",
+    ),
+    "biophilic": Style(
+        name="Biophilic",
+        summary="green, textured and nature-immersed, in bright natural daylight.",
+        guide="\n".join([
+            "- Palette: leaf green, warm terracotta and natural wood tones against white or "
+            "stone.",
+            "- Materials: living plant walls, raw and reclaimed wood, natural stone, jute, "
+            "cork, unfinished rattan.",
+            "- Forms and pieces: an abundance of large potted plants at multiple heights; a "
+            "wood-slat room divider; a stone or pebble accent surface; a rattan hanging chair; "
+            "a small water feature.",
+            "- Avoid: synthetic materials, artificial-looking plastic plants, dark or "
+            "windowless-feeling schemes, hard minimalism with no greenery.",
+        ]),
+        decor_scale="small",
+    ),
+    "solarpunk": Style(
+        name="Solarpunk",
+        summary="optimistic, green-technological and sun-bright, in vivid daylight.",
+        guide="\n".join([
+            "- Palette: leaf green and sky blue with warm terracotta and brushed gold accents; "
+            "bright, never dark.",
+            "- Materials: living plants integrated with reclaimed wood, glass, woven natural "
+            "fibre, warm-toned recycled metal.",
+            "- Forms and pieces: climbing plants trained along a trellis or frame; a "
+            "stained-glass-look panel catching light; greenery mixed with clean modern "
+            "furniture; a solar-lantern-style light fixture; an open, airy arrangement.",
+            "- Avoid: dark or industrial-dystopian materials, muted or grey palettes, synthetic "
+            "plastic finishes, cramped arrangement.",
+        ]),
+        decor_scale="small",
+    ),
+    "tropical": Style(
+        name="Tropical",
+        summary="lush, breezy and colourful, in bright humid-feeling daylight.",
+        guide="\n".join([
+            "- Palette: leaf green, hibiscus pink and sunny yellow against white or rattan tan.",
+            "- Materials: rattan, bamboo, palm-leaf print textiles, teak, woven raffia.",
+            "- Forms and pieces: oversized leafy plants such as monstera or palm; a rattan "
+            "peacock or papasan-style chair; a wood-look ceiling fan; botanical-print "
+            "textiles; a woven pendant light.",
+            "- Avoid: cool greys, heavy dark wood, minimalism, wintery or muted colour, "
+            "synthetic-looking plastic greenery.",
+        ]),
+        decor_scale="small",
+    ),
+    "parisian": Style(
+        name="Parisian",
+        summary="elegant, effortless and softly aged, in soft grey daylight.",
+        guide="\n".join([
+            "- Palette: warm white, soft grey and black, with a single muted rose or blue "
+            "accent.",
+            "- Materials: herringbone oak, aged brass, marble, linen, gilt-edged mirror glass.",
+            "- Forms and pieces: a Louis-style chair with plain upholstery; a marble-topped "
+            "console; a large gilt-framed mirror leaning against the wall; a slender brass "
+            "floor lamp; a cafe-style bistro chair as an accent.",
+            "- Avoid: bulky modern furniture, saturated colour, matching furniture sets, "
+            "plastic or laminate finishes, clutter.",
+        ]),
+        decor_scale="small",
+    ),
+    "brutalist": Style(
+        name="Brutalist",
+        summary="raw, monolithic and unapologetically concrete, in stark directional light.",
+        guide="\n".join([
+            "- Palette: concrete grey, charcoal and off-white; no accent colour.",
+            "- Materials: raw poured concrete, unfinished steel, exposed brick, dark oiled "
+            "wood.",
+            "- Forms and pieces: heavy geometric furniture with blocky, unornamented forms; a "
+            "sculptural concrete or stone side table; a single oversized pendant in raw metal; "
+            "minimal sculptural decor; a hard-edged rug or bare floor.",
+            "- Avoid: soft textiles in excess, pastel colour, ornate detail, anything delicate "
+            "or highly decorative.",
+        ]),
+        decor_scale="small",
+    ),
+    "vaporwave": Style(
+        name="Vaporwave",
+        summary="neon pastel and retro-digital, lit by artificial glow, after dark.",
+        guide="\n".join([
+            "- Palette: pastel pink and cyan-teal neon over a dark or lavender-grey base; no "
+            "natural earth tones.",
+            "- Materials: glossy laminate, chrome, mirrored and iridescent glass, matte black "
+            "plastic.",
+            "- Forms and pieces: neon or LED strip lighting along edges; a checkerboard-pattern "
+            "floor or rug; a glossy geometric console; retro-grid or CRT-style wall art; "
+            "palm-silhouette accents.",
+            "- Avoid: warm wood tones, natural fibre, muted earthy colour, daylight, cosy "
+            "traditional furniture. Do not turn the window view into a city skyline or add a "
+            "cityscape — it is an ordinary room, lit and finished differently.",
+        ]),
+        decor_scale="small",
+    ),
+    "hollywood-regency": Style(
+        name="Hollywood Regency",
+        summary="glamorous, high-contrast and mirrored, in warm dramatic light.",
+        guide="\n".join([
+            "- Palette: black and white or cream with bold jewel accents (emerald, fuchsia or "
+            "royal blue) and gold.",
+            "- Materials: lacquered wood, mirrored and lucite surfaces, velvet, gold leaf, "
+            "faux fur.",
+            "- Forms and pieces: a tufted velvet seat with slender gold legs; a mirrored "
+            "console or bar cart; an oversized starburst mirror; a crystal or geometric "
+            "chandelier; a bold leopard-print accent textile.",
+            "- Avoid: rustic or reclaimed wood, muted earth tones, matte natural finishes, "
+            "understatement of any kind. Do not render any visible brand names, logos or text "
+            "on books, packaging or objects.",
+        ]),
+        decor_scale="small",
+    ),
+    "art-nouveau": Style(
+        name="Art Nouveau",
+        summary="flowing, organic and hand-crafted, in soft warm light.",
+        guide="\n".join([
+            "- Palette: sage green, mustard, deep plum and warm gold against cream.",
+            "- Materials: carved wood with whiplash curves, stained glass, wrought iron, "
+            "brass, hand-painted tile.",
+            "- Forms and pieces: furniture with sinuous, plant-inspired curved lines; a "
+            "stained-glass lamp with organic floral motifs; wrought-iron detailing on light "
+            "fixtures; a botanical mural-style artwork; a curved-back upholstered seat.",
+            "- Avoid: straight rigid lines, minimalism, industrial materials, geometric Art "
+            "Deco motifs, plain unornamented surfaces.",
+        ]),
+        decor_scale="small",
+    ),
+    "korean-hanok": Style(
+        name="Korean Hanok",
+        summary="quiet, wood-framed and floor-oriented, in soft natural light.",
+        guide="\n".join([
+            "- Palette: warm wood brown, whitewashed clay walls, charcoal roof-tile grey; no "
+            "bright colour.",
+            "- Materials: unfinished pine and hardwood, hanji mulberry paper, woven floor "
+            "matting, celadon ceramic, plain cotton.",
+            "- Forms and pieces: a low wooden table for floor seating; a hanji-paper lattice "
+            "screen or door; a single celadon vase; floor cushions instead of raised furniture; "
+            "exposed wood beam detailing.",
+            "- Avoid: upholstered Western furniture, bright synthetic colour, glossy finishes, "
+            "clutter, tall raised furniture that blocks the floor lines.",
+        ]),
+        decor_scale="small",
+    ),
+    "southwestern": Style(
+        name="Southwestern",
+        summary="sun-baked, earthen and pattern-rich, in warm desert light.",
+        guide="\n".join([
+            "- Palette: terracotta, adobe tan, turquoise and rust against warm white.",
+            "- Materials: adobe-look plaster, hand-woven wool, leather, turquoise-inlaid "
+            "silver accents, weathered wood.",
+            "- Forms and pieces: a Navajo or Saltillo-pattern rug; leather-and-wood accent "
+            "seating; woven wall hangings; a cowhide or leather pouf; terracotta pottery.",
+            "- Avoid: cool greys and blues, glossy modern finishes, minimalism, pale "
+            "Scandinavian wood, clutter of unrelated global patterns.",
+        ]),
+        decor_scale="small",
+    ),
+    "nordic-hygge": Style(
+        name="Nordic Hygge",
+        summary="cosy, candlelit and soft-textured, in warm low light.",
+        guide="\n".join([
+            "- Palette: warm white, oatmeal and soft grey with muted blush or clay accents.",
+            "- Materials: chunky knit wool, sheepskin, pale oak, matte ceramic, beeswax "
+            "candles.",
+            "- Forms and pieces: deep upholstery piled with knit cushions and a chunky throw; a "
+            "sheepskin draped over a simple wood-framed seat; clustered candles on a low "
+            "surface; a soft wool rug; simple pale-wood open shelving.",
+            "- Avoid: cold hard surfaces left unsoftened, bright overhead lighting, clutter, "
+            "saturated or neon colour.",
+        ]),
+        decor_scale="small",
+    ),
+    "baroque": Style(
+        name="Baroque",
+        summary="opulent, dramatic and gilded, in a warm candlelit glow.",
+        guide="\n".join([
+            "- Palette: deep burgundy, royal blue and emerald with heavy gold ornament "
+            "throughout.",
+            "- Materials: gilded and carved wood, velvet and brocade, marble, crystal, ornate "
+            "wrought iron.",
+            "- Forms and pieces: heavily carved and gilded upholstered seating; a crystal "
+            "chandelier; an ornate gilt mirror with scrollwork; richly tasseled drapery; a "
+            "marble-topped table on carved legs.",
+            "- Avoid: minimalism, plain unornamented surfaces, pale or neutral colour, "
+            "industrial or raw materials, restraint of any kind.",
+        ]),
+        decor_scale="small",
+    ),
+    "bauhaus": Style(
+        name="Bauhaus",
+        summary="geometric, functional and primary-coloured, in bright even light.",
+        guide="\n".join([
+            "- Palette: white and black with primary red, yellow and blue used as flat "
+            "accents.",
+            "- Materials: tubular chrome steel, moulded plywood, leather, matte-painted "
+            "surfaces, glass.",
+            "- Forms and pieces: a tubular-steel cantilever seat; a geometric primary-colour "
+            "wall composition; unornamented rectilinear shelving; a simple grid-pattern "
+            "textile; a single functional pendant light.",
+            "- Avoid: ornament or applied decoration, pastel or muted colour, traditional or "
+            "period furniture forms, clutter.",
+        ]),
+        decor_scale="small",
+    ),
+    "futuristic": Style(
+        name="Futuristic",
+        summary="sleek, high-tech and curved, lit by cool ambient light.",
+        guide="\n".join([
+            "- Palette: white, silver and charcoal with one glowing accent colour (blue or "
+            "violet light).",
+            "- Materials: high-gloss white plastic and lacquer, brushed steel, smoked glass, "
+            "integrated LED strip lighting.",
+            "- Forms and pieces: a smooth curved-form seat with no visible legs; a sculptural "
+            "pod-shaped chair; integrated ambient lighting along ceiling or floor lines; a "
+            "glossy white console with no visible hardware; minimal screen-like art.",
+            "- Avoid: natural wood tones, traditional ornament, warm lamplight, clutter, "
+            "visible mechanical hardware. Do not turn the window view into a city skyline or "
+            "add a cityscape — it is an ordinary room, lit and finished differently.",
+        ]),
+        decor_scale="small",
+    ),
+    "colonial": Style(
+        name="Colonial",
+        summary="symmetrical, dark-wood and formal, in warm lamplight.",
+        guide="\n".join([
+            "- Palette: deep mahogany brown, cream and hunter green with brass accents.",
+            "- Materials: dark mahogany and cherry wood, wrought iron, toile and stripe "
+            "fabric, brass.",
+            "- Forms and pieces: a four-poster bed frame or wingback-shaped upholstery; a "
+            "campaign-style chest with brass hardware; paneled or shuttered-look window "
+            "treatments; a braided or oriental-style rug; furniture arranged in symmetrical "
+            "pairs.",
+            "- Avoid: bright saturated colour, minimalism, glossy modern surfaces, asymmetry, "
+            "plastic or laminate finishes.",
+        ]),
+        decor_scale="small",
+    ),
+    "tudor": Style(
+        name="Tudor",
+        summary="half-timbered, heavy and medieval-leaning, in warm low light.",
+        guide="\n".join([
+            "- Palette: dark oak brown, cream plaster white and deep burgundy or forest green.",
+            "- Materials: dark exposed timber beams, wrought iron, leaded glass, "
+            "tapestry-weight fabric, stone.",
+            "- Forms and pieces: a heavy carved oak table or chest; wrought-iron candle-style "
+            "light fixtures; a stone or brick fireplace surround; a tapestry or heraldic wall "
+            "hanging; leaded-look window styling.",
+            "- Avoid: pale modern wood, minimalism, glossy finishes, bright colour, sleek "
+            "contemporary furniture.",
+        ]),
+        decor_scale="small",
+    ),
+    "shaker": Style(
+        name="Shaker",
+        summary="plain, honest and finely made, in clear daylight.",
+        guide="\n".join([
+            "- Palette: warm white, soft grey-blue and natural wood tone; no ornament colour.",
+            "- Materials: plain solid maple, cherry and pine, woven-seat chairs, wool, "
+            "unadorned wrought iron.",
+            "- Forms and pieces: a ladder-back chair with a woven seat; a wall-mounted peg "
+            "rail for hanging items; a plain trestle table; simple unadorned cabinetry; a "
+            "single plain oval box or basket.",
+            "- Avoid: carving or applied ornament, upholstered excess, pattern, gilt or "
+            "metallic finishes, clutter.",
+        ]),
+        decor_scale="small",
+    ),
+    "rococo": Style(
+        name="Rococo",
+        summary="delicate, curved and pastel-gilded, in soft romantic light.",
+        guide="\n".join([
+            "- Palette: powder pink, mint and pale gold against cream or ivory.",
+            "- Materials: gilded carved wood, silk damask, porcelain, gilt bronze, mirrored "
+            "glass.",
+            "- Forms and pieces: an asymmetrical curved-leg settee; a gilt-framed oval mirror; "
+            "porcelain figurines or a delicately scrolled chandelier; a marble-topped console "
+            "on cabriole legs; pastel silk drapery.",
+            "- Avoid: straight rigid lines, minimalism, dark heavy wood, industrial materials, "
+            "bold saturated colour.",
+        ]),
+        decor_scale="small",
+    ),
+    "deconstructivism": Style(
+        name="Deconstructivism",
+        summary="fragmented, angular and deliberately unresolved, in stark directional light.",
+        guide="\n".join([
+            "- Palette: concrete grey, black and white with sharp unexpected colour "
+            "fragments.",
+            "- Materials: raw steel, angled glass, exposed concrete, unfinished plywood.",
+            "- Forms and pieces: furniture with fractured, non-parallel angles; a sculptural "
+            "asymmetric shelving unit; a canted or off-axis mirror; bare structural elements "
+            "left exposed as a feature; a single dramatically angular light fixture.",
+            "- Avoid: symmetry, ornament, soft traditional upholstery, warm cosy textiles, "
+            "anything predictable or matched.",
+        ]),
+        decor_scale="small",
+    ),
+    "wabi-sabi": Style(
+        name="Wabi-Sabi",
+        summary="imperfect, weathered and quietly beautiful, in soft natural light.",
+        guide="\n".join([
+            "- Palette: unbleached linen, clay, charcoal and stone tones; nothing bright or "
+            "new-looking.",
+            "- Materials: raw unfinished wood, hand-thrown crackle-glazed ceramic, unbleached "
+            "linen, natural plaster, rough stone.",
+            "- Forms and pieces: a low, irregularly-shaped wood stool; a single asymmetric "
+            "ceramic vessel with visible imperfection; a rough plaster or lime-washed wall "
+            "finish; a plain linen throw; one dried branch or seed-pod arrangement.",
+            "- Avoid: glossy or symmetrical finishes, bright colour, matching sets, anything "
+            "that looks factory-new, clutter.",
+        ]),
+        decor_scale="small",
+    ),
+    "organic-modern": Style(
+        name="Organic Modern",
+        summary="curved, natural-toned and softly sculptural, in warm daylight.",
+        guide="\n".join([
+            "- Palette: warm white, sand and clay with soft sage or terracotta accents.",
+            "- Materials: light oiled wood, bouclé, natural linen, travertine, unglazed "
+            "ceramic.",
+            "- Forms and pieces: curved-arm seating in bouclé; an organic free-form coffee "
+            "table; a sculptural ceramic floor vase; a plain jute or wool rug; softly rounded "
+            "floor lamps.",
+            "- Avoid: sharp geometric lines, high-gloss or chrome finishes, saturated colour, "
+            "ornate period detail, clutter.",
+        ]),
+        decor_scale="small",
+    ),
+    "quiet-luxury": Style(
+        name="Quiet Luxury",
+        summary="understated, exquisitely made and logo-free, in soft warm light.",
+        guide="\n".join([
+            "- Palette: cream, taupe and camel with a single deep neutral accent (charcoal or "
+            "ink).",
+            "- Materials: cashmere-weight wool, brushed brass, honed natural stone, fine "
+            "leather, unmarked quality wood veneer.",
+            "- Forms and pieces: a low-profile seat in plain fine-weave fabric; understated "
+            "brass hardware with no visible branding; a plain cashmere throw; one considered "
+            "art piece rather than many; a single well-made occasional table.",
+            "- Avoid: visible logos or branding, loud pattern, bright saturated colour, "
+            "cheap-looking materials, visual clutter of any kind.",
+        ]),
+        decor_scale="small",
+    ),
+    "french-country": Style(
+        name="French Country",
+        summary="warm, rustic-elegant and sun-faded, in soft golden daylight.",
+        guide="\n".join([
+            "- Palette: soft ochre, lavender, cream and warm terracotta.",
+            "- Materials: weathered oak, toile and provincial-print cotton, wrought iron, "
+            "glazed terracotta, limestone.",
+            "- Forms and pieces: a ladder-back chair with a woven rush seat; a distressed "
+            "farmhouse-style hutch; a wrought-iron chandelier; lavender or toile-print "
+            "textiles; a glazed terracotta pot.",
+            "- Avoid: cold modern minimalism, chrome or glossy plastic, bright primary colour, "
+            "stark geometric form.",
+        ]),
+        decor_scale="small",
+    ),
+    "english-country": Style(
+        name="English Country",
+        summary="layered, chintz-warm and lived-in, in soft filtered daylight.",
+        guide="\n".join([
+            "- Palette: forest green, faded rose and warm cream with floral chintz tones.",
+            "- Materials: worn leather, chintz and floral cotton, aged brass, dark wood, "
+            "needlepoint textiles.",
+            "- Forms and pieces: a deep roll-arm seat in floral chintz; a Chesterfield-style "
+            "leather chair; a skirted table with a fringed lamp; layered patterned cushions; a "
+            "gallery of framed botanical prints.",
+            "- Avoid: sleek modern minimalism, chrome or glossy surfaces, monochrome schemes, "
+            "empty uncluttered walls.",
+        ]),
+        decor_scale="small",
+    ),
+    "neoclassical": Style(
+        name="Neoclassical",
+        summary="symmetrical, columned and restrained, in even formal light.",
+        guide="\n".join([
+            "- Palette: ivory, soft grey and gold with a single deep accent (navy or hunter "
+            "green).",
+            "- Materials: marble, gilt-edged wood, silk damask, bronze, plaster relief detail.",
+            "- Forms and pieces: a klismos-style chair with tapered legs; a marble-topped "
+            "console on fluted legs; a symmetrical pair of urn-form lamps; a gilt-framed "
+            "classical-style mirror; restrained plaster relief detailing.",
+            "- Avoid: ornate Baroque excess, industrial materials, asymmetry, bright saturated "
+            "colour, rustic or distressed finishes.",
+        ]),
+        decor_scale="small",
+    ),
+    "alpine-chalet": Style(
+        name="Alpine Chalet",
+        summary="timber-lined and snug, warmed by firelight, in soft mountain light.",
+        guide="\n".join([
+            "- Palette: warm honey wood tones, cream and forest green with black metal "
+            "accents.",
+            "- Materials: knotty pine and spruce panelling, sheepskin, wrought iron, chunky "
+            "wool knit, stone.",
+            "- Forms and pieces: a stone fireplace surround; a chunky wood table with turned "
+            "legs; a sheepskin-draped seat; a wrought-iron antler-style chandelier; a thick "
+            "wool or fair-isle-pattern textile.",
+            "- Avoid: glossy modern finishes, cool grey palettes, minimalism, tropical or "
+            "beach motifs, bare unwarmed surfaces.",
+        ]),
+        decor_scale="small",
+    ),
+    "hacienda": Style(
+        name="Hacienda",
+        summary="sun-warmed, earthen and hand-crafted, in strong warm daylight.",
+        guide="\n".join([
+            "- Palette: terracotta, warm white plaster, deep blue and mustard.",
+            "- Materials: hand-glazed talavera tile, dark carved wood, wrought iron, rough "
+            "plaster, leather.",
+            "- Forms and pieces: a heavy carved wood table; wrought-iron light fixtures; "
+            "talavera-tile accents on a surface or niche; a leather-and-wood equipale-style "
+            "seat; terracotta pots.",
+            "- Avoid: cool minimalism, glossy modern surfaces, pale Scandinavian wood, muted "
+            "grey palettes.",
+        ]),
+        decor_scale="small",
+    ),
+    "chinoiserie": Style(
+        name="Chinoiserie",
+        summary="ornate, lacquered and East-Asian-inspired, in soft warm light.",
+        guide="\n".join([
+            "- Palette: black and red lacquer with jade green, gold and porcelain "
+            "blue-and-white.",
+            "- Materials: black lacquered wood, hand-painted silk-panel-look wallcoverings, "
+            "porcelain, brass, bamboo-motif detailing.",
+            "- Forms and pieces: a black lacquered cabinet with painted motifs; blue-and-white "
+            "porcelain vases; a bamboo-fretwork screen or mirror frame; a pagoda-style light "
+            "fixture; hand-painted botanical or bird motifs on a feature surface.",
+            "- Avoid: minimalism, industrial materials, Scandinavian pale wood, plain "
+            "unornamented surfaces.",
+        ]),
+        decor_scale="small",
+    ),
+    "shabby-chic": Style(
+        name="Shabby Chic",
+        summary="soft, distressed-white and romantic, in gentle daylight.",
+        guide="\n".join([
+            "- Palette: white, soft pink and pale sage, all slightly faded.",
+            "- Materials: distressed painted wood, chippy white finishes, lace and linen, "
+            "worn brass.",
+            "- Forms and pieces: a distressed white-painted dresser; slipcovered seating in "
+            "faded floral or plain linen; a chandelier with a few crystals and a worn finish; "
+            "lace-edged cushions; a chippy-paint mirror frame.",
+            "- Avoid: sleek modern minimalism, dark heavy wood, glossy chrome, saturated bold "
+            "colour.",
+        ]),
+        decor_scale="small",
+    ),
+    "gothic": Style(
+        name="Gothic",
+        summary="dark, dramatic and cathedral-inspired, in a low candlelit glow.",
+        guide="\n".join([
+            "- Palette: black, deep burgundy and charcoal with dark wrought-iron metal.",
+            "- Materials: dark stained oak, wrought iron, velvet, stained or leaded glass, "
+            "aged leather.",
+            "- Forms and pieces: a high-backed carved wood chair; a wrought-iron "
+            "candelabra-style light fixture; a pointed-arch mirror or panel motif; heavy dark "
+            "velvet drapery; small trefoil-motif accents.",
+            "- Avoid: bright or pastel colour, minimalism, pale wood, cheerful daylight "
+            "staging, plastic or laminate finishes.",
+        ]),
+        decor_scale="small",
+    ),
+    "steampunk": Style(
+        name="Steampunk",
+        summary="brass-fitted and Victorian-industrial, lit by warm Edison-bulb glow.",
+        guide="\n".join([
+            "- Palette: aged brass, dark leather brown, oxblood and charcoal.",
+            "- Materials: exposed brass gears and pipework, aged leather, dark iron, "
+            "reclaimed wood, exposed filament bulbs.",
+            "- Forms and pieces: a leather chesterfield-style seat with brass studs; a "
+            "gear-motif clock or wall art; a pipe-fitting-style light fixture with exposed "
+            "bulbs; a wood-and-brass campaign trunk; a factory-gauge or map-motif accent.",
+            "- Avoid: bright clean minimalism, pastel colour, glossy plastic, Scandinavian "
+            "pale wood, sleek modern lines.",
+        ]),
+        decor_scale="small",
     ),
 }
 
