@@ -45,6 +45,7 @@ final class RoomFlowViewModel {
     private(set) var bannerMessage: String?
 
     private(set) var renderState: RenderStateMachine.State = .idle
+    private(set) var shoppingState: RenderStateMachine.ShoppingState = .idle
     private var renderMachine: RenderStateMachine?
 
     private let apiClient: APIClient
@@ -165,10 +166,14 @@ final class RoomFlowViewModel {
         guard let room, let selectedStyleId else { return }
         step = .rendering
         bannerMessage = nil
+        shoppingState = .idle
         let machine = RenderStateMachine(client: apiClient)
         renderMachine = machine
         await machine.onChange { [weak self] state in
             await self?.applyRenderState(state)
+        }
+        await machine.onShoppingChange { [weak self] state in
+            await self?.applyShoppingState(state)
         }
         let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         await machine.start(
@@ -212,6 +217,10 @@ final class RoomFlowViewModel {
         default:
             break
         }
+    }
+
+    private func applyShoppingState(_ state: RenderStateMachine.ShoppingState) async {
+        shoppingState = state
     }
 
     // MARK: - Finishing
